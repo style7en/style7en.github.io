@@ -108,20 +108,26 @@
 
 
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="style7en的博客">
-<meta property="og:url" content="https://style7en.gitee.io/index.html">
+  <meta name="description" content="何为笛卡尔积笛卡尔积的符号化为： A×B={(x,y)|x∈A∧y∈B} 例如，A={a,b}, B={0,1,2}，则 1A×B=&amp;#123;(a, 0), (a, 1), (a, 2), (b, 0), (b, 1), (b, 2)&amp;#125; 类似于Python中的itertools.product方法。 简单代码实现例子：  从节点1开始出发，不考虑联通性，所有的路径。 123456789">
+<meta property="og:type" content="article">
+<meta property="og:title" content="集合的笛卡尔积">
+<meta property="og:url" content="https://style7en.gitee.io/2018/09/16/集合的笛卡尔积/index.html">
 <meta property="og:site_name" content="style7en的博客">
+<meta property="og:description" content="何为笛卡尔积笛卡尔积的符号化为： A×B={(x,y)|x∈A∧y∈B} 例如，A={a,b}, B={0,1,2}，则 1A×B=&amp;#123;(a, 0), (a, 1), (a, 2), (b, 0), (b, 1), (b, 2)&amp;#125; 类似于Python中的itertools.product方法。 简单代码实现例子：  从节点1开始出发，不考虑联通性，所有的路径。 123456789">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="https://style7en.gitee.io/2018/09/16/集合的笛卡尔积/寻找路径例子.png">
+<meta property="og:updated_time" content="2018-09-16T14:14:18.491Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="style7en的博客">
+<meta name="twitter:title" content="集合的笛卡尔积">
+<meta name="twitter:description" content="何为笛卡尔积笛卡尔积的符号化为： A×B={(x,y)|x∈A∧y∈B} 例如，A={a,b}, B={0,1,2}，则 1A×B=&amp;#123;(a, 0), (a, 1), (a, 2), (b, 0), (b, 1), (b, 2)&amp;#125; 类似于Python中的itertools.product方法。 简单代码实现例子：  从节点1开始出发，不考虑联通性，所有的路径。 123456789">
+<meta name="twitter:image" content="https://style7en.gitee.io/2018/09/16/集合的笛卡尔积/寻找路径例子.png">
 
 
 
 
 
 
-  <link rel="canonical" href="https://style7en.gitee.io/"/>
+  <link rel="canonical" href="https://style7en.gitee.io/2018/09/16/集合的笛卡尔积/"/>
 
 
 
@@ -131,7 +137,7 @@
   };
 </script>
 
-  <title>style7en的博客</title>
+  <title>集合的笛卡尔积 | style7en的博客</title>
   
 
 
@@ -178,8 +184,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -216,7 +221,7 @@
         
         
           
-          <li class="menu-item menu-item-home menu-item-active">
+          <li class="menu-item menu-item-home">
     <a href="/" rel="section">
       <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Home</a>
   </li>
@@ -260,9 +265,9 @@
           
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -294,11 +299,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/16/集合的笛卡尔积/" itemprop="url">
-                  集合的笛卡尔积
-                </a>
+          <h1 class="post-title" itemprop="name headline">集合的笛卡尔积
               
             
           </h1>
@@ -361,9 +362,7 @@
       
 
       
-        
-          
-            <h2 id="何为笛卡尔积"><a href="#何为笛卡尔积" class="headerlink" title="何为笛卡尔积"></a>何为笛卡尔积</h2><p>笛卡尔积的符号化为：</p>
+        <h2 id="何为笛卡尔积"><a href="#何为笛卡尔积" class="headerlink" title="何为笛卡尔积"></a>何为笛卡尔积</h2><p>笛卡尔积的符号化为：</p>
 <p>A×B={(x,y)|x∈A∧y∈B}</p>
 <p>例如，A={a,b}, B={0,1,2}，则</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A×B=&#123;(a, 0), (a, 1), (a, 2), (b, 0), (b, 1), (b, 2)&#125;</span><br></pre></td></tr></table></figure>
@@ -373,8 +372,6 @@
 <p>从节点1开始出发，不考虑联通性，所有的路径。</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> SIZE(a) (sizeof(a) / sizeof(a[0]))</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">find_next</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;data, <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result, <span class="keyword">int</span> layer, <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; cur_list)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">find_all</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;data, <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">show</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; data;</span><br><span class="line">    <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; result;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> a1[] = &#123; <span class="number">1</span> &#125;;</span><br><span class="line">    <span class="keyword">int</span> a2[] = &#123; <span class="number">2</span> &#125;;</span><br><span class="line">    <span class="keyword">int</span> a3[] = &#123; <span class="number">7</span>, <span class="number">3</span>, <span class="number">8</span> &#125;;</span><br><span class="line">    <span class="keyword">int</span> a4[] = &#123; <span class="number">6</span>, <span class="number">9</span>, <span class="number">4</span>, <span class="number">10</span> &#125;;</span><br><span class="line">    <span class="keyword">int</span> a5[] = &#123; <span class="number">11</span>, <span class="number">5</span> &#125;;</span><br><span class="line">    data.push_back(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;(a1, a1 + SIZE(a1)));</span><br><span class="line">    data.push_back(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;(a2, a2 + SIZE(a2)));</span><br><span class="line">    data.push_back(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;(a3, a3 + SIZE(a3)));</span><br><span class="line">    data.push_back(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;(a4, a4 + SIZE(a4)));</span><br><span class="line">    data.push_back(<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt;(a5, a5 + SIZE(a5)));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 递归</span></span><br><span class="line">    <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; curlist;</span><br><span class="line">    find_next(data, result, <span class="number">0</span>, curlist);</span><br><span class="line">    show(result);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环</span></span><br><span class="line">    result.clear();</span><br><span class="line">    find_all(data, result); </span><br><span class="line">    show(result);</span><br><span class="line">      </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">show</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> index = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; (<span class="keyword">int</span>)result.size(); i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"%2d-&gt;"</span>, index++);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> k = <span class="number">0</span>; k &lt; (<span class="keyword">int</span>)result[i].size(); k++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"%2d "</span>, result[i][k]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 笛卡尔积的两种方法</span></span><br><span class="line"><span class="comment">// 1. 递归</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">find_next</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;data, <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result, <span class="keyword">int</span> layer, <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; cur_list)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (layer == data.size())</span><br><span class="line">    &#123;</span><br><span class="line">        result.push_back(cur_list);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; (<span class="keyword">int</span>)data[layer].size(); i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; <span class="built_in">list</span>(cur_list);</span><br><span class="line">        <span class="built_in">list</span>.push_back(data[layer][i]);</span><br><span class="line">        find_next(data, result, layer + <span class="number">1</span>, <span class="built_in">list</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 循环</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">find_all</span><span class="params">(<span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;data, <span class="built_in">vector</span>&lt;<span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; &gt; &amp;result)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> total_num = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; layer;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = (<span class="keyword">int</span>)data.size() - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--)</span><br><span class="line">    &#123;              </span><br><span class="line">        layer.insert(layer.begin(), total_num);</span><br><span class="line">        total_num *= data[i].size();</span><br><span class="line">    &#125;   </span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; total_num; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">int</span> index = i;</span><br><span class="line">        <span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; <span class="built_in">list</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> k = <span class="number">0</span>; k &lt; (<span class="keyword">int</span>)data.size(); k++)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">int</span> layer_index = index / layer[k];</span><br><span class="line">            <span class="built_in">list</span>.push_back(data[k][layer_index]);</span><br><span class="line">            index %= layer[k];</span><br><span class="line">        &#125;</span><br><span class="line">        result.push_back(<span class="built_in">list</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-          
-        
       
     </div>
 
@@ -394,164 +391,28 @@
       
 
       
-
-      
-
       
       
-        <div class="post-eof"></div>
+
       
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="https://style7en.gitee.io/2018/09/16/Hexo使用简介/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="style7en">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="style7en的博客">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/09/16/Hexo使用简介/" itemprop="url">
-                  Hexo使用简介
-                </a>
-              
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
             
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
+              <a href="/2018/09/16/Hexo使用简介/" rel="next" title="Hexo使用简介">
+                <i class="fa fa-chevron-left"></i> Hexo使用简介
+              </a>
             
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
             
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-
-              
-                
-              
-
-              <time title="Created: 2018-09-16 20:59:54 / Modified: 21:28:42" itemprop="dateCreated datePublished" datetime="2018-09-16T20:59:54+08:00">2018-09-16</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <h2 id="安装Hexo"><a href="#安装Hexo" class="headerlink" title="安装Hexo"></a>安装Hexo</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm install -g hexo</span><br></pre></td></tr></table></figure>
-<h2 id="初始化Hexo"><a href="#初始化Hexo" class="headerlink" title="初始化Hexo"></a>初始化Hexo</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd &lt;blog_folder&gt;</span><br><span class="line">hexo init</span><br></pre></td></tr></table></figure>
-<h2 id="生成网页"><a href="#生成网页" class="headerlink" title="生成网页"></a>生成网页</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo generate 或者 hexo g</span><br></pre></td></tr></table></figure>
-<p>原始的markdown文件在<strong>source/_posts/</strong>目录下，结果在<strong>public/</strong>目录下。</p>
-<h2 id="清除缓存"><a href="#清除缓存" class="headerlink" title="清除缓存"></a>清除缓存</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br></pre></td></tr></table></figure>
-<h2 id="运行本地服务器"><a href="#运行本地服务器" class="headerlink" title="运行本地服务器"></a>运行本地服务器</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo server 或者 hexo s</span><br></pre></td></tr></table></figure>
-<p>浏览器中访问<strong>localhost:4000</strong>进行预览。</p>
-<h2 id="发布网站到Gitee"><a href="#发布网站到Gitee" class="headerlink" title="发布网站到Gitee"></a>发布网站到Gitee</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo deploy 或者 hexo d</span><br></pre></td></tr></table></figure>
-<p>需要在_config.yml中配置git</p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="attr">https://style7en.gitee.io/blog/</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/blog/</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line"><span class="attr">  type:</span> <span class="string">git</span></span><br><span class="line"><span class="attr">  repo:</span> <span class="attr">https://gitee.com/style7en/blog.git</span></span><br><span class="line"><span class="attr">  branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
-<p>注意：冒号后面一定要有空格，否则不能正确识别。</p>
-<p>快速发布：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo clean &amp;&amp; hexo g &amp;&amp; hexo d</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -561,14 +422,15 @@
   </article>
 
 
-    
-  </section>
-
-  
+  </div>
 
 
           </div>
           
+
+  
+
+
 
         </div>
         
@@ -589,8 +451,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -635,6 +506,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#何为笛卡尔积"><span class="nav-number">1.</span> <span class="nav-text">何为笛卡尔积</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#简单代码实现"><span class="nav-number">2.</span> <span class="nav-text">简单代码实现</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -765,6 +652,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.4.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.4.1"></script>
+
+
 
   
 
