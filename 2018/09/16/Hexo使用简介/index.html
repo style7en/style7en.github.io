@@ -115,7 +115,7 @@
 <meta property="og:site_name" content="style7en的博客">
 <meta property="og:description" content="安装Hexo1npm install -g hexo 初始化Hexo12cd &amp;lt;blog_folder&amp;gt;hexo init 生成网页1hexo generate 或者 hexo g 原始的markdown文件在source/_posts/目录下，结果在public/目录下。 清除缓存1hexo clean 运行本地服务器1hexo server 或者 hexo s 浏览器中访问loca">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-09-16T13:28:42.654Z">
+<meta property="og:updated_time" content="2018-09-16T15:22:56.627Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Hexo使用简介">
 <meta name="twitter:description" content="安装Hexo1npm install -g hexo 初始化Hexo12cd &amp;lt;blog_folder&amp;gt;hexo init 生成网页1hexo generate 或者 hexo g 原始的markdown文件在source/_posts/目录下，结果在public/目录下。 清除缓存1hexo clean 运行本地服务器1hexo server 或者 hexo s 浏览器中访问loca">
@@ -322,7 +322,7 @@
                 
               
 
-              <time title="Created: 2018-09-16 20:59:54 / Modified: 21:28:42" itemprop="dateCreated datePublished" datetime="2018-09-16T20:59:54+08:00">2018-09-16</time>
+              <time title="Created: 2018-09-16 20:59:54 / Modified: 23:22:56" itemprop="dateCreated datePublished" datetime="2018-09-16T20:59:54+08:00">2018-09-16</time>
             
 
             
@@ -369,7 +369,7 @@
 <p>浏览器中访问<strong>localhost:4000</strong>进行预览。</p>
 <h2 id="发布网站到Gitee"><a href="#发布网站到Gitee" class="headerlink" title="发布网站到Gitee"></a>发布网站到Gitee</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo deploy 或者 hexo d</span><br></pre></td></tr></table></figure>
 <p>需要在_config.yml中配置git</p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="attr">https://style7en.gitee.io/blog/</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/blog/</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line"><span class="attr">  type:</span> <span class="string">git</span></span><br><span class="line"><span class="attr">  repo:</span> <span class="attr">https://gitee.com/style7en/blog.git</span></span><br><span class="line"><span class="attr">  branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="attr">https://style7en.github.io</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line"><span class="attr">  type:</span> <span class="string">git</span></span><br><span class="line"><span class="attr">  repo:</span> <span class="attr">https://github.com/style7en/style7en.github.io.git</span></span><br><span class="line"><span class="attr">  branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
 <p>注意：冒号后面一定要有空格，否则不能正确识别。</p>
 <p>快速发布：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo clean &amp;&amp; hexo g &amp;&amp; hexo d</span><br></pre></td></tr></table></figure>

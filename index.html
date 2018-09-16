@@ -323,7 +323,7 @@
                 
               
 
-              <time title="Created: 2018-09-16 22:00:59 / Modified: 22:14:18" itemprop="dateCreated datePublished" datetime="2018-09-16T22:00:59+08:00">2018-09-16</time>
+              <time title="Created: 2018-09-16 22:00:59 / Modified: 23:22:28" itemprop="dateCreated datePublished" datetime="2018-09-16T22:00:59+08:00">2018-09-16</time>
             
 
             
@@ -366,7 +366,7 @@
             <h2 id="何为笛卡尔积"><a href="#何为笛卡尔积" class="headerlink" title="何为笛卡尔积"></a>何为笛卡尔积</h2><p>笛卡尔积的符号化为：</p>
 <p>A×B={(x,y)|x∈A∧y∈B}</p>
 <p>例如，A={a,b}, B={0,1,2}，则</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A×B=&#123;(a, 0), (a, 1), (a, 2), (b, 0), (b, 1), (b, 2)&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A×B=&#123;(a, <span class="number">0</span>), (a, <span class="number">1</span>), (a, <span class="number">2</span>), (b, <span class="number">0</span>), (b, <span class="number">1</span>), (b, <span class="number">2</span>)&#125;</span><br></pre></td></tr></table></figure>
 <p>类似于Python中的itertools.product方法。</p>
 <h2 id="简单代码实现"><a href="#简单代码实现" class="headerlink" title="简单代码实现"></a>简单代码实现</h2><p>例子：</p>
 <p><img src="/2018/09/16/集合的笛卡尔积/寻找路径例子.png" alt="无法加载图片"></p>
@@ -471,7 +471,7 @@
                 
               
 
-              <time title="Created: 2018-09-16 20:59:54 / Modified: 21:28:42" itemprop="dateCreated datePublished" datetime="2018-09-16T20:59:54+08:00">2018-09-16</time>
+              <time title="Created: 2018-09-16 20:59:54 / Modified: 23:22:56" itemprop="dateCreated datePublished" datetime="2018-09-16T20:59:54+08:00">2018-09-16</time>
             
 
             
@@ -520,7 +520,7 @@
 <p>浏览器中访问<strong>localhost:4000</strong>进行预览。</p>
 <h2 id="发布网站到Gitee"><a href="#发布网站到Gitee" class="headerlink" title="发布网站到Gitee"></a>发布网站到Gitee</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo deploy 或者 hexo d</span><br></pre></td></tr></table></figure>
 <p>需要在_config.yml中配置git</p>
-<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="attr">https://style7en.gitee.io/blog/</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/blog/</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line"><span class="attr">  type:</span> <span class="string">git</span></span><br><span class="line"><span class="attr">  repo:</span> <span class="attr">https://gitee.com/style7en/blog.git</span></span><br><span class="line"><span class="attr">  branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">url:</span> <span class="attr">https://style7en.github.io</span></span><br><span class="line"><span class="attr">root:</span> <span class="string">/</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line"><span class="attr">  type:</span> <span class="string">git</span></span><br><span class="line"><span class="attr">  repo:</span> <span class="attr">https://github.com/style7en/style7en.github.io.git</span></span><br><span class="line"><span class="attr">  branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
 <p>注意：冒号后面一定要有空格，否则不能正确识别。</p>
 <p>快速发布：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo clean &amp;&amp; hexo g &amp;&amp; hexo d</span><br></pre></td></tr></table></figure>
