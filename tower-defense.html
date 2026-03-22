@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>三消塔防无尽版</title>
+    <style>
+        :root {
+            /* 浅色主题 */
+            --bg-primary: #e8e8f0;
+            --bg-secondary: #f8f8fc;
+            --bg-tertiary: #f0f0f8;
+            --bg-canvas: #d8d8e8;
+            --bg-canvas-grid: #c0c0d8;
+            --bg-path: rgba(160, 160, 180, 0.4);
+            --text-primary: #333;
+            --text-secondary: #555;
+            --text-muted: #666;
+            --border-primary: #a0a0c0;
+            --border-secondary: #d0d0e0;
+            --accent-primary: #4090d0;
+            --accent-hover: #50a0e0;
+            --accent-success: #40a060;
+            --color-lives: #d04040;
+            --color-lives-hover: #e05050;
+            --color-score: #20a080;
+            --color-wave: #d06030;
+            --color-cancel: #a0a0b0;
+            --color-cancel-hover: #b0b0c0;
+            --dialog-overlay: rgba(200, 200, 220, 0.9);
+            --shadow-primary: 0 4px 15px rgba(0, 0, 0, 0.2);
+            --shadow-secondary: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --tower-bg: #d0d0e0;
+            --tower-bg-hover: #c0c0d0;
+            --tower-border: #3080c0;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #1f2940;
+            --bg-canvas: #1a1a30;
+            --bg-canvas-grid: #3a3a5a;
+            --bg-path: rgba(80, 80, 120, 0.5);
+            --text-primary: #e0e0e8;
+            --text-secondary: #b0b0c0;
+            --text-muted: #8888a0;
+            --border-primary: #3a3a5c;
+            --border-secondary: #2a2a4a;
+            --accent-primary: #4a90d0;
+            --accent-hover: #5aa0e0;
+            --accent-success: #4a9060;
+            --color-lives: #e05050;
+            --color-lives-hover: #f06060;
+            --color-score: #30b090;
+            --color-wave: #e08040;
+            --color-cancel: #505070;
+            --color-cancel-hover: #606080;
+            --dialog-overlay: rgba(10, 10, 30, 0.9);
+            --shadow-primary: 0 4px 15px rgba(0, 0, 0, 0.5);
+            --shadow-secondary: 0 4px 20px rgba(0, 0, 0, 0.6);
+            --tower-bg: #2a2a4a;
+            --tower-bg-hover: #3a3a5a;
+            --tower-border: #3a7ab0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", sans-serif;
+            color: var(--text-primary);
+            padding: 10px;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        #gameCanvas {
+            border: 4px solid var(--border-primary);
+            image-rendering: pixelated;
+            cursor: crosshair;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .ui-panel {
+            background: var(--bg-secondary);
+            padding: 8px;
+            border: 3px solid var(--border-primary);
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2px 0;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .lives { color: var(--color-lives); }
+        .score { color: var(--color-score); }
+        .wave { color: var(--color-wave); }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dialog-overlay);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .game-over h2 {
+            font-size: 48px;
+            color: var(--color-lives);
+            text-shadow: 2px 2px 0 #888;
+            margin-bottom: 20px;
+        }
+
+        .game-over p {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        .restart-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            font-family: inherit;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .restart-btn:hover {
+            transform: scale(1.05);
+            background: var(--accent-hover);
+        }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .help-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+
+        .help-content {
+            background: var(--bg-secondary);
+            border: 3px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-secondary);
+        }
+
+        .help-content h3 {
+            color: var(--accent-primary);
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .help-content h4 {
+            color: var(--text-primary);
+            margin: 12px 0 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-secondary);
+            padding-bottom: 4px;
+        }
+
+        .help-content p, .help-content li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 4px 0;
+        }
+
+        .help-content ul {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
+        .help-close {
+            display: block;
+            margin: 15px auto 0;
+            padding: 8px 30px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .help-close:hover {
+            background: var(--accent-hover);
+        }
+
+        .confirm-content {
+            background: var(--bg-secondary);
+            border: 3px solid var(--accent-primary);
+            border-radius: 8px;
+            padding: 20px 30px;
+            text-align: center;
+            box-shadow: var(--shadow-secondary);
+        }
+
+        .confirm-message {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-btn {
+            padding: 8px 24px;
+            font-size: 14px;
+            font-family: inherit;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .confirm-btn.cancel {
+            background: var(--color-cancel);
+            color: white;
+        }
+
+        .confirm-btn.cancel:hover {
+            background: var(--color-cancel-hover);
+        }
+
+        .confirm-btn.ok {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .confirm-btn.ok:hover {
+            background: var(--accent-hover);
+        }
+
+        .selected-tower {
+            font-size: 11px;
+            color: var(--text-primary);
+            margin-top: 6px;
+            padding: 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-primary);
+        }
+
+        .selected-tower .title {
+            color: var(--accent-primary);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .selected-tower .prop {
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            margin-top: 4px;
+            padding: 3px 6px;
+            font-size: 10px;
+            font-family: inherit;
+            background: var(--color-lives);
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .delete-btn:hover {
+            background: var(--color-lives-hover);
+        }
+
+        .restart-btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            font-family: inherit;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 3px;
+            width: 100%;
+        }
+
+        .restart-btn-small:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .tower-type-select {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 4px 2px;
+            font-size: 11px;
+            font-family: inherit;
+            background: var(--tower-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-primary);
+            cursor: pointer;
+            text-align: center;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .type-btn.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--tower-border);
+        }
+
+        .type-btn:hover:not(.active) {
+            background: var(--tower-bg-hover);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 响应式布局 - 手机适配 */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 5px;
+                justify-content: flex-start;
+            }
+
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                width: 100%;
+            }
+
+            #gameCanvas {
+                width: 100%;
+                max-width: calc(100vw - 10px);
+                height: auto;
+                border-width: 2px;
+            }
+
+            .ui-panel {
+                width: 100%;
+                max-width: calc(100vw - 10px);
+                min-width: auto;
+                padding: 6px;
+            }
+
+            .stat-label {
+                font-size: 14px;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            .restart-btn-small {
+                font-size: 14px;
+                padding: 6px 4px;
+            }
+
+            .type-btn {
+                font-size: 14px;
+                padding: 5px 2px;
+            }
+
+            .selected-tower {
+                font-size: 12px;
+            }
+
+            .delete-btn {
+                font-size: 14px;
+                padding: 8px 6px;
+            }
+
+            .help-content {
+                max-width: calc(100vw - 20px);
+                padding: 15px;
+            }
+
+            .help-content h3 {
+                font-size: 16px;
+            }
+
+            .help-content h4 {
+                font-size: 13px;
+            }
+
+            .help-content p, .help-content li {
+                font-size: 12px;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (pointer: coarse) {
+            .restart-btn-small, .type-btn, .confirm-btn, .help-close, .delete-btn {
+                min-height: 44px;
+            }
+
+            .btn-grid {
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="450" height="450"></canvas>
+        <div class="ui-panel">
+            <div class="stat">
+                <span class="stat-label">生命</span>
+                <span class="stat-value lives" id="lives">100</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">分数</span>
+                <span class="stat-value score" id="score">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">波次</span>
+                <span class="stat-value wave" id="wave">1</span>
+            </div>
+            <div class="btn-grid">
+                <button class="restart-btn-small" onclick="restartGame()">重新开始</button>
+                <button class="restart-btn-small" onclick="nextWave()">下一波</button>
+                <button class="restart-btn-small" id="speedBtn" onclick="toggleSpeed()">1倍速</button>
+                <button class="restart-btn-small" id="pauseBtn" onclick="togglePause()">暂停</button>
+                <button class="restart-btn-small" onclick="showHelp()">玩法说明</button>
+                <button class="restart-btn-small" id="themeBtn" onclick="toggleTheme()">深色</button>
+            </div>
+            <div class="tower-type-select">
+                <div class="type-btn active" data-type="attack" onclick="selectTowerType('attack')">攻击塔</div>
+                <div class="type-btn" data-type="slow" onclick="selectTowerType('slow')">减速塔</div>
+            </div>
+            <div class="selected-tower hidden" id="selectedTower">
+                <div class="title">防御塔属性</div>
+                <div>类型: <span id="selType">-</span></div>
+                <div>等级: <span id="selLevel">-</span></div>
+                <div>攻击力: <span id="selAttack">-</span></div>
+                <div>攻击范围: <span id="selRange">-</span></div>
+                <div>攻击间隔: <span id="selInterval">-</span>ms</div>
+                <div id="selSlowDiv">减速: <span id="selSlow">-</span>%</div>
+                <button class="delete-btn" onclick="deleteSelectedTower()">删除防御塔</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-over hidden" id="gameOver">
+        <h2>GAME OVER</h2>
+        <p>最终波次: <span id="finalWave">1</span></p>
+        <button class="restart-btn" onclick="restartGame()">重新开始</button>
+    </div>
+
+    <div class="game-over hidden" id="victoryDialog">
+        <h2 style="color: var(--accent-success);">胜利！</h2>
+        <p>恭喜你成功抵御了100波进攻！</p>
+        <p>最终分数: <span id="victoryScore">0</span></p>
+        <div style="margin-top: 20px; display: flex; gap: 15px;">
+            <button class="restart-btn" style="background: var(--accent-success);" onclick="continueEndless()">进入无尽模式</button>
+            <button class="restart-btn" style="background: var(--color-cancel);" onclick="endGameFromVictory()">结束游戏</button>
+        </div>
+    </div>
+
+    <div class="confirm-dialog hidden" id="confirmDialog">
+        <div class="confirm-content">
+            <div class="confirm-message" id="confirmMessage">确定要删除吗？</div>
+            <div class="confirm-buttons">
+                <button class="confirm-btn cancel" onclick="handleConfirm(false)">取消</button>
+                <button class="confirm-btn ok" onclick="handleConfirm(true)">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="help-dialog hidden" id="helpDialog">
+        <div class="help-content">
+            <h3>三消塔防无尽版 - 玩法说明</h3>
+            
+            <h4>游戏目标</h4>
+            <p>阻止怪物从左上角到达右下角，保护你的生命值。</p>
+            
+            <h4>放置防御塔</h4>
+            <ul>
+                <li>在地图空格上<strong>点击</strong>放置防御塔</li>
+                <li>按住鼠标<strong>超过0.5秒</strong>可拖拽预览塔的攻击范围</li>
+                <li>按<strong>空格键</strong>切换攻击塔/减速塔</li>
+            </ul>
+            
+            <h4>塔的类型</h4>
+            <ul>
+                <li><strong>攻击塔</strong>（圆形）：单体攻击，伤害较高</li>
+                <li><strong>减速塔</strong>（方形）：范围攻击，降低敌人移动速度</li>
+            </ul>
+            
+            <h4>塔的合成升级</h4>
+            <ul>
+                <li>3个<strong>相邻</strong>且<strong>相同等级、相同类型</strong>的塔会自动合成</li>
+                <li>合成后等级+1，攻击力和范围大幅提升</li>
+                <li>等级上限为6级（金色塔）</li>
+            </ul>
+            
+            <h4>怪物与波次</h4>
+            <ul>
+                <li>每波有多个怪物，血量随波次增加</li>
+                <li>每<strong>10波</strong>会出现Boss怪物</li>
+                <li>怪物到达终点会扣除生命值</li>
+            </ul>
+            
+            <h4>操作说明</h4>
+            <ul>
+                <li>点击已有塔可查看属性或删除</li>
+                <li><strong>重新开始</strong>：重置游戏</li>
+                <li><strong>下一波</strong>：立即开始下一波</li>
+                <li><strong>倍速</strong>：切换1/2/4/8倍速</li>
+                <li><strong>暂停</strong>：暂停/继续游戏</li>
+            </ul>
+            
+            <button class="help-close" onclick="hideHelp()">知道了</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Cache DOM elements for performance
+        const DOM = {
+            lives: document.getElementById('lives'),
+            score: document.getElementById('score'),
+            wave: document.getElementById('wave'),
+            speedBtn: document.getElementById('speedBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            themeBtn: document.getElementById('themeBtn'),
+            selectedTower: document.getElementById('selectedTower'),
+            selType: document.getElementById('selType'),
+            selLevel: document.getElementById('selLevel'),
+            selAttack: document.getElementById('selAttack'),
+            selRange: document.getElementById('selRange'),
+            selInterval: document.getElementById('selInterval'),
+            selSlowDiv: document.getElementById('selSlowDiv'),
+            selSlow: document.getElementById('selSlow'),
+            gameOver: document.getElementById('gameOver'),
+            finalWave: document.getElementById('finalWave'),
+            victoryDialog: document.getElementById('victoryDialog'),
+            victoryScore: document.getElementById('victoryScore'),
+            confirmDialog: document.getElementById('confirmDialog'),
+            confirmMessage: document.getElementById('confirmMessage')
+        };
+
+        const GRID_SIZE = 15;
+        const CELL_SIZE = 30;
+        const GAME_WIDTH = GRID_SIZE * CELL_SIZE;
+        const GAME_HEIGHT = GRID_SIZE * CELL_SIZE;
+
+        // Create offscreen canvas for grid background (performance optimization)
+        const gridCanvas = document.createElement('canvas');
+        gridCanvas.width = GAME_WIDTH;
+        gridCanvas.height = GAME_HEIGHT;
+        const gridCtx = gridCanvas.getContext('2d');
+
+        // Initialize grid canvas
+        function initGridCanvas() {
+            const isDark = document.documentElement.dataset.theme === 'dark';
+            gridCtx.fillStyle = isDark ? '#1a1a30' : '#d8d8e8';
+            gridCtx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+            gridCtx.strokeStyle = isDark ? '#3a3a5a' : '#c0c0d8';
+            gridCtx.lineWidth = 1;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                gridCtx.beginPath();
+                gridCtx.moveTo(i * CELL_SIZE, 0);
+                gridCtx.lineTo(i * CELL_SIZE, GAME_HEIGHT);
+                gridCtx.stroke();
+
+                gridCtx.beginPath();
+                gridCtx.moveTo(0, i * CELL_SIZE);
+                gridCtx.lineTo(GAME_WIDTH, i * CELL_SIZE);
+                gridCtx.stroke();
+            }
+        }
+        initGridCanvas();
+
+        // 主题相关
+        let isDarkTheme = false;
+
+        function toggleTheme() {
+            isDarkTheme = !isDarkTheme;
+            document.documentElement.dataset.theme = isDarkTheme ? 'dark' : '';
+            DOM.themeBtn.textContent = isDarkTheme ? '浅色' : '深色';
+            localStorage.setItem('towerDefenseTheme', isDarkTheme ? 'dark' : 'light');
+            initGridCanvas();  // 重新绘制网格背景
+        }
+
+        function loadTheme() {
+            const saved = localStorage.getItem('towerDefenseTheme');
+            if (saved === 'dark') {
+                isDarkTheme = true;
+                document.documentElement.dataset.theme = 'dark';
+                DOM.themeBtn.textContent = '浅色';
+            }
+        }
+        loadTheme();
+
+        // Tower type selection
+        let selectedTowerType = 'attack';
+        let isPaused = false;
+        let isMouseDown = false;
+        let pendingTowerPos = null;
+        let mouseDownTime = 0;
+
+        function selectTowerType(type) {
+            selectedTowerType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.type === type);
+            });
+        }
+
+        // 空格键切换塔类型
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !gameState.gameOver) {
+                e.preventDefault();
+                const newType = selectedTowerType === 'attack' ? 'slow' : 'attack';
+                selectTowerType(newType);
+            }
+        });
+
+        // 阻止手机上canvas区域的页面滚动
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target === canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Attack tower stats
+        const TOWER_STATS = {
+            1: { attack: 10, range: 80, interval: 500 },
+            2: { attack: 25, range: 100, interval: 450 },
+            3: { attack: 50, range: 120, interval: 400 },
+            4: { attack: 100, range: 150, interval: 350 },
+            5: { attack: 200, range: 180, interval: 300 },
+            6: { attack: 400, range: 220, interval: 250 }
+        };
+
+        const MERGE_REQUIRE = { 1: 3, 2: 3, 3: 3, 4: 3, 5: 4, 6: 4 };
+
+        // Slow tower stats (lower attack, slow effect)
+        // slowFactor: lower = more slow (0.3 means 30% speed, i.e., 70% slow)
+        const SLOW_TOWER_STATS = {
+            1: { attack: 5, range: 70, interval: 600, slowFactor: 0.5 },
+            2: { attack: 10, range: 90, interval: 550, slowFactor: 0.45 },
+            3: { attack: 20, range: 110, interval: 500, slowFactor: 0.4 },
+            4: { attack: 40, range: 140, interval: 450, slowFactor: 0.35 },
+            5: { attack: 80, range: 170, interval: 400, slowFactor: 0.3 },
+            6: { attack: 150, range: 210, interval: 350, slowFactor: 0.25 }
+        };
+
+        let gameState = {
+            score: 0,
+            lives: 100,
+            wave: 1,
+            monsters: [],
+            towers: [],
+            bullets: [],
+            particles: [],
+            lastSpawnTime: 0,
+            spawnInterval: 400,
+            gameOver: false,
+            baseHp: 50,
+            monstersPerWave: 30,
+            monstersSpawnedInWave: 0
+        };
+
+        // Tower position grid index for O(1) lookup (performance optimization)
+        const towerGrid = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(null));
+
+        function getTowerAt(gridX, gridY) {
+            if (gridX < 0 || gridX >= GRID_SIZE || gridY < 0 || gridY >= GRID_SIZE) return null;
+            return towerGrid[gridY][gridX];
+        }
+
+        function setTowerAt(gridX, gridY, tower) {
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                towerGrid[gridY][gridX] = tower;
+            }
+        }
+
+        function clearTowerAt(gridX, gridY) {
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                towerGrid[gridY][gridX] = null;
+            }
+        }
+
+        function rebuildTowerGrid() {
+            // Clear grid
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    towerGrid[y][x] = null;
+                }
+            }
+            // Rebuild from towers array
+            for (const tower of gameState.towers) {
+                towerGrid[tower.gridY][tower.gridX] = tower;
+            }
+        }
+
+        let gameSpeed = 1;
+        let mousePos = { x: 0, y: 0 };
+        let selectedTower = null;
+
+        // Particle colors for each wave
+        const WAVE_COLORS = ['#ff4444', '#ff8844', '#ffcc44', '#ccaa44', '#66cc33', '#33ccaa', '#aa66cc', '#ff66aa', '#888888', '#555555'];
+
+        // Tower colors by level (gray, blue, purple, orange, red, gold)
+        const TOWER_COLORS = ['#9d9d9d', '#4177d4', '#9b4dca', '#ff8000', '#e62e2e', '#ffd700'];
+        const SLOW_TOWER_COLORS = ['#7a7a7a', '#2d5a9e', '#7a3dad', '#cc6600', '#b32424', '#ccaa00'];
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // 计算缩放比例（canvas可能被CSS缩放）
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            mousePos.x = (e.clientX - rect.left) * scaleX;
+            mousePos.y = (e.clientY - rect.top) * scaleY;
+
+            // Update pending tower position while dragging
+            if (isMouseDown) {
+                const gridX = Math.floor(mousePos.x / CELL_SIZE);
+                const gridY = Math.floor(mousePos.y / CELL_SIZE);
+                pendingTowerPos = { gridX, gridY };
+            }
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState.gameOver) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            const gridX = Math.floor(x / CELL_SIZE);
+            const gridY = Math.floor(y / CELL_SIZE);
+
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                // Check if clicking on existing tower
+                const existing = getTowerAt(gridX, gridY);
+                if (existing) {
+                    selectedTower = existing;
+                    showTowerInfo(existing);
+                } else {
+                    // Start dragging a new tower
+                    isMouseDown = true;
+                    mouseDownTime = Date.now();
+                    pendingTowerPos = { gridX, gridY };
+                }
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (gameState.gameOver) return;
+
+            if (isMouseDown && pendingTowerPos) {
+                selectedTower = null;
+                DOM.selectedTower.classList.add('hidden');
+                placeTower(pendingTowerPos.gridX, pendingTowerPos.gridY);
+            }
+            isMouseDown = false;
+            pendingTowerPos = null;
+            mouseDownTime = 0;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isMouseDown = false;
+            pendingTowerPos = null;
+            mouseDownTime = 0;
+        });
+
+        // 触摸事件支持 - 手机适配
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0] || e.changedTouches[0];
+            // 计算缩放比例
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
+            };
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.gameOver) return;
+
+            const pos = getTouchPos(e);
+            mousePos.x = pos.x;
+            mousePos.y = pos.y;
+
+            const gridX = Math.floor(pos.x / CELL_SIZE);
+            const gridY = Math.floor(pos.y / CELL_SIZE);
+
+            if (gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE) {
+                const existing = getTowerAt(gridX, gridY);
+                if (existing) {
+                    selectedTower = existing;
+                    showTowerInfo(existing);
+                } else {
+                    isMouseDown = true;
+                    mouseDownTime = Date.now();
+                    pendingTowerPos = { gridX, gridY };
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const pos = getTouchPos(e);
+            mousePos.x = pos.x;
+            mousePos.y = pos.y;
+
+            if (isMouseDown) {
+                const gridX = Math.floor(pos.x / CELL_SIZE);
+                const gridY = Math.floor(pos.y / CELL_SIZE);
+                pendingTowerPos = { gridX, gridY };
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (gameState.gameOver) return;
+
+            if (isMouseDown && pendingTowerPos) {
+                selectedTower = null;
+                DOM.selectedTower.classList.add('hidden');
+                placeTower(pendingTowerPos.gridX, pendingTowerPos.gridY);
+            }
+            isMouseDown = false;
+            pendingTowerPos = null;
+            mouseDownTime = 0;
+        }, { passive: false });
+
+        function showTowerInfo(tower) {
+            DOM.selectedTower.classList.remove('hidden');
+            DOM.selType.textContent = tower.type === 'slow' ? '减速塔' : '攻击塔';
+            DOM.selLevel.textContent = tower.level;
+            DOM.selAttack.textContent = tower.attack;
+            DOM.selRange.textContent = tower.range;
+            DOM.selInterval.textContent = tower.interval;
+
+            if (tower.type === 'slow') {
+                DOM.selSlowDiv.style.display = 'block';
+                DOM.selSlow.textContent = Math.round((1 - tower.slowFactor) * 100);
+            } else {
+                DOM.selSlowDiv.style.display = 'none';
+            }
+        }
+
+        let confirmDialogCallback = null;
+
+        function showConfirm(message, callback) {
+            DOM.confirmMessage.textContent = message;
+            confirmDialogCallback = callback;
+            DOM.confirmDialog.classList.remove('hidden');
+        }
+
+        function handleConfirm(confirmed) {
+            if (confirmDialogCallback) {
+                confirmDialogCallback(confirmed);
+            }
+            hideConfirm();
+        }
+
+        function hideConfirm() {
+            DOM.confirmDialog.classList.add('hidden');
+            confirmDialogCallback = null;
+        }
+
+        function showHelp() {
+            document.getElementById('helpDialog').classList.remove('hidden');
+        }
+
+        function hideHelp() {
+            document.getElementById('helpDialog').classList.add('hidden');
+        }
+
+        function deleteSelectedTower() {
+            if (selectedTower) {
+                showConfirm(`确定要删除等级 ${selectedTower.level} 的防御塔吗？`, (confirmed) => {
+                    if (confirmed) {
+                        const idx = gameState.towers.indexOf(selectedTower);
+                        if (idx > -1) {
+                            clearTowerAt(selectedTower.gridX, selectedTower.gridY);  // Clear grid index
+                            gameState.towers.splice(idx, 1);
+                            invalidatePathCache();
+                        }
+                        selectedTower = null;
+                        DOM.selectedTower.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        function placeTower(gridX, gridY) {
+            // Use O(1) grid lookup
+            if (getTowerAt(gridX, gridY)) return;
+
+            // Check if there's a monster on this cell
+            const monsterOnCell = gameState.monsters.some(m => {
+                const mx = Math.floor(m.x / CELL_SIZE);
+                const my = Math.floor(m.y / CELL_SIZE);
+                return mx === gridX && my === gridY;
+            });
+            if (monsterOnCell) return;
+
+            // Check if placing tower would block the path
+            const pathExists = checkPathExistsAt(gridX, gridY);
+            if (!pathExists) {
+                return;
+            }
+
+            const stats = selectedTowerType === 'attack' ? TOWER_STATS[1] : SLOW_TOWER_STATS[1];
+
+            const tower = {
+                gridX,
+                gridY,
+                x: gridX * CELL_SIZE + CELL_SIZE / 2,
+                y: gridY * CELL_SIZE + CELL_SIZE / 2,
+                level: 1,
+                type: selectedTowerType,
+                lastAttack: 0,
+                attack: stats.attack,
+                range: stats.range,
+                interval: stats.interval,
+                slowFactor: stats.slowFactor || 0
+            };
+
+            gameState.towers.push(tower);
+            setTowerAt(gridX, gridY, tower);  // Update grid index
+            invalidatePathCache();
+            checkMerge(tower);
+            updateUI();
+        }
+
+        function checkMerge(tower) {
+            // Use a loop to handle chain merges synchronously
+            let currentTower = tower;
+
+            while (currentTower) {
+                // Find all connected towers of the same level and same type (BFS)
+                const connected = [];
+                const queue = [currentTower];
+                const visited = new Set([`${currentTower.gridX},${currentTower.gridY}`]);
+
+                while (queue.length > 0) {
+                    const current = queue.shift();
+
+                    if (current.level === currentTower.level && current.type === currentTower.type) {
+                        connected.push(current);
+                    }
+
+                    // Check 4 directions (up, down, left, right)
+                    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+                    for (const [dx, dy] of directions) {
+                        const nx = current.gridX + dx;
+                        const ny = current.gridY + dy;
+                        const key = `${nx},${ny}`;
+
+                        if (visited.has(key)) continue;
+
+                        // Use O(1) grid lookup instead of find
+                        const neighbor = getTowerAt(nx, ny);
+                        if (neighbor && neighbor.level === currentTower.level && neighbor.type === currentTower.type) {
+                            visited.add(key);
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+
+                const need = MERGE_REQUIRE[currentTower.level];
+                if (connected.length >= need) {
+                    const statsTable = currentTower.type === 'attack' ? TOWER_STATS : SLOW_TOWER_STATS;
+                    const baseStats = statsTable[currentTower.level + 1];
+                    if (!baseStats) break;
+
+                    // New attack = max attack * count
+                    const maxAttack = Math.max(...connected.map(t => t.attack));
+                    const newAttack = maxAttack * connected.length;
+
+                    // New range = max range from connected towers + bonus
+                    const maxRange = Math.max(...connected.map(t => t.range));
+                    const extra = connected.length - need;
+                    const newRange = maxRange + extra * 15;
+
+                    // For slow towers, improve slow factor (lower = more slow)
+                    const minSlow = Math.min(...connected.map(t => t.slowFactor || 1));
+                    const newSlowFactor = currentTower.type === 'slow' ? Math.max(0.1, minSlow - 0.05) : 0;
+
+                    const newTower = {
+                        gridX: currentTower.gridX,
+                        gridY: currentTower.gridY,
+                        x: currentTower.x,
+                        y: currentTower.y,
+                        level: currentTower.level + 1,
+                        type: currentTower.type,
+                        lastAttack: 0,
+                        attack: newAttack,
+                        range: newRange,
+                        interval: baseStats.interval,
+                        slowFactor: newSlowFactor
+                    };
+
+                    // Remove all connected towers from array and grid
+                    for (const t of connected) {
+                        const idx = gameState.towers.indexOf(t);
+                        if (idx > -1) gameState.towers.splice(idx, 1);
+                        clearTowerAt(t.gridX, t.gridY);  // Clear grid index
+                    }
+
+                    gameState.towers.push(newTower);
+                    setTowerAt(newTower.gridX, newTower.gridY, newTower);  // Set grid index
+                    invalidatePathCache();
+
+                    // Continue checking for chain merges
+                    currentTower = newTower;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        function spawnMonster() {
+            // Check if this is a boss wave (every 10 waves)
+            const isBossWave = gameState.wave % 10 === 0;
+            const isBoss = isBossWave && gameState.monstersSpawnedInWave === gameState.monstersPerWave - 1;
+
+            // Scale HP with wave: baseHp + wave * 30
+            const baseHp = gameState.baseHp + gameState.wave * 30;
+
+            let hp = baseHp;
+            let isBossMonster = false;
+
+            if (isBoss) {
+                // Boss HP = 1.5x of total normal monster HP in this wave
+                hp = baseHp * (gameState.monstersPerWave - 1) * 1.5;
+                isBossMonster = true;
+            }
+
+            const monster = {
+                x: CELL_SIZE / 2,
+                y: CELL_SIZE / 2,
+                hp,
+                maxHp: hp,
+                speed: CELL_SIZE,
+                pathIndex: 0,
+                path: generatePath(),
+                isBoss: isBossMonster,
+                wave: gameState.wave
+            };
+
+            gameState.monsters.push(monster);
+            gameState.monstersSpawnedInWave++;
+        }
+
+        // 100波胜利标记
+        let hasReachedVictory = false;
+        let isEndlessMode = false;
+
+        function checkWaveComplete() {
+            // Check if wave is complete (all spawned and all dead)
+            if (gameState.monstersSpawnedInWave >= gameState.monstersPerWave &&
+                gameState.monsters.length === 0) {
+                const currentWave = gameState.wave;
+                gameState.wave = currentWave + 1;
+                gameState.monstersSpawnedInWave = 0;
+                // Increase monsters per wave based on NEXT wave number
+                gameState.monstersPerWave = Math.min(30, 5 + currentWave);
+                // Speed up spawn interval every 10 waves
+                if (gameState.wave % 10 === 0 && gameState.spawnInterval > 1000) {
+                    gameState.spawnInterval -= 200;
+                }
+                updateUI();
+
+                // 检测100波胜利（仅在非无尽模式下）
+                if (gameState.wave > 100 && !hasReachedVictory && !isEndlessMode) {
+                    hasReachedVictory = true;
+                    isPaused = true;
+                    DOM.pauseBtn.textContent = '继续';
+                    DOM.victoryScore.textContent = gameState.score;
+                    DOM.victoryDialog.classList.remove('hidden');
+                }
+            }
+        }
+
+        function checkPathExistsAt(gridX, gridY) {
+            // Check if placing a tower at (gridX, gridY) would block the path
+            // Use grid index directly, temporarily mark the position as blocked
+            const originalTower = towerGrid[gridY][gridX];
+            towerGrid[gridY][gridX] = { gridX, gridY };  // Temporarily mark as blocked
+
+            const result = checkPathExistsInternal();
+
+            towerGrid[gridY][gridX] = originalTower;  // Restore
+            return result;
+        }
+
+        function checkPathExists(towers) {
+            // Legacy function - rebuild temporary grid and check
+            // Used when loading game or checking with multiple tower positions
+            const tempGrid = new Array(GRID_SIZE).fill(null).map(() => new Array(GRID_SIZE).fill(null));
+            for (const t of towers) {
+                tempGrid[t.gridY][t.gridX] = t;
+            }
+
+            const start = { x: 0, y: 0 };
+            const end = { x: GRID_SIZE - 1, y: GRID_SIZE - 1 };
+
+            const queue = [start];
+            const visited = new Set(['0,0']);
+
+            const directions = [
+                { dx: 1, dy: 0 }, { dx: 0, dy: 1 },
+                { dx: -1, dy: 0 }, { dx: 0, dy: -1 }
+            ];
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                if (current.x === end.x && current.y === end.y) {
+                    return true;
+                }
+
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    const key = `${nx},${ny}`;
+
+                    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+                    if (visited.has(key)) continue;
+
+                    if (tempGrid[ny][nx]) continue;  // Use tempGrid for O(1) lookup
+
+                    visited.add(key);
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+
+            return false;
+        }
+
+        function checkPathExistsInternal() {
+            // Internal function using towerGrid for O(1) lookup
+            const start = { x: 0, y: 0 };
+            const end = { x: GRID_SIZE - 1, y: GRID_SIZE - 1 };
+
+            const queue = [start];
+            const visited = new Set(['0,0']);
+
+            const directions = [
+                { dx: 1, dy: 0 }, { dx: 0, dy: 1 },
+                { dx: -1, dy: 0 }, { dx: 0, dy: -1 }
+            ];
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                if (current.x === end.x && current.y === end.y) {
+                    return true;
+                }
+
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    const key = `${nx},${ny}`;
+
+                    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+                    if (visited.has(key)) continue;
+
+                    if (towerGrid[ny][nx]) continue;  // O(1) lookup
+
+                    visited.add(key);
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+
+            return false;
+        }
+
+        function findPath(startX, startY, endX, endY) {
+            // BFS pathfinding avoiding towers
+            const start = { x: startX, y: startY };
+            const end = { x: endX, y: endY };
+
+            const queue = [start];
+            const visited = new Set([`${startX},${startY}`]);
+            const parent = new Map();
+
+            const directions = [
+                { dx: 1, dy: 0 },   // right
+                { dx: 0, dy: 1 },   // down
+                { dx: -1, dy: 0 },  // left
+                { dx: 0, dy: -1 }   // up
+            ];
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                if (current.x === endX && current.y === endY) {
+                    // Reconstruct path
+                    const path = [];
+                    let node = current;
+                    while (node) {
+                        path.unshift({
+                            x: node.x * CELL_SIZE + CELL_SIZE / 2,
+                            y: node.y * CELL_SIZE + CELL_SIZE / 2
+                        });
+                        node = parent.get(`${node.x},${node.y}`);
+                    }
+                    return path;
+                }
+
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    const key = `${nx},${ny}`;
+
+                    if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) continue;
+                    if (visited.has(key)) continue;
+
+                    // Use O(1) grid lookup instead of some()
+                    if (towerGrid[ny][nx]) continue;
+
+                    visited.add(key);
+                    parent.set(key, current);
+                    queue.push({ x: nx, y: ny });
+                }
+            }
+
+            // No path found - return null instead of invalid path
+            return null;
+        }
+
+        // Cache for path - recalculate when tower positions change
+        let cachedPath = null;
+        let cachedTowerHash = '';
+
+        function getTowerHash() {
+            // Create a hash based on tower positions
+            if (gameState.towers.length === 0) return '';
+            return gameState.towers
+                .map(t => `${t.gridX},${t.gridY}`)
+                .sort()
+                .join('|');
+        }
+
+        function generatePath() {
+            // Check if we need to recalculate path
+            const currentHash = getTowerHash();
+            if (cachedPath && currentHash === cachedTowerHash) {
+                return cachedPath;
+            }
+
+            cachedPath = findPath(0, 0, GRID_SIZE - 1, GRID_SIZE - 1);
+            cachedTowerHash = currentHash;
+            return cachedPath;
+        }
+
+        function invalidatePathCache() {
+            cachedPath = null;
+            cachedTowerHash = '';
+        }
+
+        function updateMonsters(dt) {
+            for (let i = gameState.monsters.length - 1; i >= 0; i--) {
+                const monster = gameState.monsters[i];
+
+                // Recalculate path periodically to avoid new towers
+                if (!monster.pathRecalcTime || Date.now() - monster.pathRecalcTime > 500) {
+                    const currentGridX = Math.floor(monster.x / CELL_SIZE);
+                    const currentGridY = Math.floor(monster.y / CELL_SIZE);
+                    const newPath = findPath(currentGridX, currentGridY, GRID_SIZE - 1, GRID_SIZE - 1);
+                    if (newPath) {
+                        monster.path = newPath;
+                        monster.pathIndex = 0;
+                    }
+                    monster.pathRecalcTime = Date.now();
+                }
+
+                // If no valid path, monster waits
+                if (!monster.path || monster.path.length === 0) {
+                    continue;
+                }
+
+                // Check slow effect
+                let speedMultiplier = 1;
+                if (monster.slowUntil && Date.now() < monster.slowUntil) {
+                    speedMultiplier = monster.slowFactor || 1;
+                } else {
+                    monster.slowFactor = 1;
+                }
+
+                if (monster.pathIndex < monster.path.length - 1) {
+                    const target = monster.path[monster.pathIndex + 1];
+                    const dx = target.x - monster.x;
+                    const dy = target.y - monster.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 2) {
+                        monster.pathIndex++;
+                    } else {
+                        const move = monster.speed * dt / 1000 * speedMultiplier;
+                        monster.x += (dx / dist) * move;
+                        monster.y += (dy / dist) * move;
+                    }
+                } else {
+                    gameState.monsters.splice(i, 1);
+                    gameState.lives--;
+                    updateUI();
+
+                    if (gameState.lives <= 0) {
+                        endGame();
+                    }
+                }
+            }
+        }
+
+        function updateTowers() {
+            const now = Date.now();
+            for (const tower of gameState.towers) {
+                const lastAttack = tower.lastAttack || 0;
+                if (now - lastAttack < tower.interval) continue;
+
+                // Find all enemies in range (use squared distance for performance)
+                const rangeSq = tower.range * tower.range;
+                const targetsInRange = gameState.monsters.filter(m => {
+                    const dx = m.x - tower.x;
+                    const dy = m.y - tower.y;
+                    return dx * dx + dy * dy <= rangeSq;
+                });
+
+                if (targetsInRange.length === 0) continue;
+
+                // Update attack time
+                tower.lastAttack = Date.now();
+
+                if (tower.type === 'slow') {
+                    // AOE attack - damage all enemies in range
+                    for (let j = targetsInRange.length - 1; j >= 0; j--) {
+                        const monster = targetsInRange[j];
+                        monster.hp -= tower.attack;
+                        // Apply slow effect
+                        // Apply slow effect - use smaller value (stronger slow)
+                        monster.slowFactor = Math.min(monster.slowFactor || 1, tower.slowFactor);
+                        monster.slowUntil = Date.now() + 1000; // Slow lasts 1 second
+
+                        // Spawn snowflake particles
+                        spawnSnowParticles(monster.x, monster.y, 3);
+
+                        // Check if monster died
+                        if (monster.hp <= 0) {
+                            const idx = gameState.monsters.indexOf(monster);
+                            if (idx > -1) {
+                                gameState.monsters.splice(idx, 1);
+                                // Boss gives 10x score
+                                const waveBonus = monster.isBoss ? gameState.wave * 10 : gameState.wave;
+                                gameState.score += waveBonus;
+                                updateUI();
+                            }
+                        }
+                    }
+                } else {
+                    // Single target attack
+                    const target = targetsInRange[0];
+                    gameState.bullets.push({
+                        x: tower.x,
+                        y: tower.y,
+                        targetX: target.x,
+                        targetY: target.y,
+                        target,
+                        speed: 400,
+                        damage: tower.attack
+                    });
+                }
+            }
+        }
+
+        function updateBullets(dt) {
+            for (let i = gameState.bullets.length - 1; i >= 0; i--) {
+                const bullet = gameState.bullets[i];
+
+                const target = bullet.target;
+                if (!target || !gameState.monsters.includes(target)) {
+                    gameState.bullets.splice(i, 1);
+                    continue;
+                }
+
+                const dx = target.x - bullet.x;
+                const dy = target.y - bullet.y;
+                const distSq = dx * dx + dy * dy;
+
+                if (distSq < 100) { // 10 * 10 = 100
+                    target.hp -= bullet.damage;
+
+                    // Spawn hit particles
+                    spawnParticles(target.x, target.y, WAVE_COLORS[(target.wave - 1) % WAVE_COLORS.length], 5);
+
+                    if (target.hp <= 0) {
+                        const idx = gameState.monsters.indexOf(target);
+                        if (idx > -1) {
+                            gameState.monsters.splice(idx, 1);
+                            // Score based on wave
+                            const waveBonus = target.isBoss ? gameState.wave * 10 : gameState.wave;
+                            gameState.score += waveBonus;
+                            // Death explosion particles
+                            const color = target.isBoss ? '#aa44ff' : WAVE_COLORS[(target.wave - 1) % WAVE_COLORS.length];
+                            spawnParticles(target.x, target.y, color, 20);
+                            updateUI();
+                        }
+                    }
+
+                    gameState.bullets.splice(i, 1);
+                } else {
+                    const dist = Math.sqrt(distSq);
+                    const move = bullet.speed * dt / 1000;
+                    bullet.x += (dx / dist) * move;
+                    bullet.y += (dy / dist) * move;
+                }
+            }
+        }
+
+        function spawnParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 50 + Math.random() * 150;
+                gameState.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    decay: 0.02 + Math.random() * 0.03,
+                    color,
+                    size: 2 + Math.random() * 4,
+                    type: 'normal'
+                });
+            }
+        }
+
+        function spawnSnowParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                gameState.particles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    vx: (Math.random() - 0.5) * 30,
+                    vy: 20 + Math.random() * 30,
+                    life: 1,
+                    decay: 0.03 + Math.random() * 0.02,
+                    color: '#aaddff',
+                    size: 2 + Math.random() * 3,
+                    type: 'snow'
+                });
+            }
+        }
+
+        const MAX_PARTICLES = 200;
+
+        function updateParticles(dt) {
+            // Limit total particles
+            if (gameState.particles.length > MAX_PARTICLES) {
+                gameState.particles.splice(0, gameState.particles.length - MAX_PARTICLES);
+            }
+
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const p = gameState.particles[i];
+
+                if (p.type === 'snow') {
+                    // Snow falls down with slight horizontal drift
+                    p.x += p.vx * dt / 1000 + Math.sin(p.y * 0.1) * 0.5;
+                    p.y += p.vy * dt / 1000;
+                } else {
+                    // Normal particles
+                    p.x += p.vx * dt / 1000;
+                    p.y += p.vy * dt / 1000;
+                    p.vx *= 0.95;
+                    p.vy *= 0.95;
+                }
+
+                p.life -= p.decay;
+                if (p.life <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+
+        function draw(now) {
+            // Draw cached grid background
+            ctx.drawImage(gridCanvas, 0, 0);
+
+            // Draw path as highlighted grid cells
+            const path = generatePath();
+            const pathSet = new Set();
+            for (const p of path) {
+                const gx = Math.floor(p.x / CELL_SIZE);
+                const gy = Math.floor(p.y / CELL_SIZE);
+                pathSet.add(`${gx},${gy}`);
+            }
+
+            // Draw highlighted path cells
+            for (const key of pathSet) {
+                const [gx, gy] = key.split(',').map(Number);
+                ctx.fillStyle = isDarkTheme ? 'rgba(80, 80, 120, 0.5)' : 'rgba(160, 160, 180, 0.4)';
+                ctx.fillRect(gx * CELL_SIZE + 1, gy * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+            }
+
+            // Draw tower attack range for selected tower
+            if (selectedTower) {
+                ctx.fillStyle = isDarkTheme ? 'rgba(74, 144, 208, 0.15)' : 'rgba(64, 144, 208, 0.15)';
+                ctx.beginPath();
+                ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = isDarkTheme ? 'rgba(74, 144, 208, 0.5)' : 'rgba(64, 144, 208, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Tower outer ring color based on theme
+            const towerOuterColor = isDarkTheme ? '#3a3a5c' : '#a0a0b0';
+
+            for (const tower of gameState.towers) {
+                const color = tower.type === 'slow' ? SLOW_TOWER_COLORS[tower.level - 1] : TOWER_COLORS[tower.level - 1];
+
+                const cx = tower.x;
+                const cy = tower.y;
+                const radius = CELL_SIZE / 2 - 2;
+                const size = radius * 2;
+
+                // Calculate attack animation scale
+                let scale = 1;
+                const timeSinceAttack = Date.now() - (tower.lastAttack || 0);
+                if (tower.lastAttack > 0 && timeSinceAttack < 250) {
+                    // Pulse animation: grow then shrink
+                    const progress = timeSinceAttack / 250;
+                    scale = progress < 0.5
+                        ? 1 + 0.3 * (progress * 2)
+                        : 1.3 - 0.3 * ((progress - 0.5) * 2);
+                }
+
+                if (tower.type === 'slow') {
+                    // Draw rounded square for slow tower with scale animation
+                    const scaledSize = size * scale;
+                    const offset = (scaledSize - size) / 2;
+
+                    ctx.fillStyle = towerOuterColor;
+                    const outerSize = scaledSize + 4;
+                    ctx.beginPath();
+                    ctx.roundRect(cx - outerSize / 2, cy - outerSize / 2, outerSize, outerSize, 4);
+                    ctx.fill();
+
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.roundRect(cx - scaledSize / 2, cy - scaledSize / 2, scaledSize, scaledSize, 3);
+                    ctx.fill();
+
+                    // Inner highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.beginPath();
+                    ctx.roundRect(cx - scaledSize / 2 + 3, cy - scaledSize / 2 + 3, scaledSize * 0.4, scaledSize * 0.4, 2);
+                    ctx.fill();
+                } else {
+                    // Draw circular tower with scale animation
+                    const scaledRadius = radius * scale;
+
+                    // Outer ring
+                    ctx.fillStyle = towerOuterColor;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, scaledRadius + 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Main circle
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, scaledRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Inner highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(cx - 3, cy - 3, scaledRadius * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Level text
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(tower.level, cx, cy);
+            }
+
+            // Draw monsters (combined loop for performance)
+            for (const monster of gameState.monsters) {
+                const radius = monster.isBoss ? 18 : 10;
+                const hpRatio = monster.hp / monster.maxHp;
+
+                // Get monster color
+                const monsterColor = monster.isBoss
+                    ? '#800080'
+                    : WAVE_COLORS[(monster.wave - 1) % WAVE_COLORS.length];
+
+                // Draw outline
+                ctx.fillStyle = '#800000';
+                ctx.beginPath();
+                ctx.arc(monster.x, monster.y, radius + 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw HP as pie chart - 顺时针扣血
+                // 白色部分（缺失的血量）从12点顺时针画
+                ctx.fillStyle = '#f0f0f0';
+                ctx.beginPath();
+                ctx.moveTo(monster.x, monster.y);
+                ctx.arc(monster.x, monster.y, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio));
+                ctx.closePath();
+                ctx.fill();
+
+                // 彩色部分（剩余血量）从剩余位置画到12点
+                ctx.fillStyle = monsterColor;
+                ctx.beginPath();
+                ctx.moveTo(monster.x, monster.y);
+                ctx.arc(monster.x, monster.y, radius, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio), -Math.PI / 2 + Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw border
+                ctx.strokeStyle = '#404040';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(monster.x, monster.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            for (const bullet of gameState.bullets) {
+                ctx.fillStyle = '#d0a020';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Draw particles
+            for (const p of gameState.particles) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            // Draw tower preview following mouse when dragging (only after 0.5 second)
+            if (isMouseDown && pendingTowerPos && Date.now() - mouseDownTime > 500) {
+                const previewX = mousePos.x;
+                const previewY = mousePos.y;
+                const gridX = Math.floor(previewX / CELL_SIZE);
+                const gridY = Math.floor(previewY / CELL_SIZE);
+
+                // Check if can place tower - use O(1) grid lookup
+                const existing = getTowerAt(gridX, gridY);
+                const monsterOnCell = gameState.monsters.some(m => {
+                    const mx = Math.floor(m.x / CELL_SIZE);
+                    const my = Math.floor(m.y / CELL_SIZE);
+                    return mx === gridX && my === gridY;
+                });
+                const pathExists = checkPathExistsAt(gridX, gridY);  // Use optimized function
+                const canPlace = !existing && !monsterOnCell && pathExists && gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE;
+
+                // Get stats for preview
+                const stats = selectedTowerType === 'attack' ? TOWER_STATS[1] : SLOW_TOWER_STATS[1];
+                const color = selectedTowerType === 'attack' ? TOWER_COLORS[0] : SLOW_TOWER_COLORS[0];
+                const radius = CELL_SIZE / 2 - 2;
+                const size = radius * 2;
+
+                // Draw attack range
+                ctx.fillStyle = canPlace
+                    ? (isDarkTheme ? 'rgba(74, 144, 208, 0.15)' : 'rgba(64, 144, 208, 0.15)')
+                    : 'rgba(200, 64, 64, 0.15)';
+                ctx.beginPath();
+                ctx.arc(previewX, previewY, stats.range, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = canPlace
+                    ? (isDarkTheme ? 'rgba(74, 144, 208, 0.5)' : 'rgba(64, 144, 208, 0.5)')
+                    : 'rgba(200, 64, 64, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw tower preview with transparency
+                ctx.globalAlpha = 0.7;
+
+                if (selectedTowerType === 'slow') {
+                    ctx.fillStyle = towerOuterColor;
+                    ctx.beginPath();
+                    ctx.roundRect(previewX - (size + 4) / 2, previewY - (size + 4) / 2, size + 4, size + 4, 4);
+                    ctx.fill();
+
+                    ctx.fillStyle = canPlace ? color : '#d04040';
+                    ctx.beginPath();
+                    ctx.roundRect(previewX - size / 2, previewY - size / 2, size, size, 3);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.beginPath();
+                    ctx.roundRect(previewX - size / 2 + 3, previewY - size / 2 + 3, size * 0.4, size * 0.4, 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = towerOuterColor;
+                    ctx.beginPath();
+                    ctx.arc(previewX, previewY, radius + 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = canPlace ? color : '#d04040';
+                    ctx.beginPath();
+                    ctx.arc(previewX, previewY, radius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.beginPath();
+                    ctx.arc(previewX - 3, previewY - 3, radius * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('1', previewX, previewY);
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function updateUI() {
+            DOM.lives.textContent = gameState.lives;
+            DOM.score.textContent = gameState.score;
+            DOM.wave.textContent = gameState.wave;
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            DOM.finalWave.textContent = gameState.wave;
+            DOM.gameOver.classList.remove('hidden');
+        }
+
+        function continueEndless() {
+            // 继续无尽模式
+            isEndlessMode = true;
+            isPaused = false;
+            DOM.pauseBtn.textContent = '暂停';
+            DOM.victoryDialog.classList.add('hidden');
+        }
+
+        function endGameFromVictory() {
+            // 从胜利界面结束游戏
+            gameState.gameOver = true;
+            DOM.victoryDialog.classList.add('hidden');
+            DOM.finalWave.textContent = gameState.wave;
+            DOM.gameOver.classList.remove('hidden');
+        }
+
+        function restartGame() {
+            // 清除存档
+            localStorage.removeItem('towerDefenseSave');
+
+            gameState = {
+                score: 0,
+                lives: 100,
+                wave: 1,
+                monsters: [],
+                towers: [],
+                bullets: [],
+                particles: [],
+                lastSpawnTime: 0,
+                spawnInterval: 400,
+                gameOver: false,
+                baseHp: 50,
+                monstersPerWave: 30,
+                monstersSpawnedInWave: 0
+            };
+            rebuildTowerGrid();  // Clear grid index
+            gameSpeed = 1;
+            isPaused = false;
+            hasReachedVictory = false;
+            isEndlessMode = false;
+            DOM.speedBtn.textContent = '1倍速';
+            DOM.pauseBtn.textContent = '暂停';
+
+            selectedTower = null;
+            DOM.selectedTower.classList.add('hidden');
+            DOM.gameOver.classList.add('hidden');
+            DOM.victoryDialog.classList.add('hidden');
+            invalidatePathCache();
+            updateUI();
+        }
+
+        function nextWave() {
+            // Start next wave immediately (don't clear current monsters)
+            gameState.wave++;
+            gameState.monstersSpawnedInWave = 0;
+            gameState.monstersPerWave = Math.min(20, 5 + Math.floor(gameState.wave / 2));
+            updateUI();
+        }
+
+        function toggleSpeed() {
+            const speeds = [1, 2, 4, 8];
+            const currentIndex = speeds.indexOf(gameSpeed);
+            const nextIndex = (currentIndex + 1) % speeds.length;
+            gameSpeed = speeds[nextIndex];
+            DOM.speedBtn.textContent = gameSpeed + '倍速';
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            DOM.pauseBtn.textContent = isPaused ? '继续' : '暂停';
+        }
+
+        function saveGame() {
+            const saveData = {
+                score: gameState.score,
+                lives: gameState.lives,
+                wave: gameState.wave,
+                monstersPerWave: gameState.monstersPerWave,
+                spawnInterval: gameState.spawnInterval,
+                isEndlessMode: isEndlessMode,
+                towers: gameState.towers.map(t => ({
+                    gridX: t.gridX, gridY: t.gridY, level: t.level, type: t.type,
+                    attack: t.attack, range: t.range, interval: t.interval, slowFactor: t.slowFactor
+                })),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('towerDefenseSave', JSON.stringify(saveData));
+        }
+
+        // 页面关闭或刷新时自动保存
+        window.addEventListener('beforeunload', saveGame);
+
+        function loadGame() {
+            const saved = localStorage.getItem('towerDefenseSave');
+            if (!saved) return false;
+
+            try {
+                const data = JSON.parse(saved);
+
+                gameState.score = data.score || 0;
+                gameState.lives = data.lives || 100;
+                gameState.wave = data.wave || 1;
+                gameState.monstersPerWave = data.monstersPerWave || 30;
+                gameState.spawnInterval = data.spawnInterval || 400;
+
+                // 恢复无尽模式状态
+                isEndlessMode = data.isEndlessMode || false;
+                // 如果波次超过100且不是无尽模式，说明已经触发过胜利
+                hasReachedVictory = gameState.wave > 100;
+
+                // Restore towers
+                gameState.towers = (data.towers || []).map(t => ({
+                    ...t,
+                    x: t.gridX * CELL_SIZE + CELL_SIZE / 2,
+                    y: t.gridY * CELL_SIZE + CELL_SIZE / 2,
+                    lastAttack: 0
+                }));
+
+                rebuildTowerGrid();  // Rebuild grid index after loading
+                invalidatePathCache();
+                updateUI();
+                return true;
+            } catch (e) {
+                console.error('Load failed:', e);
+                return false;
+            }
+        }
+
+        // 页面加载时自动加载已保存的游戏
+        loadGame();
+
+        let lastTime = 0;
+
+        function gameLoop(timestamp) {
+            const dt = lastTime ? (timestamp - lastTime) * gameSpeed : 16;
+            lastTime = timestamp;
+            const now = timestamp;
+
+            if (!gameState.gameOver && !isPaused) {
+                if (timestamp - gameState.lastSpawnTime >= gameState.spawnInterval / gameSpeed) {
+                    if (gameState.monstersSpawnedInWave < gameState.monstersPerWave) {
+                        spawnMonster();
+                    }
+                    gameState.lastSpawnTime = timestamp;
+                }
+
+                updateMonsters(dt);
+                updateTowers();
+                updateBullets(dt);
+                updateParticles(dt);
+                checkWaveComplete();
+            }
+
+            draw(timestamp);
+            requestAnimationFrame(gameLoop);
+        }
+
+        updateUI();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
