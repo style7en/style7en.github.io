@@ -397,6 +397,38 @@
             display: none !important;
         }
 
+        /* Tower tooltip */
+        .tower-tooltip {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 12px;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: var(--shadow-primary);
+            min-width: 120px;
+        }
+
+        .tower-tooltip .tooltip-title {
+            color: var(--accent-primary);
+            font-weight: bold;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+
+        .tower-tooltip .tooltip-row {
+            color: var(--text-secondary);
+            margin: 3px 0;
+        }
+
+        .tower-tooltip .tooltip-row span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
         /* 响应式布局 - 手机适配 */
         @media screen and (max-width: 600px) {
             body {
@@ -549,6 +581,17 @@
         </div>
     </div>
 
+    <!-- Tower tooltip -->
+    <div class="tower-tooltip hidden" id="towerTooltip">
+        <div class="tooltip-title">防御塔属性</div>
+        <div class="tooltip-row">类型: <span id="tooltipType">-</span></div>
+        <div class="tooltip-row">等级: <span id="tooltipLevel">-</span></div>
+        <div class="tooltip-row">攻击力: <span id="tooltipAttack">-</span></div>
+        <div class="tooltip-row">攻击范围: <span id="tooltipRange">-</span></div>
+        <div class="tooltip-row">攻击间隔: <span id="tooltipInterval">-</span>ms</div>
+        <div class="tooltip-row" id="tooltipSlowRow">减速: <span id="tooltipSlow">-</span>%</div>
+    </div>
+
     <div class="help-dialog hidden" id="helpDialog">
         <div class="help-content">
             <h3>三消塔防无尽版 - 玩法说明</h3>
@@ -621,7 +664,15 @@
             victoryDialog: document.getElementById('victoryDialog'),
             victoryScore: document.getElementById('victoryScore'),
             confirmDialog: document.getElementById('confirmDialog'),
-            confirmMessage: document.getElementById('confirmMessage')
+            confirmMessage: document.getElementById('confirmMessage'),
+            towerTooltip: document.getElementById('towerTooltip'),
+            tooltipType: document.getElementById('tooltipType'),
+            tooltipLevel: document.getElementById('tooltipLevel'),
+            tooltipAttack: document.getElementById('tooltipAttack'),
+            tooltipRange: document.getElementById('tooltipRange'),
+            tooltipInterval: document.getElementById('tooltipInterval'),
+            tooltipSlowRow: document.getElementById('tooltipSlowRow'),
+            tooltipSlow: document.getElementById('tooltipSlow')
         };
 
         const GRID_SIZE = 15;
@@ -791,6 +842,10 @@
         const TOWER_COLORS = ['#9d9d9d', '#4177d4', '#9b4dca', '#ff8000', '#e62e2e', '#ffd700'];
         const SLOW_TOWER_COLORS = ['#7a7a7a', '#2d5a9e', '#7a3dad', '#cc6600', '#b32424', '#ccaa00'];
 
+        // Hover tower detection
+        let hoveredTower = null;
+        let hoverTimeout = null;
+
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             // 计算缩放比例（canvas可能被CSS缩放）
@@ -804,6 +859,32 @@
                 const gridX = Math.floor(mousePos.x / CELL_SIZE);
                 const gridY = Math.floor(mousePos.y / CELL_SIZE);
                 pendingTowerPos = { gridX, gridY };
+            }
+
+            // Hover detection - check if mouse is over a tower
+            const gridX = Math.floor(mousePos.x / CELL_SIZE);
+            const gridY = Math.floor(mousePos.y / CELL_SIZE);
+            const towerAtPos = getTowerAt(gridX, gridY);
+
+            if (towerAtPos) {
+                // Mouse is over a tower
+                if (hoveredTower !== towerAtPos) {
+                    hoveredTower = towerAtPos;
+                    // Clear any existing timeout
+                    if (hoverTimeout) clearTimeout(hoverTimeout);
+                    // Show tooltip after 150ms delay
+                    hoverTimeout = setTimeout(() => {
+                        if (hoveredTower === towerAtPos) {
+                            showTowerTooltip(towerAtPos, e.clientX, e.clientY);
+                        }
+                    }, 150);
+                } else {
+                    // Update tooltip position while moving over same tower
+                    updateTooltipPosition(e.clientX, e.clientY);
+                }
+            } else {
+                // Mouse left the tower area, hide tooltip
+                hideTowerTooltip();
             }
         });
 
@@ -851,6 +932,7 @@
             isMouseDown = false;
             pendingTowerPos = null;
             mouseDownTime = 0;
+            hideTowerTooltip();
         });
 
         // 触摸事件支持 - 手机适配
@@ -916,6 +998,51 @@
             pendingTowerPos = null;
             mouseDownTime = 0;
         }, { passive: false });
+
+        // Tooltip functions
+        function showTowerTooltip(tower, clientX, clientY) {
+            DOM.tooltipType.textContent = tower.type === 'slow' ? '减速塔' : '攻击塔';
+            DOM.tooltipLevel.textContent = tower.level;
+            DOM.tooltipAttack.textContent = tower.attack;
+            DOM.tooltipRange.textContent = tower.range;
+            DOM.tooltipInterval.textContent = tower.interval;
+
+            if (tower.type === 'slow') {
+                DOM.tooltipSlowRow.style.display = 'block';
+                DOM.tooltipSlow.textContent = Math.round((1 - tower.slowFactor) * 100);
+            } else {
+                DOM.tooltipSlowRow.style.display = 'none';
+            }
+
+            DOM.towerTooltip.classList.remove('hidden');
+            updateTooltipPosition(clientX, clientY);
+        }
+
+        function hideTowerTooltip() {
+            if (hoverTimeout) clearTimeout(hoverTimeout);
+            hoveredTower = null;
+            DOM.towerTooltip.classList.add('hidden');
+        }
+
+        function updateTooltipPosition(clientX, clientY) {
+            const tooltip = DOM.towerTooltip;
+            const rect = tooltip.getBoundingClientRect();
+            const padding = 10;
+
+            let left = clientX + padding;
+            let top = clientY + padding;
+
+            // Keep tooltip within viewport
+            if (left + rect.width > window.innerWidth) {
+                left = clientX - rect.width - padding;
+            }
+            if (top + rect.height > window.innerHeight) {
+                top = clientY - rect.height - padding;
+            }
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
 
         function showTowerInfo(tower) {
             DOM.selectedTower.classList.remove('hidden');
