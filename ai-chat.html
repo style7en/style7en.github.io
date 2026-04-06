@@ -534,9 +534,12 @@
             return wrapper;
         }
 
-        function scrollBottom() {
+        function scrollBottom(force = false) {
             const c = document.getElementById('chat-container');
-            c.scrollTop = c.scrollHeight;
+            // 距底部 60px 以内视为"已在底部"，自动跟随；否则不打断用户阅读
+            if (force || c.scrollHeight - c.scrollTop - c.clientHeight < 60) {
+                c.scrollTop = c.scrollHeight;
+            }
         }
 
         function renderAllMessages() {
@@ -553,7 +556,7 @@
         function appendMsg(msg) {
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-container').appendChild(createMsgEl(msg));
-            scrollBottom();
+            scrollBottom(true);
         }
 
         async function sendMessage() {
@@ -584,13 +587,17 @@
             loadingWrapper.firstChild.className = 'message loading';
             const container = document.getElementById('chat-container');
             container.appendChild(loadingWrapper);
-            scrollBottom();
+            scrollBottom(true); // 发送时强制滚到底
 
             // clean history (no errors) up to contextLength, userMsg already included
             const apiPayload = messages
                 .filter(m => m.role !== 'error')
                 .slice(-store.getContextLen())
                 .map(m => ({ role: m.role, content: m.content }));
+
+            let assistantWrapper = null;
+            let assistantDiv = null;
+            let assistantContent = '';
 
             try {
                 const res = await fetch(getApiUrl(config.apiUrl), {
@@ -602,16 +609,15 @@
                 if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
 
                 // 创建 AI 回复消息气泡，插入后再移除 loading，避免空白闪烁
-                const assistantWrapper = createMsgEl({ role: 'assistant', content: '' });
-                const assistantDiv = assistantWrapper.firstChild;
+                assistantWrapper = createMsgEl({ role: 'assistant', content: '' });
+                assistantDiv = assistantWrapper.firstChild;
                 document.getElementById('chat-container').appendChild(assistantWrapper);
                 loadingWrapper.remove();
-                scrollBottom();
+                scrollBottom(true); // 气泡首次出现，强制滚到底
 
                 // 读取 SSE 流
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
-                let assistantContent = '';
                 let buffer = '';
 
                 while (true) {
@@ -647,7 +653,21 @@
                 store.saveHistory(messages);
 
             } catch (err) {
-                loadingWrapper.remove();
+                // 若流已开始（assistantWrapper 已挂载），保存已收到的内容或移除空气泡
+                if (assistantWrapper?.parentNode) {
+                    if (assistantContent) {
+                        // 有部分内容：标注中断，保存到历史
+                        assistantContent += '\n\n[回复中断]';
+                        assistantDiv.textContent = assistantContent;
+                        messages.push({ role: 'assistant', content: assistantContent });
+                        store.saveHistory(messages);
+                    } else {
+                        // 无内容：直接移除空气泡，改为显示错误消息
+                        assistantWrapper.remove();
+                    }
+                } else {
+                    loadingWrapper.remove();
+                }
                 const errorMsg = { role: 'error', content: `请求失败: ${err.message}` };
                 messages.push(errorMsg);
                 store.saveHistory(messages);
