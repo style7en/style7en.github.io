@@ -358,49 +358,6 @@
             margin: 0 3px;
         }
 
-        /* 移动端虚拟方向键 */
-        .dpad-container {
-            display: none;
-            margin-top: 20px;
-            justify-content: center;
-        }
-
-        .dpad {
-            display: grid;
-            grid-template-areas:
-                ". up ."
-                "left . right"
-                ". down .";
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 8px;
-        }
-
-        .dpad-btn {
-            background: linear-gradient(145deg, #3a3a5a, #2a2a4a);
-            border: 2px solid #5a5a7a;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            color: #ccc;
-            cursor: pointer;
-            touch-action: manipulation;
-            transition: all 0.15s;
-        }
-
-        .dpad-btn:active {
-            background: linear-gradient(145deg, #667eea, #764ba2);
-            color: #fff;
-            transform: scale(0.95);
-        }
-
-        .dpad-btn.up { grid-area: up; }
-        .dpad-btn.down { grid-area: down; }
-        .dpad-btn.left { grid-area: left; }
-        .dpad-btn.right { grid-area: right; }
-
         /* 移动端适配 */
         @media (max-width: 500px) {
             .container { padding: 10px; }
@@ -418,12 +375,6 @@
             .controls { gap: 8px; }
             .btn { padding: 8px 14px; font-size: 12px; }
             .instructions { font-size: 11px; }
-            .dpad-container { display: flex; }
-            .dpad { grid-template-columns: repeat(3, 55px); grid-template-rows: repeat(3, 55px); }
-        }
-
-        @media (hover: none) and (pointer: coarse) {
-            .dpad-container { display: flex; }
         }
     </style>
 </head>
@@ -480,18 +431,7 @@
             Use <span>Arrow Keys</span> or <span>WASD</span> to play
         </div>
 
-        <!-- 移动端虚拟方向键 -->
-        <div class="dpad-container">
-            <div class="dpad">
-                <button class="dpad-btn up" id="btn-up">▲</button>
-                <button class="dpad-btn left" id="btn-left">◀</button>
-                <button class="dpad-btn right" id="btn-right">▶</button>
-                <button class="dpad-btn down" id="btn-down">▼</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
+    </script>
         // 创建背景粒子
         const particlesContainer = document.getElementById('particles');
         for (let i = 0; i < 50; i++) {
@@ -1194,26 +1134,6 @@
                         else if (dy < -minSwipe) this.move('up');
                     }
                 }, { passive: true });
-
-                // 虚拟方向键
-                const btnUp = document.getElementById('btn-up');
-                const btnDown = document.getElementById('btn-down');
-                const btnLeft = document.getElementById('btn-left');
-                const btnRight = document.getElementById('btn-right');
-
-                const handleMove = (dir) => {
-                    if (!this.aiRunning) this.move(dir);
-                };
-
-                btnUp.addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('up'); });
-                btnDown.addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('down'); });
-                btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('left'); });
-                btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); handleMove('right'); });
-
-                btnUp.addEventListener('click', () => handleMove('up'));
-                btnDown.addEventListener('click', () => handleMove('down'));
-                btnLeft.addEventListener('click', () => handleMove('left'));
-                btnRight.addEventListener('click', () => handleMove('right'));
             }
         }
 
