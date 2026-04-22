@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>开心消消乐</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: linear-gradient(135deg, #0b0e17 0%, #1a1040 40%, #2d1b69 70%, #1a1040 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .bg-particles {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: particleFloat linear infinite;
+        }
+        @keyframes particleFloat {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        .glow-orb {
+            position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.25; pointer-events: none; z-index: 0;
+        }
+        .glow-orb-1 { top: -80px; left: -80px; width: 250px; height: 250px; background: radial-gradient(circle, #a855f7, transparent 70%); animation: orb1 7s ease-in-out infinite; }
+        .glow-orb-2 { bottom: -80px; right: -80px; width: 250px; height: 250px; background: radial-gradient(circle, #ec4899, transparent 70%); animation: orb2 9s ease-in-out infinite; }
+        .glow-orb-3 { top: 50%; left: 50%; width: 200px; height: 200px; background: radial-gradient(circle, #3b82f6, transparent 70%); animation: orb3 11s ease-in-out infinite; }
+        @keyframes orb1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,40px)} }
+        @keyframes orb2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,-40px)} }
+        @keyframes orb3 { 0%,100%{transform:translate(-50%,-50%)} 50%{transform:translate(-30%,-60%)} }
+
+        .container {
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 500px; padding: 10px;
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; margin-bottom: 12px; padding: 0 5px;
+        }
+
+        .title {
+            font-size: 26px; font-weight: 900;
+            background: linear-gradient(135deg, #f093fb, #f5576c, #ffd93d);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 15px rgba(240,147,251,0.5));
+        }
+
+        .scores { display: flex; gap: 10px; }
+        .score-box {
+            background: rgba(255,255,255,0.06); backdrop-filter: blur(10px);
+            padding: 6px 14px; border-radius: 10px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .score-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; }
+        .score-value { font-size: 20px; font-weight: bold; color: #fff; margin-top: 2px; }
+
+        .board-wrapper {
+            position: relative;
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px; padding: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        .board {
+            position: relative;
+            overflow: hidden; border-radius: 10px;
+            touch-action: none;
+        }
+
+        .cell-bg {
+            position: absolute; border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .gem {
+            position: absolute; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer;
+            transition: top 0.18s ease, left 0.18s ease, transform 0.2s ease, opacity 0.2s ease;
+            will-change: top, left, transform, opacity;
+        }
+        .gem:hover { transform: scale(1.08); }
+        .gem.selected {
+            animation: gemPulse 0.6s ease-in-out infinite alternate;
+            box-shadow: 0 0 20px rgba(255,255,255,0.6), 0 0 40px currentColor;
+            z-index: 10;
+        }
+        @keyframes gemPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.12); }
+        }
+        .gem.matched {
+            animation: gemPop 0.2s ease-out forwards;
+        }
+        @keyframes gemPop {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .gem.hint {
+            animation: gemHint 0.5s ease-in-out 3 alternate;
+        }
+        @keyframes gemHint {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); filter: brightness(1.4); }
+        }
+
+        .combo-text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 36px; font-weight: 900;
+            color: #ffd93d; text-shadow: 0 0 20px rgba(255,217,61,0.8), 0 0 40px rgba(255,217,61,0.4);
+            pointer-events: none; z-index: 100;
+            animation: comboAnim 1s ease-out forwards;
+        }
+        @keyframes comboAnim {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
+            30% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+            60% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -80%) scale(0.8); opacity: 0; }
+        }
+
+        .controls {
+            display: flex; gap: 10px; margin-top: 12px; width: 100%; padding: 0 5px;
+        }
+
+        .btn {
+            flex: 1; padding: 12px 10px;
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
+            background: rgba(255,255,255,0.06); backdrop-filter: blur(10px);
+            color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+            text-align: center;
+        }
+        .btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-ai {
+            background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(236,72,153,0.3));
+            border-color: rgba(168,85,247,0.3);
+        }
+        .btn-ai.active {
+            background: linear-gradient(135deg, rgba(168,85,247,0.6), rgba(236,72,153,0.6));
+            box-shadow: 0 0 20px rgba(168,85,247,0.4);
+        }
+        .btn-hint {
+            background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(6,182,212,0.3));
+            border-color: rgba(59,130,246,0.3);
+        }
+        .btn-shuffle {
+            background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(239,68,68,0.3));
+            border-color: rgba(245,158,11,0.3);
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 10px; z-index: 200;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .overlay.show { opacity: 1; pointer-events: auto; }
+        .overlay-title { font-size: 28px; font-weight: 900; color: #ffd93d; margin-bottom: 10px; text-shadow: 0 0 20px rgba(255,217,61,0.5); }
+        .overlay-score { font-size: 18px; color: #e5e7eb; margin-bottom: 20px; }
+        .overlay-btn {
+            padding: 12px 40px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: #fff; font-size: 16px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(168,85,247,0.4);
+            transition: transform 0.2s ease;
+        }
+        .overlay-btn:hover { transform: scale(1.05); }
+
+        .score-popup {
+            position: absolute; pointer-events: none; z-index: 50;
+            font-size: 18px; font-weight: 900; color: #ffd93d;
+            text-shadow: 0 0 10px rgba(255,217,61,0.6);
+            animation: scoreFloat 0.8s ease-out forwards;
+        }
+        @keyframes scoreFloat {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            30% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0.8); opacity: 0; }
+        }
+
+        .moves-display {
+            font-size: 12px; color: #9ca3af; margin-top: 6px; text-align: center;
+        }
+
+        @media (max-width: 400px) {
+            .title { font-size: 20px; }
+            .score-box { padding: 4px 10px; }
+            .score-value { font-size: 16px; }
+            .btn { padding: 10px 6px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    <div class="glow-orb glow-orb-1"></div>
+    <div class="glow-orb glow-orb-2"></div>
+    <div class="glow-orb glow-orb-3"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="title">开心消消乐</div>
+            <div class="scores">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高</div>
+                    <div class="score-value" id="best">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="board-wrapper">
+            <div class="board" id="board"></div>
+            <div class="overlay" id="overlay">
+                <div class="overlay-title" id="overlayTitle">游戏结束</div>
+                <div class="overlay-score" id="overlayScore"></div>
+                <button class="overlay-btn" id="overlayBtn" onclick="startGame()">再来一局</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-hint" onclick="showHint()">💡 提示</button>
+            <button class="btn btn-ai" id="aiBtn" onclick="toggleAI()">🤖 AI自动</button>
+            <button class="btn btn-shuffle" onclick="shuffleBoard()">🔀 打乱</button>
+        </div>
+        <div class="moves-display" id="movesDisplay"></div>
+    </div>
+
+<script>
+const ROWS = 8, COLS = 8, GEM_TYPES = 6;
+const GEMS = [
+    { emoji: '🔴', color: '#ef4444', glow: 'rgba(239,68,68,0.5)' },
+    { emoji: '🟡', color: '#eab308', glow: 'rgba(234,179,8,0.5)' },
+    { emoji: '🟢', color: '#22c55e', glow: 'rgba(34,197,94,0.5)' },
+    { emoji: '🔵', color: '#3b82f6', glow: 'rgba(59,130,246,0.5)' },
+    { emoji: '🟣', color: '#a855f7', glow: 'rgba(168,85,247,0.5)' },
+    { emoji: '🟠', color: '#f97316', glow: 'rgba(249,115,22,0.5)' },
+];
+
+let board = [], gemEls = [], score = 0, bestScore = 0, moves = 0;
+let selected = null, animating = false, aiRunning = false, aiTimer = null;
+let cellSize = 0, gap = 4, boardEl;
+
+function calcSize() {
+    const maxW = Math.min(window.innerWidth - 36, 480);
+    cellSize = Math.floor((maxW - gap * (COLS + 1)) / COLS);
+    return cellSize * COLS + gap * (COLS + 1);
+}
+
+function createBoard() {
+    const bw = calcSize();
+    boardEl.style.width = bw + 'px';
+    boardEl.style.height = bw + 'px';
+    boardEl.innerHTML = '';
+
+    for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        gemEls[r] = [];
+        for (let c = 0; c < COLS; c++) {
+            const bg = document.createElement('div');
+            bg.className = 'cell-bg';
+            bg.style.width = cellSize + 'px';
+            bg.style.height = cellSize + 'px';
+            bg.style.left = (gap + c * (cellSize + gap)) + 'px';
+            bg.style.top = (gap + r * (cellSize + gap)) + 'px';
+            boardEl.appendChild(bg);
+
+            let type;
+            do { type = Math.floor(Math.random() * GEM_TYPES); } while (wouldMatch(r, c, type));
+            board[r][c] = type;
+            gemEls[r][c] = createGemEl(r, c, type);
+        }
+    }
+}
+
+function wouldMatch(r, c, type) {
+    if (c >= 2 && board[r][c-1] === type && board[r][c-2] === type) return true;
+    if (r >= 2 && board[r-1] && board[r-1][c] === type && board[r-2] && board[r-2][c] === type) return true;
+    return false;
+}
+
+function createGemEl(r, c, type) {
+    const el = document.createElement('div');
+    el.className = 'gem';
+    el.style.width = cellSize + 'px';
+    el.style.height = cellSize + 'px';
+    el.style.left = (gap + c * (cellSize + gap)) + 'px';
+    el.style.top = (gap + r * (cellSize + gap)) + 'px';
+    el.style.background = `radial-gradient(circle at 35% 35%, ${GEMS[type].glow}, ${GEMS[type].color} 60%, rgba(0,0,0,0.3))`;
+    el.style.boxShadow = `0 2px 8px ${GEMS[type].glow}, inset 0 1px 0 rgba(255,255,255,0.3)`;
+    el.style.color = GEMS[type].color;
+    el.textContent = GEMS[type].emoji;
+    el.style.fontSize = Math.max(16, cellSize * 0.48) + 'px';
+    el.dataset.row = r;
+    el.dataset.col = c;
+    boardEl.appendChild(el);
+    return el;
+}
+
+function posGem(el, r, c) {
+    el.style.left = (gap + c * (cellSize + gap)) + 'px';
+    el.style.top = (gap + r * (cellSize + gap)) + 'px';
+}
+
+function getCellFromPoint(x, y) {
+    const rect = boardEl.getBoundingClientRect();
+    const lx = x - rect.left, ly = y - rect.top;
+    const c = Math.floor(lx / (cellSize + gap));
+    const r = Math.floor(ly / (cellSize + gap));
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
+    const cx = gap + c * (cellSize + gap), cy = gap + r * (cellSize + gap);
+    if (lx < cx || lx > cx + cellSize || ly < cy || ly > cy + cellSize) return null;
+    return { r, c };
+}
+
+let pointerState = null;
+
+function setupInput() {
+    boardEl = document.getElementById('board');
+
+    boardEl.addEventListener('pointerdown', e => {
+        if (animating) return;
+        e.preventDefault();
+        const cell = getCellFromPoint(e.clientX, e.clientY);
+        if (!cell || !gemEls[cell.r][cell.c]) return;
+        boardEl.setPointerCapture(e.pointerId);
+        pointerState = { r: cell.r, c: cell.c, x: e.clientX, y: e.clientY, moved: false, id: e.pointerId };
+    });
+
+    document.addEventListener('pointermove', e => {
+        if (!pointerState || animating) return;
+        const dx = e.clientX - pointerState.x, dy = e.clientY - pointerState.y;
+        if (Math.sqrt(dx*dx + dy*dy) > 15 && !pointerState.moved) {
+            pointerState.moved = true;
+            let nr = pointerState.r, nc = pointerState.c;
+            if (Math.abs(dx) > Math.abs(dy)) nc += dx > 0 ? 1 : -1;
+            else nr += dy > 0 ? 1 : -1;
+            if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+                if (selected) { gemEls[selected.r][selected.c].classList.remove('selected'); selected = null; }
+                const sr = pointerState.r, sc = pointerState.c;
+                pointerState = null;
+                trySwap(sr, sc, nr, nc);
+            }
+        }
+    });
+
+    document.addEventListener('pointerup', e => {
+        if (!pointerState || animating) { pointerState = null; return; }
+        if (!pointerState.moved) {
+            const { r, c } = pointerState;
+            if (selected) {
+                const sr = selected.r, sc = selected.c;
+                gemEls[sr][sc].classList.remove('selected');
+                if (sr === r && sc === c) { selected = null; }
+                else if ((Math.abs(r - sr) + Math.abs(c - sc)) === 1) { selected = null; trySwap(sr, sc, r, c); }
+                else { selected = { r, c }; gemEls[r][c].classList.add('selected'); }
+            } else {
+                selected = { r, c };
+                gemEls[r][c].classList.add('selected');
+            }
+        }
+        pointerState = null;
+    });
+}
+
+async function trySwap(r1, c1, r2, c2) {
+    animating = true;
+    swap(r1, c1, r2, c2);
+    await animatePositions();
+    const matches = findMatches();
+    if (matches.length === 0) {
+        swap(r1, c1, r2, c2);
+        await animatePositions();
+        animating = false;
+        return;
+    }
+    moves++;
+    updateMoves();
+    await processMatches();
+    animating = false;
+    checkGameOver();
+}
+
+function swap(r1, c1, r2, c2) {
+    [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+    [gemEls[r1][c1], gemEls[r2][c2]] = [gemEls[r2][c2], gemEls[r1][c1]];
+    if (gemEls[r1][c1]) { gemEls[r1][c1].dataset.row = r1; gemEls[r1][c1].dataset.col = c1; }
+    if (gemEls[r2][c2]) { gemEls[r2][c2].dataset.row = r2; gemEls[r2][c2].dataset.col = c2; }
+}
+
+function animatePositions() {
+    return new Promise(resolve => {
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (gemEls[r][c]) posGem(gemEls[r][c], r, c);
+        setTimeout(resolve, 190);
+    });
+}
+
+function findMatches() {
+    const matched = new Set();
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS - 2; c++) {
+            const t = board[r][c]; if (t < 0) continue;
+            if (board[r][c+1] === t && board[r][c+2] === t) {
+                let end = c + 2;
+                while (end + 1 < COLS && board[r][end+1] === t) end++;
+                for (let i = c; i <= end; i++) matched.add(r * COLS + i);
+            }
+        }
+    }
+    for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r < ROWS - 2; r++) {
+            const t = board[r][c]; if (t < 0) continue;
+            if (board[r+1][c] === t && board[r+2][c] === t) {
+                let end = r + 2;
+                while (end + 1 < ROWS && board[end+1][c] === t) end++;
+                for (let i = r; i <= end; i++) matched.add(i * COLS + c);
+            }
+        }
+    }
+    return [...matched].map(i => ({ r: Math.floor(i / COLS), c: i % COLS }));
+}
+
+async function processMatches() {
+    let combo = 0;
+    let matches = findMatches();
+    while (matches.length > 0) {
+        combo++;
+        const pts = matches.length * 10 * combo;
+        score += pts;
+        updateScore();
+        if (combo >= 2) showCombo(combo);
+        showScorePopups(matches, pts);
+
+        for (const { r, c } of matches) {
+            if (gemEls[r][c]) { gemEls[r][c].classList.add('matched'); }
+        }
+        await delay(200);
+
+        for (const { r, c } of matches) {
+            if (gemEls[r][c]) { gemEls[r][c].remove(); gemEls[r][c] = null; }
+            board[r][c] = -1;
+        }
+
+        for (let c = 0; c < COLS; c++) {
+            let empty = 0;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r][c] === -1) { empty++; }
+                else if (empty > 0) {
+                    const nr = r + empty;
+                    board[nr][c] = board[r][c]; board[r][c] = -1;
+                    gemEls[nr][c] = gemEls[r][c]; gemEls[r][c] = null;
+                    gemEls[nr][c].dataset.row = nr;
+                    posGem(gemEls[nr][c], nr, c);
+                }
+            }
+            for (let r = empty - 1; r >= 0; r--) {
+                const type = Math.floor(Math.random() * GEM_TYPES);
+                board[r][c] = type;
+                const el = createGemEl(r, c, type);
+                el.style.top = -(empty - r) * (cellSize + gap) + 'px';
+                el.style.transition = 'none';
+                gemEls[r][c] = el;
+                requestAnimationFrame(() => {
+                    el.style.transition = '';
+                    posGem(el, r, c);
+                });
+            }
+        }
+        await delay(200);
+        matches = findMatches();
+    }
+}
+
+function showCombo(combo) {
+    const el = document.createElement('div');
+    el.className = 'combo-text';
+    el.textContent = `${combo}x 连击!`;
+    boardEl.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+function showScorePopups(matches, pts) {
+    const mid = matches[Math.floor(matches.length / 2)];
+    const el = document.createElement('div');
+    el.className = 'score-popup';
+    el.textContent = '+' + pts;
+    el.style.left = (gap + mid.c * (cellSize + gap) + cellSize / 2) + 'px';
+    el.style.top = (gap + mid.r * (cellSize + gap)) + 'px';
+    boardEl.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+}
+
+function updateScore() {
+    document.getElementById('score').textContent = score;
+    if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('match3_best', bestScore);
+    }
+    document.getElementById('best').textContent = bestScore;
+}
+
+function updateMoves() {
+    document.getElementById('movesDisplay').textContent = `步数: ${moves}`;
+}
+
+function findPossibleMove() {
+    const moves = [];
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (c + 1 < COLS) {
+                swap(r, c, r, c + 1);
+                if (findMatches().length > 0) moves.push({ r1: r, c1: c, r2: r, c2: c + 1, score: findMatches().length });
+                swap(r, c, r, c + 1);
+            }
+            if (r + 1 < ROWS) {
+                swap(r, c, r + 1, c);
+                if (findMatches().length > 0) moves.push({ r1: r, c1: c, r2: r + 1, c2: c, score: findMatches().length });
+                swap(r, c, r + 1, c);
+            }
+        }
+    }
+    if (moves.length === 0) return null;
+    moves.sort((a, b) => b.score - a.score);
+    return moves[0];
+}
+
+function showHint() {
+    if (animating) return;
+    const move = findPossibleMove();
+    if (!move) { shuffleBoard(); return; }
+    const el1 = gemEls[move.r1][move.c1], el2 = gemEls[move.r2][move.c2];
+    if (el1) el1.classList.add('hint');
+    if (el2) el2.classList.add('hint');
+    setTimeout(() => { if (el1) el1.classList.remove('hint'); if (el2) el2.classList.remove('hint'); }, 1500);
+}
+
+function shuffleBoard() {
+    if (animating) return;
+    for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+            if (gemEls[r][c]) gemEls[r][c].remove();
+    createBoard();
+}
+
+function toggleAI() {
+    aiRunning = !aiRunning;
+    const btn = document.getElementById('aiBtn');
+    btn.classList.toggle('active', aiRunning);
+    btn.textContent = aiRunning ? '🤖 AI运行中' : '🤖 AI自动';
+    if (aiRunning) aiStep();
+    else { clearTimeout(aiTimer); aiTimer = null; }
+}
+
+async function aiStep() {
+    if (!aiRunning) return;
+    if (animating) { aiTimer = setTimeout(aiStep, 150); return; }
+    const move = findPossibleMove();
+    if (!move) { shuffleBoard(); aiTimer = setTimeout(aiStep, 300); return; }
+    const el1 = gemEls[move.r1][move.c1], el2 = gemEls[move.r2][move.c2];
+    if (el1) el1.classList.add('hint');
+    if (el2) el2.classList.add('hint');
+    await delay(100);
+    if (el1) el1.classList.remove('hint');
+    if (el2) el2.classList.remove('hint');
+    await trySwap(move.r1, move.c1, move.r2, move.c2);
+    aiTimer = setTimeout(aiStep, 150);
+}
+
+function checkGameOver() {
+    if (!findPossibleMove()) {
+        if (board.flat().filter(v => v >= 0).length < ROWS * COLS * 0.5) {
+            showOverlay('游戏结束', `最终得分: ${score}`);
+        } else {
+            shuffleBoard();
+        }
+    }
+}
+
+function showOverlay(title, scoreText) {
+    if (aiRunning) toggleAI();
+    document.getElementById('overlayTitle').textContent = title;
+    document.getElementById('overlayScore').textContent = scoreText;
+    document.getElementById('overlay').classList.add('show');
+}
+
+function startGame() {
+    document.getElementById('overlay').classList.remove('show');
+    if (aiRunning) toggleAI();
+    score = 0; moves = 0; selected = null; animating = false;
+    updateScore(); updateMoves();
+    for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+            if (gemEls[r] && gemEls[r][c]) gemEls[r][c].remove();
+    createBoard();
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function initParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (5 + Math.random() * 10) + 's';
+        p.style.animationDelay = Math.random() * 10 + 's';
+        p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+        container.appendChild(p);
+    }
+}
+
+window.addEventListener('resize', () => {
+    calcSize();
+    const bw = cellSize * COLS + gap * (COLS + 1);
+    boardEl.style.width = bw + 'px';
+    boardEl.style.height = bw + 'px';
+    for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+            if (gemEls[r][c]) {
+                gemEls[r][c].style.width = cellSize + 'px';
+                gemEls[r][c].style.height = cellSize + 'px';
+                gemEls[r][c].style.fontSize = Math.max(16, cellSize * 0.48) + 'px';
+                posGem(gemEls[r][c], r, c);
+            }
+});
+
+bestScore = +localStorage.getItem('match3_best') || 0;
+initParticles();
+setupInput();
+createBoard();
+updateScore();
+</script>
+</body>
+</html>

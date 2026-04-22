@@ -299,10 +299,65 @@
       }
     })();
 
+    function hamDist(fromR, fromC, toR, toC) {
+      const a = pathIdx[fromR][fromC], b = pathIdx[toR][toC];
+      return b >= a ? b - a : (TOTAL - a + b);
+    }
+
+    function canMove(dx, dy) {
+      const nx = snake[0].x + dx, ny = snake[0].y + dy;
+      if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) return false;
+      for (let i = 0; i < snake.length - 1; i++) if (snake[i].x === nx && snake[i].y === ny) return false;
+      return true;
+    }
+
     function aiDecide() {
       const head = snake[0];
-      const move = hamNext[head.y][head.x];
-      return move || { dx: 1, dy: 0 };
+      const headIdx = pathIdx[head.y][head.x];
+      const tailIdx = pathIdx[snake[snake.length - 1].y][snake[snake.length - 1].x];
+      const foodIdx = pathIdx[food.y][food.x];
+      const snakeLen = snake.length;
+
+      const headToFood = foodIdx >= headIdx ? foodIdx - headIdx : (TOTAL - headIdx + foodIdx);
+      const foodToTail = tailIdx >= foodIdx ? tailIdx - foodIdx : (TOTAL - foodIdx + tailIdx);
+      const headToTail = tailIdx >= headIdx ? tailIdx - headIdx : (TOTAL - headIdx + tailIdx);
+
+      if (snakeLen < TOTAL * 0.75 && headToFood <= headToTail && foodToTail > snakeLen) {
+        const dirs = [
+          { dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }
+        ];
+        let bestDir = null, bestDist = Infinity;
+        for (const d of dirs) {
+          const nx = head.x + d.dx, ny = head.y + d.dy;
+          if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS) continue;
+          let blocked = false;
+          for (let i = 0; i < snake.length - 1; i++) if (snake[i].x === nx && snake[i].y === ny) { blocked = true; break; }
+          if (blocked) continue;
+          const nextIdx = pathIdx[ny][nx];
+          const nextToFood = foodIdx >= nextIdx ? foodIdx - nextIdx : (TOTAL - nextIdx + foodIdx);
+          const nextToTail = tailIdx >= nextIdx ? tailIdx - nextIdx : (TOTAL - nextIdx + tailIdx);
+          if (nextToTail > snakeLen && nextToFood < bestDist) {
+            bestDist = nextToFood;
+            bestDir = d;
+          }
+        }
+        if (bestDir) return bestDir;
+      }
+
+      const hamDir = hamNext[head.y][head.x];
+      if (canMove(hamDir.dx, hamDir.dy)) return hamDir;
+
+      const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
+      for (const d of dirs) {
+        if (d.dx === -hamDir.dx && d.dy === -hamDir.dy) continue;
+        if (canMove(d.dx, d.dy)) {
+          const nx = head.x + d.dx, ny = head.y + d.dy;
+          const nextIdx = pathIdx[ny][nx];
+          if ((nextIdx >= headIdx ? nextIdx - headIdx : TOTAL - headIdx + nextIdx) <= TOTAL / 2) return d;
+        }
+      }
+      for (const d of dirs) if (canMove(d.dx, d.dy)) return d;
+      return hamDir;
     }
 
     function spawnFood() {

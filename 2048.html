@@ -695,16 +695,12 @@
                     return;
                 }
 
-                // 动态搜索深度：根据空格数调整
                 let empty = 0;
-                for (let r = 0; r < this.size; r++) {
-                    for (let c = 0; c < this.size; c++) {
+                for (let r = 0; r < this.size; r++)
+                    for (let c = 0; c < this.size; c++)
                         if (this.cells[r][c] === 0) empty++;
-                    }
-                }
-                
-                // 空格越少搜索越深
-                let depth = empty <= 4 ? 5 : empty <= 8 ? 4 : 3;
+
+                let depth = empty <= 2 ? 6 : empty <= 4 ? 5 : empty <= 8 ? 4 : 3;
 
                 const directions = ['up', 'down', 'left', 'right'];
                 let bestMove = null;
@@ -758,37 +754,27 @@
                         return this.evaluate(cells);
                     }
 
-                    // 智能采样：优先考虑角落和边缘位置
-                    const cornerPriority = (cell) => {
-                        const cornerDist = Math.min(cell.r, 3 - cell.r) + Math.min(cell.c, 3 - cell.c);
-                        return cornerDist;
-                    };
+                    const cornerDist = (cell) => Math.min(cell.r, 3 - cell.r) + Math.min(cell.c, 3 - cell.c);
+                    emptyCells.sort((a, b) => cornerDist(a) - cornerDist(b));
                     
-                    emptyCells.sort((a, b) => cornerPriority(a) - cornerPriority(b));
-                    
-                    // 根据深度调整采样数量
-                    let samples = depth >= 4 ? 2 : depth >= 3 ? 3 : Math.min(emptyCells.length, 4);
-                    samples = Math.min(samples, emptyCells.length);
+                    let samples;
+                    if (emptyCells.length <= 4) samples = emptyCells.length;
+                    else if (depth >= 5) samples = Math.min(3, emptyCells.length);
+                    else if (depth >= 3) samples = Math.min(4, emptyCells.length);
+                    else samples = Math.min(emptyCells.length, 6);
                     
                     let score = 0;
                     
                     for (let i = 0; i < samples; i++) {
                         const { r, c } = emptyCells[i];
                         
-                        // 90% 放 2
                         const newCells2 = cells.map(row => [...row]);
                         newCells2[r][c] = 2;
                         score += 0.9 * this.expectimax(newCells2, depth - 1, true);
                         
-                        // 10% 放 4（深度较低时才考虑）
-                        if (depth <= 3) {
-                            const newCells4 = cells.map(row => [...row]);
-                            newCells4[r][c] = 4;
-                            score += 0.1 * this.expectimax(newCells4, depth - 1, true);
-                        } else {
-                            // 深度较大时简化计算
-                            score += 0.1 * this.expectimax(newCells2, depth - 1, true);
-                        }
+                        const newCells4 = cells.map(row => [...row]);
+                        newCells4[r][c] = 4;
+                        score += 0.1 * this.expectimax(newCells4, depth - 1, true);
                     }
 
                     return score / samples;
@@ -843,243 +829,88 @@
             }
 
             evaluate(cells) {
-                const EMPTY_WEIGHT = 270;
-                const MERGES_WEIGHT = 700;
-                const MONO_WEIGHT = 47;
-                const SUM_WEIGHT = 11;
-                const LOST_PENALTY = 200000;
-                
-                let empty = 0;
-                let merges = 0;
-                let sum = 0;
-                let maxTile = 0;
-                
-                // 计算空格数、合并潜力、总和
-                for (let r = 0; r < this.size; r++) {
-                    let prev = 0;
-                    let counter = 0;
-                    for (let c = 0; c < this.size; c++) {
-                        const val = cells[r][c];
-                        if (val === 0) {
-                            empty++;
-                        } else {
-                            sum += Math.pow(val, 3.5);
-                            maxTile = Math.max(maxTile, val);
-                            if (prev === val) {
-                                counter++;
-                            } else if (counter > 0) {
-                                merges += 1 + counter;
-                                counter = 0;
-                            }
-                            prev = val;
-                        }
-                    }
-                    if (counter > 0) merges += 1 + counter;
-                }
-                
-                for (let c = 0; c < this.size; c++) {
-                    let prev = 0;
-                    let counter = 0;
-                    for (let r = 0; r < this.size; r++) {
-                        const val = cells[r][c];
-                        if (val !== 0) {
-                            if (prev === val) {
-                                counter++;
-                            } else if (counter > 0) {
-                                merges += 1 + counter;
-                                counter = 0;
-                            }
-                            prev = val;
-                        }
-                    }
-                    if (counter > 0) merges += 1 + counter;
-                }
-                
-                // 单调性计算
-                let mono = 0;
-                for (let r = 0; r < this.size; r++) {
-                    let left = 0, right = 0;
-                    for (let c = 0; c < this.size - 1; c++) {
-                        const cur = cells[r][c] ? Math.log2(cells[r][c]) : 0;
-                        const next = cells[r][c + 1] ? Math.log2(cells[r][c + 1]) : 0;
-                        if (cur > next) left += Math.pow(next - cur, 4);
-                        else right += Math.pow(cur - next, 4);
-                    }
-                    mono += Math.min(left, right);
-                }
-                
-                for (let c = 0; c < this.size; c++) {
-                    let up = 0, down = 0;
-                    for (let r = 0; r < this.size - 1; r++) {
-                        const cur = cells[r][c] ? Math.log2(cells[r][c]) : 0;
-                        const next = cells[r + 1][c] ? Math.log2(cells[r + 1][c]) : 0;
-                        if (cur > next) up += Math.pow(next - cur, 4);
-                        else down += Math.pow(cur - next, 4);
-                    }
-                    mono += Math.min(up, down);
-                }
-                
-                // 蛇形权重矩阵（角落最大）
-                const snakeWeights = [
-                    [15, 14, 13, 12],
-                    [8, 9, 10, 11],
-                    [7, 6, 5, 4],
-                    [0, 1, 2, 3]
+                const weightMatrices = [
+                    [[15,14,13,12],[8,9,10,11],[7,6,5,4],[0,1,2,3]],
+                    [[12,13,14,15],[11,10,9,8],[4,5,6,7],[3,2,1,0]],
+                    [[0,1,2,3],[7,6,5,4],[8,9,10,11],[15,14,13,12]],
+                    [[3,2,1,0],[4,5,6,7],[11,10,9,8],[12,13,14,15]],
                 ];
-                
-                let snakeScore = 0;
-                for (let r = 0; r < this.size; r++) {
+
+                let empty = 0;
+                let maxVal = 0;
+                for (let r = 0; r < this.size; r++)
                     for (let c = 0; c < this.size; c++) {
-                        if (cells[r][c] !== 0) {
-                            snakeScore += snakeWeights[r][c] * cells[r][c];
-                        }
+                        if (cells[r][c] === 0) empty++;
+                        if (cells[r][c] > maxVal) maxVal = cells[r][c];
                     }
-                }
-                
-                // 平滑度
-                let smooth = 0;
-                for (let r = 0; r < this.size; r++) {
-                    for (let c = 0; c < this.size; c++) {
-                        if (cells[r][c] !== 0) {
-                            const val = Math.log2(cells[r][c]);
-                            if (c < this.size - 1 && cells[r][c + 1] !== 0) {
-                                smooth -= Math.abs(val - Math.log2(cells[r][c + 1]));
-                            }
-                            if (r < this.size - 1 && cells[r + 1][c] !== 0) {
-                                smooth -= Math.abs(val - Math.log2(cells[r + 1][c]));
-                            }
-                        }
-                    }
-                }
-                
-                // 游戏结束检测
+
                 let isLost = true;
-                for (let r = 0; r < this.size && isLost; r++) {
+                for (let r = 0; r < this.size && isLost; r++)
                     for (let c = 0; c < this.size && isLost; c++) {
                         if (cells[r][c] === 0) isLost = false;
                         if (r < this.size - 1 && cells[r][c] === cells[r + 1][c]) isLost = false;
                         if (c < this.size - 1 && cells[r][c] === cells[r][c + 1]) isLost = false;
                     }
-                }
-                
                 if (isLost) return -Infinity;
-                
-                return snakeScore * 10 
-                     + EMPTY_WEIGHT * Math.log2(empty + 1) 
-                     + MERGES_WEIGHT * merges 
-                     - MONO_WEIGHT * mono 
-                     - SUM_WEIGHT * Math.log2(sum + 1) 
-                     + smooth * 10;
-            }
 
-            simulateMove(direction) {
-                const cells = this.cells.map(row => [...row]);
-                let moved = false;
-                let score = 0;
-                let mergeCount = 0;
-                
-                const vectors = {
-                    up: { r: -1, c: 0 },
-                    down: { r: 1, c: 0 },
-                    left: { r: 0, c: -1 },
-                    right: { r: 0, c: 1 }
-                };
-
-                const vector = vectors[direction];
-                const traversals = this.buildTraversals(vector);
-
-                const newCells = Array(this.size).fill(null).map(() => Array(this.size).fill(0));
-                const merged = Array(this.size).fill(null).map(() => Array(this.size).fill(false));
-
-                for (const r of traversals.r) {
-                    for (const c of traversals.c) {
-                        const value = cells[r][c];
-                        if (value === 0) continue;
-
-                        let newR = r;
-                        let newC = c;
-
-                        while (true) {
-                            const nextR = newR + vector.r;
-                            const nextC = newC + vector.c;
-
-                            if (nextR < 0 || nextR >= this.size || nextC < 0 || nextC >= this.size) break;
-
-                            if (newCells[nextR][nextC] === 0) {
-                                newR = nextR;
-                                newC = nextC;
-                            } else if (newCells[nextR][nextC] === value && !merged[nextR][nextC]) {
-                                newR = nextR;
-                                newC = nextC;
-                                merged[newR][newC] = true;
-                                score += value * 2;
-                                mergeCount++;
-                                break;
-                            } else {
-                                break;
-                            }
-                        }
-
-                        newCells[newR][newC] = merged[newR][newC] ? value * 2 : value;
-                        if (newR !== r || newC !== c) moved = true;
-                    }
+                let bestSnake = -Infinity;
+                for (const w of weightMatrices) {
+                    let s = 0;
+                    for (let r = 0; r < this.size; r++)
+                        for (let c = 0; c < this.size; c++)
+                            if (cells[r][c] !== 0) s += w[r][c] * cells[r][c] * cells[r][c];
+                    bestSnake = Math.max(bestSnake, s);
                 }
 
-                // 无效移动返回负无穷
-                if (!moved) return -Infinity;
-
-                // 计算空格数
-                let emptyCount = 0;
-                for (let r = 0; r < this.size; r++) {
+                let merges = 0;
+                for (let r = 0; r < this.size; r++)
                     for (let c = 0; c < this.size; c++) {
-                        if (newCells[r][c] === 0) emptyCount++;
+                        if (cells[r][c] !== 0) {
+                            const v = Math.log2(cells[r][c]);
+                            if (c < this.size - 1 && cells[r][c] === cells[r][c + 1]) merges += v;
+                            if (r < this.size - 1 && cells[r][c] === cells[r + 1][c]) merges += v;
+                        }
                     }
-                }
 
-                // 单调性评估
-                let monotonicity = 0;
-                for (let r = 0; r < this.size; r++) {
-                    for (let c = 0; c < this.size - 1; c++) {
-                        if (newCells[r][c] >= newCells[r][c + 1]) monotonicity++;
+                let smooth = 0;
+                for (let r = 0; r < this.size; r++)
+                    for (let c = 0; c < this.size; c++) {
+                        if (cells[r][c] !== 0) {
+                            const v = Math.log2(cells[r][c]);
+                            if (c < this.size - 1 && cells[r][c + 1] !== 0)
+                                smooth -= Math.abs(v - Math.log2(cells[r][c + 1]));
+                            if (r < this.size - 1 && cells[r + 1][c] !== 0)
+                                smooth -= Math.abs(v - Math.log2(cells[r + 1][c]));
+                        }
                     }
+
+                let mono = 0;
+                for (let r = 0; r < this.size; r++) {
+                    let l = 0, ri = 0;
+                    for (let c = 0; c < this.size - 1; c++) {
+                        const cur = cells[r][c] ? Math.log2(cells[r][c]) : 0;
+                        const nxt = cells[r][c + 1] ? Math.log2(cells[r][c + 1]) : 0;
+                        if (cur > nxt) l += nxt - cur;
+                        else ri += cur - nxt;
+                    }
+                    mono += Math.max(l, ri);
                 }
                 for (let c = 0; c < this.size; c++) {
+                    let u = 0, d = 0;
                     for (let r = 0; r < this.size - 1; r++) {
-                        if (newCells[r][c] >= newCells[r + 1][c]) monotonicity++;
+                        const cur = cells[r][c] ? Math.log2(cells[r][c]) : 0;
+                        const nxt = cells[r + 1][c] ? Math.log2(cells[r + 1][c]) : 0;
+                        if (cur > nxt) u += nxt - cur;
+                        else d += cur - nxt;
                     }
+                    mono += Math.max(u, d);
                 }
 
-                // 平滑度评估
-                let smoothness = 0;
-                for (let r = 0; r < this.size; r++) {
-                    for (let c = 0; c < this.size; c++) {
-                        if (newCells[r][c] !== 0) {
-                            const val = Math.log2(newCells[r][c]);
-                            if (r < this.size - 1 && newCells[r + 1][c] !== 0) {
-                                smoothness -= Math.abs(val - Math.log2(newCells[r + 1][c]));
-                            }
-                            if (c < this.size - 1 && newCells[r][c + 1] !== 0) {
-                                smoothness -= Math.abs(val - Math.log2(newCells[r][c + 1]));
-                            }
-                        }
-                    }
-                }
-
-                // 最大值位置评估（角落优先）
-                let maxVal = 0;
-                let maxPos = { r: 0, c: 0 };
-                for (let r = 0; r < this.size; r++) {
-                    for (let c = 0; c < this.size; c++) {
-                        if (newCells[r][c] > maxVal) {
-                            maxVal = newCells[r][c];
-                            maxPos = { r, c };
-                        }
-                    }
-                }
-                const cornerBonus = ((maxPos.r === 0 || maxPos.r === 3) && 
-                                     (maxPos.c === 0 || maxPos.c === 3)) ? maxVal * 2 : 0;
-
-                return score * 1.5 + emptyCount * 2.7 + monotonicity * 1.0 + smoothness * 0.1 + mergeCount * 10 + cornerBonus;
+                return bestSnake
+                     + 270 * empty
+                     + 700 * merges
+                     + 10 * mono
+                     + smooth * 3;
             }
 
             bindEvents() {
