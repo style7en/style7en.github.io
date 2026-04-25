@@ -691,7 +691,7 @@
 
     function updateUI() {
       scoreEl.textContent = score;
-      timeEl.textContent = timeLeft;
+      timeEl.textContent = elapsedTime;
 
       let remaining = 0;
       for (let row = 0; row < GRID_SIZE; row++) {
