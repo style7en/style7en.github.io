@@ -375,11 +375,10 @@
   <script>
     const ICONS = ['circle', 'square', 'triangle', 'diamond', 'star', 'heart'];
     const GRID_SIZE = 8;
-    const GAME_TIME = 60;
 
     let grid = [];
     let score = 0;
-    let timeLeft = GAME_TIME;
+    let elapsedTime = 0;
     let selected = null;
     let isPlaying = false;
     let isPaused = false;
@@ -401,7 +400,7 @@
     function initGame() {
       grid = [];
       score = 0;
-      timeLeft = GAME_TIME;
+      elapsedTime = 0;
       selected = null;
       isPlaying = false;
       isPaused = false;
@@ -724,12 +723,8 @@
 
       timerInterval = setInterval(() => {
         if (!isPaused) {
-          timeLeft--;
-          timeEl.textContent = timeLeft;
-
-          if (timeLeft <= 0) {
-            endGame(false);
-          }
+          elapsedTime++;
+          timeEl.textContent = elapsedTime;
         }
       }, 1000);
     }
@@ -743,7 +738,7 @@
       isPlaying = false;
       clearInterval(timerInterval);
 
-      messageTextEl.textContent = won ? '恭喜通关!' : '时间到!';
+      messageTextEl.textContent = won ? '恭喜通关!' : '游戏结束!';
       finalScoreEl.textContent = score;
       messageEl.classList.add('show');
 
