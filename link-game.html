@@ -291,6 +291,38 @@
       font-size: 3rem;
     }
 
+    .leaderboard {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .leaderboard h3 {
+      color: #00d4ff;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .leaderboard th, .leaderboard td {
+      padding: 5px 10px;
+      text-align: center;
+    }
+
+    .leaderboard th {
+      color: #4ecdc4;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .leaderboard tr.current {
+      color: #ffd700;
+      font-weight: bold;
+    }
+
     @media (max-width: 600px) {
       .grid {
         grid-template-columns: repeat(8, 45px);
@@ -349,7 +381,7 @@
       </div>
       <div class="info-item">
         <span class="info-label">时间:</span>
-        <span id="time">60</span>
+        <span id="time">0.0</span>
       </div>
       <div class="info-item">
         <span class="info-label">剩余:</span>
@@ -369,6 +401,7 @@
   <div class="message" id="message">
     <p id="messageText">游戏结束!</p>
     <p class="final-score" id="finalScore">0</p>
+    <div class="leaderboard" id="leaderboard"></div>
     <button class="btn-restart" onclick="restartGame()">再玩一次</button>
   </div>
 
@@ -394,8 +427,37 @@
     const messageEl = document.getElementById('message');
     const messageTextEl = document.getElementById('messageText');
     const finalScoreEl = document.getElementById('finalScore');
+    const leaderboardEl = document.getElementById('leaderboard');
     const pathCanvas = document.getElementById('pathCanvas');
     const ctx = pathCanvas.getContext('2d');
+
+    function getLeaderboard() {
+      const data = localStorage.getItem('linkGameLeaderboard');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveScore(time) {
+      const leaderboard = getLeaderboard();
+      leaderboard.push(time);
+      leaderboard.sort((a, b) => a - b);
+      const top10 = leaderboard.slice(0, 10);
+      localStorage.setItem('linkGameLeaderboard', JSON.stringify(top10));
+      return top10;
+    }
+
+    function renderLeaderboard(currentTime) {
+      const leaderboard = getLeaderboard();
+      let html = '<h3>排行榜 (前10名)</h3><table><tr><th>排名</th><th>用时</th></tr>';
+      leaderboard.forEach((time, index) => {
+        const isCurrent = time === currentTime && index === leaderboard.indexOf(currentTime);
+        html += `<tr class="${isCurrent ? 'current' : ''}"><td>${index + 1}</td><td>${time.toFixed(1)}秒</td></tr>`;
+      });
+      if (leaderboard.length === 0) {
+        html += '<tr><td colspan="2">暂无记录</td></tr>';
+      }
+      html += '</table>';
+      return html;
+    }
 
     function initGame() {
       grid = [];
@@ -691,7 +753,7 @@
 
     function updateUI() {
       scoreEl.textContent = score;
-      timeEl.textContent = elapsedTime;
+      timeEl.textContent = elapsedTime.toFixed(1);
 
       let remaining = 0;
       for (let row = 0; row < GRID_SIZE; row++) {
@@ -723,10 +785,10 @@
 
       timerInterval = setInterval(() => {
         if (!isPaused) {
-          elapsedTime++;
-          timeEl.textContent = elapsedTime;
+          elapsedTime += 0.1;
+          timeEl.textContent = elapsedTime.toFixed(1);
         }
-      }, 1000);
+      }, 100);
     }
 
     function pauseGame() {
@@ -738,8 +800,17 @@
       isPlaying = false;
       clearInterval(timerInterval);
 
-      messageTextEl.textContent = won ? '恭喜通关!' : '游戏结束!';
-      finalScoreEl.textContent = score;
+      if (won) {
+        const finalTime = Math.round(elapsedTime * 10) / 10;
+        saveScore(finalTime);
+        messageTextEl.textContent = '恭喜通关!';
+        finalScoreEl.textContent = `用时: ${finalTime.toFixed(1)}秒`;
+        leaderboardEl.innerHTML = renderLeaderboard(finalTime);
+      } else {
+        messageTextEl.textContent = '游戏结束!';
+        finalScoreEl.textContent = score;
+        leaderboardEl.innerHTML = '';
+      }
       messageEl.classList.add('show');
 
       startBtn.disabled = false;
