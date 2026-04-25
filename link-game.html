@@ -664,6 +664,8 @@
       const cell1 = getCellElement(r1, c1);
       const cell2 = getCellElement(r2, c2);
 
+      cell1.classList.remove('selected');
+      cell2.classList.remove('selected');
       cell1.classList.add('matched');
       cell2.classList.add('matched');
 
