@@ -546,17 +546,20 @@
           const path = findPath(selected.row, selected.col, row, col);
           if (path) {
             matchSuccess(selected.row, selected.col, row, col, path);
+            selected = null;
           } else {
             matchError(row, col);
           }
+          if (selected) {
+            getCellElement(selected.row, selected.col).classList.remove('selected');
+            selected = null;
+          }
         } else {
           matchError(row, col);
-        }
-
-        if (selected) {
           getCellElement(selected.row, selected.col).classList.remove('selected');
+          selected = { row, col };
+          cell.classList.add('selected');
         }
-        selected = null;
       } else {
         selected = { row, col };
         cell.classList.add('selected');
