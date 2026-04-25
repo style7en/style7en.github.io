@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>连连看游戏</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    .game-container {
+      text-align: center;
+    }
+
+    h1 {
+      color: #00d4ff;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .game-info {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 20px;
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .info-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px 25px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 212, 255, 0.3);
+    }
+
+    .info-label {
+      color: #00d4ff;
+      margin-right: 10px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    button {
+      padding: 12px 30px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      color: #fff;
+    }
+
+    .btn-pause {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+      color: #fff;
+    }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #4ecdc4, #44a3a0);
+      color: #fff;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .game-board {
+      position: relative;
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 10px;
+      border: 2px solid rgba(0, 212, 255, 0.2);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      gap: 4px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    .cell:hover:not(.empty) {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .cell.selected {
+      border-color: #00d4ff;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+      transform: scale(1.1);
+    }
+
+    .cell.matched {
+      animation: matchPop 0.5s ease forwards;
+    }
+
+    .cell.error {
+      animation: shake 0.3s ease;
+      border-color: #ff6b6b;
+    }
+
+    .cell.empty {
+      background: transparent;
+      cursor: default;
+    }
+
+    @keyframes matchPop {
+      0% { transform: scale(1.1); opacity: 1; }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      transition: all 0.3s ease;
+    }
+
+    .icon.circle {
+      background: radial-gradient(circle, #ff6b6b, #ee5a5a);
+      border-radius: 50%;
+    }
+
+    .icon.square {
+      background: linear-gradient(135deg, #4ecdc4, #44a3a0);
+      border-radius: 5px;
+    }
+
+    .icon.triangle {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 35px solid #ffe66d;
+      background: none;
+    }
+
+    .icon.diamond {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      transform: rotate(45deg);
+    }
+
+    .icon.star {
+      background: none;
+      position: relative;
+    }
+
+    .icon.star::before {
+      content: '★';
+      font-size: 35px;
+      color: #ffd700;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      line-height: 1;
+    }
+
+    .icon.heart {
+      background: none;
+      position: relative;
+    }
+
+    .icon.heart::before {
+      content: '♥';
+      font-size: 35px;
+      color: #ff69b4;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      line-height: 1;
+    }
+
+    .path-canvas {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: particleExplode 0.6s ease-out forwards;
+    }
+
+    @keyframes particleExplode {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+      }
+    }
+
+    .message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 40px 60px;
+      border-radius: 20px;
+      border: 2px solid #00d4ff;
+      color: #fff;
+      font-size: 2rem;
+      text-align: center;
+      z-index: 100;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .message p {
+      margin-bottom: 20px;
+    }
+
+    .message .final-score {
+      color: #00d4ff;
+      font-size: 3rem;
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(8, 45px);
+        grid-template-rows: repeat(8, 45px);
+        gap: 3px;
+      }
+
+      .cell {
+        width: 45px;
+        height: 45px;
+      }
+
+      .icon {
+        width: 30px;
+        height: 30px;
+      }
+
+      .icon.triangle {
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-bottom: 26px solid #ffe66d;
+      }
+
+      .icon.diamond {
+        width: 21px;
+        height: 21px;
+      }
+
+      .icon.star::before,
+      .icon.heart::before {
+        font-size: 26px;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+
+      .game-info {
+        gap: 15px;
+        font-size: 1rem;
+      }
+
+      .info-item {
+        padding: 8px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1>连连看</h1>
+    <div class="game-info">
+      <div class="info-item">
+        <span class="info-label">分数:</span>
+        <span id="score">0</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">时间:</span>
+        <span id="time">60</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">剩余:</span>
+        <span id="remaining">64</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn-start" id="startBtn">开始游戏</button>
+      <button class="btn-pause" id="pauseBtn" disabled>暂停</button>
+      <button class="btn-restart" id="restartBtn">重新开始</button>
+    </div>
+    <div class="game-board">
+      <canvas class="path-canvas" id="pathCanvas"></canvas>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+  <div class="message" id="message">
+    <p id="messageText">游戏结束!</p>
+    <p class="final-score" id="finalScore">0</p>
+    <button class="btn-restart" onclick="restartGame()">再玩一次</button>
+  </div>
+
+  <script>
+    const ICONS = ['circle', 'square', 'triangle', 'diamond', 'star', 'heart'];
+    const GRID_SIZE = 8;
+    const GAME_TIME = 60;
+
+    let grid = [];
+    let score = 0;
+    let timeLeft = GAME_TIME;
+    let selected = null;
+    let isPlaying = false;
+    let isPaused = false;
+    let timerInterval = null;
+
+    const gridEl = document.getElementById('grid');
+    const scoreEl = document.getElementById('score');
+    const timeEl = document.getElementById('time');
+    const remainingEl = document.getElementById('remaining');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const messageEl = document.getElementById('message');
+    const messageTextEl = document.getElementById('messageText');
+    const finalScoreEl = document.getElementById('finalScore');
+    const pathCanvas = document.getElementById('pathCanvas');
+    const ctx = pathCanvas.getContext('2d');
+
+    function initGame() {
+      grid = [];
+      score = 0;
+      timeLeft = GAME_TIME;
+      selected = null;
+      isPlaying = false;
+      isPaused = false;
+
+      const pairs = [];
+      const totalCells = GRID_SIZE * GRID_SIZE;
+      const pairsNeeded = totalCells / 2;
+
+      for (let i = 0; i < pairsNeeded; i++) {
+        const iconType = ICONS[i % ICONS.length];
+        pairs.push(iconType, iconType);
+      }
+
+      shuffleArray(pairs);
+
+      for (let row = 0; row < GRID_SIZE; row++) {
+        grid[row] = [];
+        for (let col = 0; col < GRID_SIZE; col++) {
+          grid[row][col] = pairs[row * GRID_SIZE + col];
+        }
+      }
+
+      updateUI();
+      renderGrid();
+      resizeCanvas();
+
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+      messageEl.classList.remove('show');
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+
+          if (grid[row][col]) {
+            const icon = document.createElement('div');
+            icon.className = `icon ${grid[row][col]}`;
+            cell.appendChild(icon);
+          } else {
+            cell.classList.add('empty');
+          }
+
+          cell.addEventListener('click', () => handleCellClick(row, col));
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function resizeCanvas() {
+      const gridRect = gridEl.getBoundingClientRect();
+      pathCanvas.width = gridRect.width;
+      pathCanvas.height = gridRect.height;
+    }
+
+    function handleCellClick(row, col) {
+      if (!isPlaying || isPaused || !grid[row][col]) return;
+
+      const cell = getCellElement(row, col);
+
+      if (selected) {
+        if (selected.row === row && selected.col === col) {
+          cell.classList.remove('selected');
+          selected = null;
+          return;
+        }
+
+        if (grid[row][col] === grid[selected.row][selected.col]) {
+          const path = findPath(selected.row, selected.col, row, col);
+          if (path) {
+            matchSuccess(selected.row, selected.col, row, col, path);
+          } else {
+            matchError(row, col);
+          }
+        } else {
+          matchError(row, col);
+        }
+
+        if (selected) {
+          getCellElement(selected.row, selected.col).classList.remove('selected');
+        }
+        selected = null;
+      } else {
+        selected = { row, col };
+        cell.classList.add('selected');
+      }
+    }
+
+    function getCellElement(row, col) {
+      return gridEl.children[row * GRID_SIZE + col];
+    }
+
+    function findPath(r1, c1, r2, c2) {
+      if (canConnectStraight(r1, c1, r2, c2)) {
+        return [{ row: r1, col: c1 }, { row: r2, col: c2 }];
+      }
+
+      // 一折连接：通过 (r1, c2) 连接
+      if (canConnectStraight(r1, c1, r1, c2) && canConnectStraight(r1, c2, r2, c2)) {
+        const midEmpty = r1 < 0 || r1 >= GRID_SIZE || c2 < 0 || c2 >= GRID_SIZE || !grid[r1][c2];
+        if (midEmpty) {
+          return [
+            { row: r1, col: c1 },
+            { row: r1, col: c2 },
+            { row: r2, col: c2 }
+          ];
+        }
+      }
+
+      // 一折连接：通过 (r2, c1) 连接
+      if (canConnectStraight(r1, c1, r2, c1) && canConnectStraight(r2, c1, r2, c2)) {
+        const midEmpty = r2 < 0 || r2 >= GRID_SIZE || c1 < 0 || c1 >= GRID_SIZE || !grid[r2][c1];
+        if (midEmpty) {
+          return [
+            { row: r1, col: c1 },
+            { row: r2, col: c1 },
+            { row: r2, col: c2 }
+          ];
+        }
+      }
+
+      // 两折连接：先竖直走到中间某行，再水平，再竖直
+      for (let row = -1; row <= GRID_SIZE; row++) {
+        if (canConnectStraight(r1, c1, row, c1) &&
+            canConnectStraight(row, c1, row, c2) &&
+            canConnectStraight(row, c2, r2, c2)) {
+          const mid1Empty = row < 0 || row >= GRID_SIZE || c1 < 0 || c1 >= GRID_SIZE || !grid[row][c1];
+          const mid2Empty = row < 0 || row >= GRID_SIZE || c2 < 0 || c2 >= GRID_SIZE || !grid[row][c2];
+          if (mid1Empty && mid2Empty) {
+            return [
+              { row: r1, col: c1 },
+              { row: row, col: c1 },
+              { row: row, col: c2 },
+              { row: r2, col: c2 }
+            ];
+          }
+        }
+      }
+
+      // 两折连接：先水平走到中间某列，再竖直，再水平
+      for (let col = -1; col <= GRID_SIZE; col++) {
+        if (canConnectStraight(r1, c1, r1, col) &&
+            canConnectStraight(r1, col, r2, col) &&
+            canConnectStraight(r2, col, r2, c2)) {
+          const mid1Empty = r1 < 0 || r1 >= GRID_SIZE || col < 0 || col >= GRID_SIZE || !grid[r1][col];
+          const mid2Empty = r2 < 0 || r2 >= GRID_SIZE || col < 0 || col >= GRID_SIZE || !grid[r2][col];
+          if (mid1Empty && mid2Empty) {
+            return [
+              { row: r1, col: c1 },
+              { row: r1, col: col },
+              { row: r2, col: col },
+              { row: r2, col: c2 }
+            ];
+          }
+        }
+      }
+
+      return null;
+    }
+
+    function canConnectStraight(r1, c1, r2, c2) {
+      if (r1 === r2) {
+        const minCol = Math.min(c1, c2);
+        const maxCol = Math.max(c1, c2);
+        for (let col = minCol + 1; col < maxCol; col++) {
+          if (col >= 0 && col < GRID_SIZE && r1 >= 0 && r1 < GRID_SIZE && grid[r1][col]) return false;
+        }
+        return true;
+      }
+
+      if (c1 === c2) {
+        const minRow = Math.min(r1, r2);
+        const maxRow = Math.max(r1, r2);
+        for (let row = minRow + 1; row < maxRow; row++) {
+          if (row >= 0 && row < GRID_SIZE && c1 >= 0 && c1 < GRID_SIZE && grid[row][c1]) return false;
+        }
+        return true;
+      }
+
+      return false;
+    }
+
+    function matchSuccess(r1, c1, r2, c2, path) {
+      const cell1 = getCellElement(r1, c1);
+      const cell2 = getCellElement(r2, c2);
+
+      cell1.classList.add('matched');
+      cell2.classList.add('matched');
+
+      drawPath(path);
+
+      setTimeout(() => {
+        createParticles(cell1);
+        createParticles(cell2);
+      }, 200);
+
+      setTimeout(() => {
+        grid[r1][c1] = null;
+        grid[r2][c2] = null;
+        cell1.classList.add('empty');
+        cell2.classList.add('empty');
+        cell1.innerHTML = '';
+        cell2.innerHTML = '';
+        cell1.classList.remove('matched');
+        cell2.classList.remove('matched');
+
+        score += 10;
+        updateUI();
+
+        ctx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
+
+        checkGameEnd();
+      }, 500);
+    }
+
+    function matchError(row, col) {
+      const cell = getCellElement(row, col);
+      cell.classList.add('error');
+      setTimeout(() => cell.classList.remove('error'), 300);
+    }
+
+    function drawPath(path) {
+      ctx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = '#00d4ff';
+      ctx.shadowBlur = 10;
+
+      const cellSize = gridEl.children[0].offsetWidth;
+      const gap = 4;
+
+      ctx.beginPath();
+      path.forEach((point, index) => {
+        const x = point.col * (cellSize + gap) + cellSize / 2;
+        const y = point.row * (cellSize + gap) + cellSize / 2;
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+      ctx.stroke();
+
+      setTimeout(() => {
+        ctx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
+      }, 400);
+    }
+
+    function createParticles(cell) {
+      const rect = cell.getBoundingClientRect();
+      const boardRect = gridEl.parentElement.getBoundingClientRect();
+      const centerX = rect.left - boardRect.left + rect.width / 2;
+      const centerY = rect.top - boardRect.top + rect.height / 2;
+
+      const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#a855f7', '#00d4ff', '#ffd700'];
+
+      for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = centerX + 'px';
+        particle.style.top = centerY + 'px';
+        particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+        const angle = (Math.PI * 2 * i) / 12;
+        const distance = 30 + Math.random() * 40;
+        particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+        particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+
+        gridEl.parentElement.appendChild(particle);
+
+        setTimeout(() => particle.remove(), 600);
+      }
+    }
+
+    function updateUI() {
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+
+      let remaining = 0;
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          if (grid[row][col]) remaining++;
+        }
+      }
+      remainingEl.textContent = remaining;
+    }
+
+    function checkGameEnd() {
+      let remaining = 0;
+      for (let row = 0; row < GRID_SIZE; row++) {
+        for (let col = 0; col < GRID_SIZE; col++) {
+          if (grid[row][col]) remaining++;
+        }
+      }
+
+      if (remaining === 0) {
+        endGame(true);
+      }
+    }
+
+    function startGame() {
+      isPlaying = true;
+      isPaused = false;
+      startBtn.disabled = true;
+      pauseBtn.disabled = false;
+
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          timeLeft--;
+          timeEl.textContent = timeLeft;
+
+          if (timeLeft <= 0) {
+            endGame(false);
+          }
+        }
+      }, 1000);
+    }
+
+    function pauseGame() {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? '继续' : '暂停';
+    }
+
+    function endGame(won) {
+      isPlaying = false;
+      clearInterval(timerInterval);
+
+      messageTextEl.textContent = won ? '恭喜通关!' : '时间到!';
+      finalScoreEl.textContent = score;
+      messageEl.classList.add('show');
+
+      startBtn.disabled = false;
+      pauseBtn.disabled = true;
+    }
+
+    function restartGame() {
+      clearInterval(timerInterval);
+      initGame();
+    }
+
+    startBtn.addEventListener('click', startGame);
+    pauseBtn.addEventListener('click', pauseGame);
+    restartBtn.addEventListener('click', restartGame);
+
+    window.addEventListener('resize', resizeCanvas);
+
+    initGame();
+  </script>
+</body>
+</html>

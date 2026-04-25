@@ -10,6 +10,7 @@
 - [扫雷](minesweeper.html) - 经典 Windows 风格扫雷游戏
 - [2048](2048.html) - 经典数字合并游戏
 - [贪吃蛇](snake.html) - 经典贪吃蛇游戏
+- [连连看](link-game.html) - 经典连连看游戏
 
 ## Contact
 
