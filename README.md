@@ -12,6 +12,7 @@
 - [贪吃蛇](snake.html) - 经典贪吃蛇游戏
 - [开心消消乐](match3.html) - 三消益智游戏，支持AI自动玩
 - [连连看](link-game.html) - 经典连连看游戏
+- [音乐播放器](music-player.html) - 手机风格的音乐播放器，支持本地/网络音频
 
 ## Contact
 
