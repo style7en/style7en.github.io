@@ -1,0 +1,2919 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script src="/__vnext/attribution.js" data-vnext-badge="vnxt-4cda643014f7bb8b" data-vnext-srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;base target=&quot;_blank&quot;&gt;&lt;style&gt;
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;color-scheme:normal}
+.badge{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:34px;padding:6px 7px 6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(12,12,14,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:rgba(255,255,255,.78);font:12px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;letter-spacing:0;box-shadow:0 10px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);white-space:nowrap}
+a{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none}
+strong{font-weight:650;color:rgba(255,255,255,.96)}
+.mark{font:800 16px/1.05 Inter,Geist,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;color:#8b5cf6;text-shadow:0 0 14px rgba(139,92,246,.35)}
+button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin:0;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.58);font:16px/1 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;cursor:pointer;padding:0}
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;badge&quot;&gt;&lt;a href=&quot;https://vnext.cc&quot; rel=&quot;noreferrer&quot; aria-label=&quot;Built with vnext&quot;&gt;&lt;span class=&quot;mark&quot;&gt;V&lt;/span&gt;&lt;span&gt;Built with &lt;strong&gt;vnext&lt;/strong&gt;&lt;/span&gt;&lt;/a&gt;&lt;button type=&quot;button&quot; aria-label=&quot;Close Built with vnext badge&quot;&gt;×&lt;/button&gt;&lt;/div&gt;&lt;script&gt;document.querySelector(&quot;button&quot;).onclick=function(){parent.postMessage({type:&quot;vnxt-attribution-dismiss&quot;,token:&quot;vnxt-4cda643014f7bb8b&quot;},&quot;*&quot;)}&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;" async></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>塔防游戏 Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #1a1a2e; color: #eee; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  #app { display: flex; flex-direction: column; height: 100%; max-width: 600px; margin: 0 auto; }
+
+  /* 顶部状态栏 */
+  #statusBar {
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 6px 8px; background: #16213e; font-size: 14px; min-height: 36px;
+    border-bottom: 1px solid #0f3460;
+  }
+  #statusBar span { white-space: nowrap; }
+  .stat-label { color: #a8a8b3; }
+  .stat-value { color: #e2e2e2; font-weight: bold; }
+  .stat-gold { color: #ffd700; }
+  /* 状态栏右侧控制按钮(暂停等) */
+  .ctrl-btn {
+    background: #0f3460; color: #e2e2e2; border: 1px solid #1a3a6e;
+    padding: 4px 12px; border-radius: 4px; font-size: 13px; cursor: pointer;
+    font-weight: bold; user-select: none; -webkit-user-select: none;
+    transition: background 0.15s;
+  }
+  .ctrl-btn:hover { background: #1a4a8e; }
+  .ctrl-btn:active { background: #4caf50; }
+  .stat-danger { color: #ff4c4c; }
+
+  /* 塔位槽位 */
+  #towerSlots { display: inline-flex; gap: 4px; padding-left: 6px; border-left: 1px solid #0f3460; }
+  #towerSlots .slot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 22px; border-radius: 4px; background: #0f3460;
+    color: #6c6c80; font-size: 13px; position: relative; line-height: 1;
+    border: 1px solid transparent; transition: all 0.15s;
+  }
+  #towerSlots .slot.built { color: #fff; background: #1a3a6e; }
+  #towerSlots .slot.selected { border-color: #e94560; box-shadow: 0 0 6px rgba(233,69,96,0.5); }
+  #towerSlots .slot i.lv {
+    position: absolute; right: 1px; bottom: -2px; font-size: 9px; font-style: normal;
+    color: #ffd700; line-height: 1; text-shadow: 0 0 2px #000;
+  }
+
+  /* Canvas 容器 — 固定 flex:1 占比,内容变化不挤压;relative 让浮层以它为锚点 */
+  #canvasWrap { flex: 1 1 0; min-height: 0; position: relative; display: flex; justify-content: center; align-items: center; padding: 4px; overflow: hidden; }
+  #gameCanvas { border: 2px solid #0f3460; border-radius: 4px; touch-action: none; cursor: crosshair; }
+
+  /* 底部建造栏 */
+  #buildBar {
+    display: flex; justify-content: center; gap: 8px;
+    padding: 6px 8px; background: #16213e; border-top: 1px solid #0f3460;
+  }
+  .build-btn {
+    flex: 1; max-width: 140px; min-height: 48px; border: 2px solid #0f3460;
+    border-radius: 8px; background: #1a1a2e; color: #eee; font-size: 14px;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 2px; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+  .build-btn:active { transform: scale(0.95); }
+  .build-btn.selected { border-color: #e94560; background: #2a1a2e; box-shadow: 0 0 8px rgba(233,69,96,0.3); }
+  .build-btn.disabled { opacity: 0.4; pointer-events: none; }
+  .build-btn .btn-icon { font-size: 18px; }
+  .build-btn .btn-cost { font-size: 11px; color: #ffd700; }
+  .build-btn .btn-built { font-size: 10px; color: #4caf50; }
+
+  /* 浮层信息面板 — 跟随选中的塔定位,绝对定位不参与布局 */
+  #infoPanel {
+    position: absolute; top: 0; left: 0; width: 260px;
+    padding: 6px 10px; background: rgba(15, 52, 96, 0.96); font-size: 13px;
+    border: 1px solid #1a3a6e; border-radius: 6px;
+    display: none; flex-direction: column; gap: 4px; pointer-events: auto;
+    z-index: 20; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  #infoPanel.show { display: flex; }
+  #infoPanel .info-title { color: #e94560; font-weight: bold; font-size: 14px; }
+  #infoPanel .info-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  #infoPanel .info-item { color: #bbb; }
+  #infoPanel .info-item b { color: #eee; }
+  #upgradeBtn {
+    margin-top: 4px; padding: 6px 16px; border: none; border-radius: 6px;
+    background: #e94560; color: #fff; font-size: 14px; cursor: pointer;
+    align-self: flex-start;
+  }
+  #upgradeBtn:disabled { background: #555; cursor: not-allowed; }
+  #infoPanel .upg-row { display: flex; flex-wrap: nowrap; gap: 6px; margin-top: 6px; align-items: center; }
+  #infoPanel .upg-row-max { margin-top: 4px; }
+  #infoPanel .upg-row button {
+    background: #e94560; color: #fff; border: none; padding: 0 8px;
+    border-radius: 4px; cursor: pointer; font-size: 13px; user-select: none;
+    -webkit-user-select: none; touch-action: manipulation;
+    height: 32px; min-width: 0; line-height: 1; box-sizing: border-box;
+    display: inline-flex; align-items: center; justify-content: center;
+    white-space: nowrap; flex: 1 1 0; vertical-align: middle;
+  }
+  #infoPanel .upg-row-max button { flex: 1 1 100%; }
+  #infoPanel .upg-row button:disabled { background: #555; cursor: not-allowed; }
+  #infoPanel .upg-row .upg-multi { background: #4caf50; font-weight: bold; }
+  #infoPanel .upg-row .upg-multi:disabled { background: #555; color: #999; }
+  #infoPanel .upg-row .upg-max { background: #ff9800; }
+  #infoPanel .upg-row button:not(:disabled):active { transform: scale(0.96); }
+  #infoPanel .upg-hint { color: #888; font-size: 11px; margin-top: 4px; }
+  #itemLog { color: #888; font-size: 11px; margin-top: 2px; }
+  #ruleHint { color: #ffd54f; font-size: 11px; margin-top: 2px; display: none; }
+  #ruleHint.show { display: block; }
+  #ruleHint b { color: #ffeb3b; }
+
+  /* 游戏结束弹窗 */
+  #gameOverOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 100; justify-content: center; align-items: center;
+  }
+  #gameOverOverlay.show { display: flex; }
+  #gameOverBox {
+    background: #16213e; border: 2px solid #e94560; border-radius: 12px;
+    padding: 24px 32px; text-align: center; max-width: 320px;
+  }
+  #gameOverBox h2 { color: #e94560; font-size: 28px; margin-bottom: 12px; }
+  #gameOverBox p { color: #ccc; font-size: 16px; margin: 4px 0; }
+
+  /* 暂停遮罩 */
+  #pauseOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 90; justify-content: center; align-items: center;
+    backdrop-filter: blur(2px);
+  }
+  #pauseOverlay.show { display: flex; }
+  #pauseBox {
+    background: #16213e; border: 2px solid #4caf50; border-radius: 12px;
+    padding: 24px 32px; text-align: center; min-width: 260px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  }
+  #pauseBox h2 { color: #4caf50; font-size: 26px; margin-bottom: 12px; }
+  #pauseBox p { color: #ccc; font-size: 14px; margin: 8px 0 16px; }
+  #pauseBox kbd {
+    display: inline-block; padding: 2px 8px; background: #0f3460;
+    border: 1px solid #1a3a6e; border-radius: 3px; font-family: monospace;
+    color: #ffeb3b; font-size: 13px; margin: 0 2px;
+  }
+  #pauseBox button {
+    background: #4caf50; color: #fff; border: none; padding: 8px 24px;
+    border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer;
+  }
+  #pauseBox button:hover { background: #66bb6a; }
+  #restartBtn {
+    margin-top: 16px; padding: 10px 28px; border: none; border-radius: 8px;
+    background: #e94560; color: #fff; font-size: 16px; cursor: pointer;
+  }
+
+  /* 波次提示 */
+  #waveNotice {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 28px; color: #e94560; font-weight: bold; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s; text-shadow: 0 0 10px rgba(233,69,96,0.5);
+    z-index: 50;
+  }
+  #waveNotice.show { opacity: 1; }
+  /* 恢复存档弹窗 */
+  #restoreOverlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.80);
+    z-index: 200; justify-content: center; align-items: center;
+  }
+  #restoreOverlay.show { display: flex; }
+  #restoreBox {
+    background: #16213e; border: 2px solid #4caf50; border-radius: 12px;
+    padding: 28px 36px; text-align: center; max-width: 360px; width: 90%;
+  }
+  #restoreBox h2 { color: #4caf50; font-size: 24px; margin-bottom: 12px; }
+  #restoreBox pre { color: #ddd; font-size: 13px; text-align: left; margin: 8px 0 16px; white-space: pre-wrap; word-break: break-all; }
+  #restoreBox .btn-row { display: flex; gap: 12px; justify-content: center; }
+  #restoreBox .btn-restore {
+    padding: 10px 24px; border: none; border-radius: 8px;
+    background: #4caf50; color: #fff; font-size: 15px; cursor: pointer;
+  }
+  #restoreBox .btn-new {
+    padding: 10px 24px; border: 1px solid #888; border-radius: 8px;
+    background: transparent; color: #ccc; font-size: 15px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="statusBar">
+    <span><span class="stat-label">波数:</span> <span class="stat-value" id="waveNum">0</span></span>
+    <span><span class="stat-label">金币:</span> <span class="stat-value stat-gold" id="goldNum">200</span></span>
+    <span><span class="stat-label">怪物:</span> <span class="stat-value stat-danger" id="monsterCount">0/100</span></span>
+    <span><span class="stat-label">击杀:</span> <span class="stat-value" id="killCount">0</span></span>
+    <span class="stat-slots" id="towerSlots" title="每种塔场上只能存在一座;再造同类型 = 升级原塔">
+      <span class="slot" data-slot="fire">🔥<i class="lv">·</i></span>
+      <span class="slot" data-slot="water">💧<i class="lv">·</i></span>
+      <span class="slot" data-slot="ice">❄️<i class="lv">·</i></span>
+    </span>
+    <button id="pauseBtn" class="ctrl-btn" title="暂停/继续 (P 或 空格)">⏸ 暂停</button>
+  </div>
+  <!-- infoPanel 改成浮层(挂在 canvasWrap 内),跟随点击的塔定位,不再撑高页面 -->
+  <div id="canvasWrap"><canvas id="gameCanvas"></canvas>
+    <div id="infoPanel">
+      <div id="infoContent">点击地图放置防御塔，点击已有塔查看信息</div>
+      <div id="itemLog"></div>
+      <div id="ruleHint"></div>
+    </div>
+  </div>
+  <div id="buildBar">
+    <button class="build-btn" data-type="fire" id="btnFire">
+      <span class="btn-icon">🔥</span><span>火塔</span><span class="btn-built"></span>
+    </button>
+    <button class="build-btn" data-type="water" id="btnWater">
+      <span class="btn-icon">💧</span><span>水塔</span><span class="btn-built"></span>
+    </button>
+    <button class="build-btn" data-type="ice" id="btnIce">
+      <span class="btn-icon">❄️</span><span>冰塔</span><span class="btn-built"></span>
+    </button>
+  </div>
+</div>
+<div id="gameOverOverlay">
+  <div id="gameOverBox">
+    <h2>Game Over</h2>
+    <p>存活波数: <b id="goWave">0</b></p>
+    <p>总击杀数: <b id="goKills">0</b></p>
+    <button id="restartBtn">重新开始</button>
+  </div>
+</div>
+<div id="pauseOverlay">
+  <div id="pauseBox">
+    <h2>⏸ 已暂停</h2>
+    <p>按 <kbd>P</kbd> / <kbd>空格</kbd> 或点击下方按钮继续</p>
+    <button id="resumeBtn">继续</button>
+  </div>
+</div>
+<div id="waveNotice"></div>
+<div id="restoreOverlay">
+  <div id="restoreBox">
+    <h2>发现存档</h2>
+    <pre id="restoreInfo"></pre>
+    <div class="btn-row">
+      <button class="btn-restore" id="btnRestore">恢复进度</button>
+      <button class="btn-new" id="btnNewGame">新游戏</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================== 常量定义 ========================
+const TOWER_DEFS = {
+  fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 15, baseRange: 120, baseSpeed: 1.0, cost: 100, splash: 0, slowRate: 0, slowDur: 0, desc: '单体伤害',
+           ult: { name: '焚天', desc: '攻击附带范围灼烧', atkMul: 1.6, rangeMul: 1.2, splash: 40 } },
+  water: { name: '水塔', icon: '💧', color: '#2196f3', baseAtk: 8,  baseRange: 100, baseSpeed: 1.5, cost: 80,  splash: 50, splashMax: 3, slowRate: 0, slowDur: 0, desc: '溅射50px',
+           ult: { name: '怒涛', desc: '溅射范围+数量翻倍', atkMul: 1.4, rangeMul: 1.1, splash: 80, splashMax: 5 } },
+  ice:   { name: '冰塔', icon: '❄️', color: '#00bcd4', baseAtk: 5,  baseRange: 110, baseSpeed: 0.8, cost: 90,  splash: 0, slowRate: 0.5, slowDur: 2, desc: '减速50%',
+           ult: { name: '极寒', desc: '减速至25%并冻结0.5s', atkMul: 1.3, rangeMul: 1.1, slowRate: 0.75, slowDur: 3 } },
+};
+
+const ITEM_DEFS = [
+  { id: 'critRate',  name: '暴击率+5%',    prob: 0.15, apply: (t) => {
+    if (t.critRate >= MAX_CRIT_RATE) return false;
+    t.critRate = Math.min(MAX_CRIT_RATE, t.critRate + 0.05);
+    return true;
+  } },
+  { id: 'critDmg',   name: '爆伤+20%',     prob: 0.15, apply: (t) => {
+    if (t.critDamage >= MAX_CRIT_DMG) return false;
+    t.critDamage = Math.min(MAX_CRIT_DMG, t.critDamage + 0.20);
+    return true;
+  } },
+  { id: 'range',     name: '范围+10px',     prob: 0.10, apply: (t) => {
+    // 攻击范围上限 = 地图宽高中的较大值
+    const maxR = Math.max((game.mapW || 600), (game.mapH || 600));
+    if (t.getRange() + 10 > maxR) return false;
+    t.bonusRange += 10;
+    return true;
+  } },
+  { id: 'atkSpeed',  name: '攻速+0.1/s',   prob: 0.10, apply: (t) => {
+    if (t.bonusSpeed >= MAX_ATK_SPEED - TOWER_DEFS[t.type].baseSpeed) return false;
+    t.bonusSpeed = Math.min(MAX_ATK_SPEED - TOWER_DEFS[t.type].baseSpeed, t.bonusSpeed + 0.1);
+    return true;
+  } },
+];
+
+// 精英怪配置:每隔 ELITE_WAVE_INTERVAL 波出现一只
+// 精英怪比普通怪更肉、有特殊光环,道具爆率更高
+const ELITE_WAVE_INTERVAL = 10;      // 每 10 波来一只
+const ELITE_HP_MULT = 5;             // 血量 = 普通 × 5
+const ELITE_RESIST_BONUS = 0.10;     // 额外 +10% 抗性
+const ELITE_SPEED_MULT = 0.85;       // 慢 15%
+const ELITE_SIZE_MULT = 1.45;        // 体型大 45%
+const ELITE_GOLD_MULT = 3;           // 击杀金币 × 3
+const ELITE_DROP_PROB = 0.75;        // 精英怪固定 75% 必掉 (用精英单独的概率池)
+// 普通怪道具爆率降权:每件道具的实际概率 = 原 prob × DROP_NORM_PROB_MUL
+const DROP_NORM_PROB_MUL = 0.5;      // 普通怪 50% 概率掉道具 (相对 ITEM_DEFS.prob 基数)
+
+const MAX_TOWER_LEVEL = Infinity; // 无等级上限
+const ULTIMATE_LEVEL = 10;       // 达到此等级解锁终极形态
+const UPGRADE_COST_PER_LEVEL = 100;
+const MAX_CRIT_RATE = 1.0;       // 暴击率上限 100%
+const MAX_CRIT_DMG  = 10.0;      // 爆伤上限 1000%
+const MAX_ATK_SPEED = 20;        // 攻速上限 20/s
+// 数值安全护栏:防止无等级上限下 Math.pow(1.15, n) 在 level≈400 时溢出到 Infinity,
+// Infinity 一旦进入伤害链 -> Monster.hp = -Infinity -> 渲染 NaN -> 软锁游戏
+const MAX_SAFE_ATK = 1e9;        // 单次攻击伤害上限(游戏数值上完全够用,仅防溢出)
+const MAX_SAFE_HP  = 1e12;       // 怪物血量上限
+const MAX_SAFE_GOLD = 1e12;      // 金币上限
+const MAX_SAFE_WAVE = 1e6;       // 波数上限(到达后停在该波不再递增)
+const MONSTER_BASE_HP = 50;
+const MONSTER_HP_SCALE = 0.40;
+const MONSTER_SPEED = 40; // px/s（降低速度）
+const WAVE_BASE_INTERVAL = 8; // 第1波间隔8s，之后每波递增
+const MONSTER_SPAWN_INTERVAL = 0.4; // seconds（缩短怪物间距）
+const INITIAL_GOLD = 300;
+const KILL_GOLD_BASE = 10;
+
+// === 元素反应系统（参考原神） ===
+// 三元素:火(红)/水(蓝)/冰(青)
+// 元素附着持续时间(秒)
+const ELEMENT_DURATION = 5;
+// 反应系数（参考原神）:
+//   蒸发:水+火  = 2.0x  (后手水触发, 2.0; 后手火触发 1.5)
+//   冻结:水+冰  = 1.5x  + 冰冻 1.5s (不可移动, 期间受 1.5x 额外伤害)
+//   融化:火+冰  = 1.5x  (后手火触发)
+//   (后手冰触发蒸发/融化 = 0.5x 反向倍率, 太弱, 此处统一按 1.5x 简化)
+const REACT_VAPORIZE = 2.0;
+const REACT_FREEZE   = 1.5;
+const REACT_MELT     = 1.5;
+const FREEZE_DURATION = 1.5; // 冻结时间(秒)
+
+// 元素图标 + 颜色
+const ELEMENT_VISUAL = {
+  fire:  { icon: '🔥', color: '#ff1744', glow: '#ff5722' },
+  water: { icon: '💧', color: '#3d5afe', glow: '#1976d2' },
+  ice:   { icon: '❄️', color: '#80deea', glow: '#00bcd4' },
+  none:  { icon: '',   color: '#fff',    glow: '#fff'    },
+};
+
+// 反应表:existing + incoming = 系数 + 视觉效果
+//   null = 不反应, 只附着
+const ELEMENT_REACTIONS = {
+  // 火塔击中被水附着的怪 => 蒸发
+  fire_water:  { mul: REACT_VAPORIZE, label: '蒸发',    clear: true,  visual: { icon: '☁️', color: '#b3e5fc' } },
+  // 水塔击中被火附着的怪 => 蒸发
+  water_fire:  { mul: REACT_VAPORIZE, label: '蒸发',    clear: true,  visual: { icon: '☁️', color: '#b3e5fc' } },
+  // 水塔击中被冰附着的怪 => 冻结
+  water_ice:   { mul: REACT_FREEZE,   label: '冻结',    clear: true,  visual: { icon: '❄️', color: '#00bcd4' }, freeze: true },
+  // 冰塔击中被水附着的怪 => 冻结
+  ice_water:   { mul: REACT_FREEZE,   label: '冻结',    clear: true,  visual: { icon: '❄️', color: '#00bcd4' }, freeze: true },
+  // 火塔击中被冰附着的怪 => 融化
+  fire_ice:    { mul: REACT_MELT,     label: '融化',    clear: true,  visual: { icon: '💥', color: '#ff6f00' } },
+  // 冰塔击中被火附着的怪 => 融化
+  ice_fire:    { mul: REACT_MELT,     label: '融化',    clear: true,  visual: { icon: '💥', color: '#ff6f00' } },
+};
+const KILL_GOLD_PER_WAVE = 2;
+const MAX_MONSTERS_GAMEOVER = 100;
+const SLOW_DURATION = 2; // seconds
+const MONSTER_BASE_RESIST = 0;    // 基础抗性（减伤比例）
+const MONSTER_RESIST_SCALE = 0.008; // 每波增加0.8%抗性
+const MONSTER_RESIST_CAP = 0.35;    // 抗性上限 35%
+
+// ======================== 工具函数 ========================
+function dist(x1, y1, x2, y2) {
+  const dx = x1 - x2, dy = y1 - y2;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function lerpColor(a, b, t) {
+  // a, b are [r,g,b], t in [0,1]
+  return [
+    Math.round(a[0] + (b[0] - a[0]) * t),
+    Math.round(a[1] + (b[1] - a[1]) * t),
+    Math.round(a[2] + (b[2] - a[2]) * t),
+  ];
+}
+
+function hpColor(ratio) {
+  // 防止 NaN/Infinity 渗透到 rgb 通道
+  if (typeof ratio !== 'number' || !Number.isFinite(ratio)) ratio = 1;
+  ratio = Math.max(0, Math.min(1, ratio));
+  // green -> yellow -> red
+  const green = [76, 175, 80];
+  const yellow = [255, 235, 59];
+  const red = [244, 67, 54];
+  if (ratio > 0.5) {
+    const t = (ratio - 0.5) * 2;
+    return lerpColor(yellow, green, t);
+  } else {
+    const t = ratio * 2;
+    return lerpColor(red, yellow, t);
+  }
+}
+
+function rgbStr(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
+
+// 圆角矩形 path(用于石板/塔基座)
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  ctx.lineTo(x + rr, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+  ctx.lineTo(x, y + rr);
+  ctx.quadraticCurveTo(x, y, x + rr, y);
+  ctx.closePath();
+}
+
+// 点到线段距离
+function distPointSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const x = ax + t * dx, y = ay + t * dy;
+  const ex = px - x, ey = py - y;
+  return Math.sqrt(ex * ex + ey * ey);
+}
+
+// ======================== 数值安全工具 ========================
+// 防止加减乘除产生 NaN / Infinity,溢出时钳到 [min, max]
+function safeNum(v, min, max) {
+  if (typeof v !== 'number' || Number.isNaN(v)) return min;
+  if (v === Infinity) return max;
+  if (v === -Infinity) return min;
+  if (v > max) return max;
+  if (v < min) return min;
+  return v;
+}
+function clamp(v, min, max) { return safeNum(v, min, max); }
+// 安全的有限正数(用于伤害/血量/金币),Infinity/NaN 一律钳到 0
+function safeFinite(v, fallback = 0) {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return fallback;
+  return v;
+}
+// 安全的加法:溢出时返回上限
+function safeAdd(a, b, cap) {
+  const aa = safeFinite(a, 0), bb = safeFinite(b, 0);
+  const r = aa + bb;
+  if (r > cap) return cap;
+  if (r < -cap) return -cap;
+  return r;
+}
+// 安全的乘法:任何一边非有限 → 返回 0
+function safeMul(a, b, cap) {
+  const aa = safeFinite(a, 0), bb = safeFinite(b, 0);
+  const r = aa * bb;
+  if (!Number.isFinite(r)) return 0;
+  if (r > cap) return cap;
+  if (r < -cap) return -cap;
+  return r;
+}
+// 安全的 Math.round:NaN/Infinity 一律 0
+function safeRound(v) {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
+  return Math.round(v);
+}
+
+// ======================== 游戏对象 ========================
+
+/** 飘字/粒子 */
+class Particle {
+  constructor(x, y, text, color, duration) {
+    this.x = x;
+    this.y = y;
+    this.text = text;
+    this.color = color;
+    this.duration = duration || 1.5;
+    this.elapsed = 0;
+    this.alive = true;
+  }
+  update(dt) {
+    this.elapsed += dt;
+    this.y -= 30 * dt; // float up
+    if (this.elapsed >= this.duration) this.alive = false;
+  }
+  draw(ctx) {
+    const alpha = Math.max(0, 1 - this.elapsed / this.duration);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = this.color;
+    ctx.textAlign = 'center';
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+}
+
+/** 迁塔轨迹(从旧位置画一道弧线到新位置) */
+class TrailParticle {
+  constructor(x0, y0, x1, y1, color) {
+    this.x0 = x0; this.y0 = y0; this.x1 = x1; this.y1 = y1;
+    this.color = color;
+    this.duration = 0.45; this.elapsed = 0; this.alive = true;
+  }
+  update(dt) { this.elapsed += dt; if (this.elapsed >= this.duration) this.alive = false; }
+  draw(ctx) {
+    const t = Math.min(1, this.elapsed / this.duration);
+    const x = this.x0 + (this.x1 - this.x0) * t;
+    const y = this.y0 + (this.y1 - this.y0) * t;
+    ctx.save();
+    // 头光点
+    ctx.fillStyle = this.color;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // 拖尾线
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(this.x0, this.y0);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    // 旧位置残影
+    ctx.globalAlpha = (1 - t) * 0.5;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(this.x0, this.y0, 14, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+
+/** 合并/升级瞬间扩散环 */
+class MergeBurst {
+  constructor(x, y, color) {
+    this.x = x; this.y = y; this.color = color;
+    this.duration = 0.55; this.elapsed = 0; this.alive = true;
+    this.r0 = 14; this.r1 = 60;
+  }
+  update(dt) { this.elapsed += dt; if (this.elapsed >= this.duration) this.alive = false; }
+  draw(ctx) {
+    const t = this.elapsed / this.duration;
+    const r = this.r0 + (this.r1 - this.r0) * t;
+    const alpha = 1 - t;
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = alpha * 0.45;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 0.7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+/** 伤害飘字（按塔类型着色：火塔红 / 水塔皇家蓝 / 冰塔冰色） */
+class DamageParticle extends Particle {
+  constructor(x, y, dmg, isCrit, towerType) {
+    // 普攻:按塔类型着色,3 种塔颜色拉开差异
+    // 暴击:同色但更深、更亮、带强光晕
+    //   火  = 深红 + 亮红光晕
+    //   水  = 深紫蓝 + 亮皇家蓝光晕
+    //   冰  = 深青 + 冰蓝光晕 (原版冰色)
+    let color = '#ffffff';
+    if (towerType === 'fire') {
+      color = '#ff1744';       // 火:亮红
+    } else if (towerType === 'water') {
+      color = '#3d5afe';       // 水:皇家蓝(偏紫,和水塔的青色明显分开)
+    } else if (towerType === 'ice') {
+      color = '#80deea';       // 冰:浅冰色(原版配色)
+    } else if (isCrit) {
+      color = '#ffeb3b';       // 暴击无塔类型时的兜底金色
+    }
+    super(x, y, '', color, isCrit ? 1.5 : 1.0);
+    this.dmg = dmg;
+    this.isCrit = isCrit;
+    this.towerType = towerType;
+    this.startX = x + (Math.random() - 0.5) * 10; // 轻微随机偏移
+    this.floatSpeed = isCrit ? 45 : 30;
+    this.scale = isCrit ? 1.4 : 1.0;
+    this.shakePhase = Math.random() * Math.PI * 2; // 暴击抖动相位
+  }
+  update(dt) {
+    this.elapsed += dt;
+    this.y -= this.floatSpeed * dt;
+    if (this.isCrit) {
+      // 暴击时水平抖动
+      this.x = this.startX + Math.sin(this.shakePhase + this.elapsed * 12) * 4 * (1 - this.elapsed / this.duration);
+    }
+    if (this.elapsed >= this.duration) this.alive = false;
+  }
+  draw(ctx) {
+    const alpha = Math.max(0, 1 - this.elapsed / this.duration);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (this.isCrit) {
+      // 暴击效果:大号 + ⚡图标 + 按塔类型着色
+      // 火:深红 + 亮红光晕;水:深紫蓝 + 亮皇家蓝光晕;冰:深青 + 冰蓝光晕
+      const s = this.scale;
+      ctx.font = `bold ${Math.round(18 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // 描边 + 填充 + 阴影都按塔类型
+      let critFill = '#ffeb3b', critShadow = '#ff9800', critStroke = 'rgba(0,0,0,0.85)';
+      if (this.towerType === 'fire') {
+        critFill = '#d50000'; critShadow = '#ff1744'; critStroke = 'rgba(180,0,0,0.9)';
+      } else if (this.towerType === 'water') {
+        critFill = '#1a237e'; critShadow = '#3d5afe'; critStroke = 'rgba(20,30,120,0.95)';
+      } else if (this.towerType === 'ice') {
+        critFill = '#0097a7'; critShadow = '#4dd0e1'; critStroke = 'rgba(0,120,140,0.9)';
+      }
+      // 描边
+      ctx.strokeStyle = critStroke;
+      ctx.lineWidth = 4;
+      ctx.strokeText(`⚡${this.dmg}`, this.x, this.y);
+      // 填充 + 光晕
+      ctx.fillStyle = critFill;
+      ctx.shadowColor = critShadow;
+      ctx.shadowBlur = 12;
+      ctx.fillText(`⚡${this.dmg}`, this.x, this.y);
+    } else {
+      // 普攻效果:塔类型颜色 + 黑色描边
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(`${this.dmg}`, this.x, this.y);
+      // 塔类型颜色填充 + 阴影
+      ctx.fillStyle = this.color;
+      if (this.towerType === 'fire') {
+        ctx.shadowColor = '#ff5722';
+        ctx.shadowBlur = 6;
+      } else if (this.towerType === 'water') {
+        ctx.shadowColor = '#1a237e';
+        ctx.shadowBlur = 6;
+      } else if (this.towerType === 'ice') {
+        ctx.shadowColor = '#00bcd4';
+        ctx.shadowBlur = 6;
+      }
+      ctx.fillText(`${this.dmg}`, this.x, this.y);
+    }
+    ctx.restore();
+  }
+}
+
+/** 元素反应飘字 (蒸发/冻结/融化) */
+class ReactionParticle extends Particle {
+  constructor(x, y, label, visual) {
+    const color = (visual && visual.color) || '#fff';
+    super(x, y, '', color, 1.6);
+    this.label = label;       // '蒸发' | '冻结' | '融化'
+    this.icon = (visual && visual.icon) || '✨';
+    this.startX = x;
+    this.startY = y;
+    this.floatSpeed = 28;
+    this.scale = 1.0;
+    this.pulsePhase = Math.random() * Math.PI * 2;
+  }
+  draw(ctx) {
+    const alpha = Math.max(0, 1 - this.elapsed / this.duration);
+    const s = this.scale * (1 + 0.25 * Math.sin(this.pulsePhase + this.elapsed * 8));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // 图标
+    ctx.font = `bold ${Math.round(20 * s)}px sans-serif`;
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur = 12;
+    ctx.fillText(this.icon, this.x, this.y);
+    // 标签
+    ctx.font = `bold ${Math.round(13 * s)}px sans-serif`;
+    ctx.shadowBlur = 6;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.lineWidth = 3;
+    ctx.strokeText(this.label, this.x, this.y + 18);
+    ctx.fillStyle = this.color;
+    ctx.fillText(this.label, this.x, this.y + 18);
+    ctx.restore();
+  }
+}
+
+/** 子弹/攻击线 */
+class Projectile {
+  constructor(fromX, fromY, target, tower) {
+    this.x = fromX;
+    this.y = fromY;
+    this.target = target;
+    this.tower = tower;
+    this.speed = 400; // px/s
+    this.alive = true;
+    // 伤害计算:经 getAtk() 已经钳过,这里再保险一次
+    let atk = safeFinite(tower.getAtk(), 0);
+    this.isCrit = Math.random() < tower.critRate;
+    if (this.isCrit) {
+      const cd = safeFinite(tower.critDamage, 1);
+      atk = safeMul(atk, cd, MAX_SAFE_ATK);
+    }
+    this.damage = safeRound(safeNum(atk, 0, MAX_SAFE_ATK));
+  }
+  update(dt) {
+    if (!this.target.alive) { this.alive = false; return; }
+    const dx = this.target.x - this.x;
+    const dy = this.target.y - this.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 8) {
+      this.hit();
+      this.alive = false;
+      return;
+    }
+    const move = this.speed * dt;
+    this.x += (dx / d) * move;
+    this.y += (dy / d) * move;
+  }
+  hit() {
+    const t = this.target;
+    const tw = this.tower;
+    t.takeDamage(this.damage, this.isCrit, tw.type, tw);
+
+    // Water tower splash
+    if (tw.type === 'water' && tw.getSplash() > 0) {
+      const monsters = game.monsters.filter(m => m.alive && m !== t && dist(m.x, m.y, t.x, t.y) <= tw.getSplash());
+      const targets = monsters.slice(0, tw.getSplashMax());
+      for (const m of targets) {
+        const splashDmg = safeRound(safeMul(this.damage, 0.5, MAX_SAFE_ATK));
+        m.takeDamage(splashDmg, false, tw.type, tw);
+      }
+    }
+
+    // Ice tower slow
+    if (tw.type === 'ice') {
+      t.applySlow(tw.getSlowRate(), tw.getSlowDur());
+    }
+  }
+  draw(ctx) {
+    ctx.save();
+    const color = this.isCrit ? '#ffeb3b' : this.tower.def.color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.isCrit ? 5 : 3, 0, Math.PI * 2);
+    ctx.fill();
+    if (this.isCrit) {
+      ctx.strokeStyle = '#ffeb3b';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+/** 防御塔 */
+class Tower {
+  constructor(type, x, y) {
+    this.type = type;
+    this.def = TOWER_DEFS[type];
+    this.x = x;
+    this.y = y;
+    this.level = 1;
+    this.cooldown = 0;
+    this.critRate = 0.05;
+    this.critDamage = 1.5;
+    this.bonusRange = 0;
+    this.bonusSpeed = 0;
+    this.items = []; // item log
+    this.totalDamage = 0;
+    // 预算颜色变体(每帧 draw 都用,提前算一次)
+    this._colorLight = this._lighten(this.def.color, 0.25);
+    this._colorMid = this.def.color;
+    this._colorDark = this._darken(this.def.color, 0.25);
+    this._colorAccent = this._lighten(this.def.color, 0.55);
+  }
+  getAtk() {
+    const ult = this.level >= ULTIMATE_LEVEL ? this.def.ult.atkMul : 1;
+    // 线性增长:每升一级 +12% 基础攻击(叠加)
+    // level=1 → baseAtk * 1.00
+    // level=2 → baseAtk * 1.12
+    // level=N → baseAtk * (1 + 0.12 * (N-1))
+    // 平衡依据:与怪物血量 (50 * (1 + 0.22 * wave)) + 抗性 (0.8%/wave, 上限 35%) 适配
+    // 经验:Lv.50 终极火塔打 wave 50 怪 ≈ 5-6 下,Lv.100 终极火塔打 wave 100 怪 ≈ 5-6 下
+    const lv = safeNum(safeFinite(this.level, 1), 1, 1e6);
+    const growth = 1 + 0.12 * (lv - 1);
+    const raw = this.def.baseAtk * growth * ult;
+    // 三道护栏:非有限→0, 上限钳到 MAX_SAFE_ATK
+    return safeRound(safeNum(raw, 0, MAX_SAFE_ATK));
+  }
+  getRange() {
+    // 升级不再增加攻击范围,只在终极形态 + 道具 bonusRange 时改变
+    const ult = this.level >= ULTIMATE_LEVEL ? this.def.ult.rangeMul : 1;
+    return this.def.baseRange * ult + this.bonusRange;
+  }
+  getSplash() {
+    return this.level >= ULTIMATE_LEVEL && this.def.ult.splash > 0 ? this.def.ult.splash : this.def.splash;
+  }
+  getSplashMax() {
+    return this.level >= ULTIMATE_LEVEL && this.def.ult.splashMax > 0 ? this.def.ult.splashMax : (this.def.splashMax || 0);
+  }
+  getSlowRate() {
+    return this.level >= ULTIMATE_LEVEL && this.def.ult.slowRate > 0 ? this.def.ult.slowRate : this.def.slowRate;
+  }
+  getSlowDur() {
+    return this.level >= ULTIMATE_LEVEL && this.def.ult.slowDur > 0 ? this.def.ult.slowDur : this.def.slowDur;
+  }
+  isUltimate() { return this.level >= ULTIMATE_LEVEL; }
+  getSpeed() {
+    return this.def.baseSpeed + this.bonusSpeed;
+  }
+  getUpgradeCost() {
+    return UPGRADE_COST_PER_LEVEL;
+  }
+  upgrade() {
+    // 即使 UI 绕过 tryUpgradeTower 直接调 upgrade() 也要防溢出
+    const cur = safeFinite(this.level, 1);
+    // 实际升级:允许向上无限,但 UI 状态用 getAtk 钳过,数值安全
+    this.level = cur + 1;
+  }
+  canShoot() {
+    return this.cooldown <= 0;
+  }
+  resetCooldown() {
+    this.cooldown = 1.0 / this.getSpeed();
+  }
+  findTarget(monsters) {
+    let best = null;
+    let bestProgress = -1;
+    const range = this.getRange();
+    for (const m of monsters) {
+      if (!m.alive) continue;
+      if (dist(this.x, this.y, m.x, m.y) <= range) {
+        // Prioritize furthest along the path
+        if (m.pathProgress > bestProgress) {
+          best = m;
+          bestProgress = m.pathProgress;
+        }
+      }
+    }
+    return best;
+  }
+  applyItem(item) {
+    // 委托给 item.apply,上限判断 + 数值更新都在 ITEM_DEFS 一处定义
+    if (!item.apply(this)) return false;
+    this.items.push(item.name);
+    return true;
+  }
+  update(dt) {
+    if (this.cooldown > 0) this.cooldown -= dt;
+  }
+  draw(ctx, selected) {
+    const range = this.getRange();
+    // 选中范围圈
+    if (selected) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, range, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    const size = Math.min(14 + this.level * 1.5, 26);
+    const t = performance.now() / 1000;
+    const bobY = Math.sin(t * 2 + this.x * 0.01) * 1.2; // 塔身轻浮
+    const rot = t * 0.8; // 顶部旋转
+
+    ctx.save();
+    // === 影子 ===
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(this.x, this.y + size + 2, size * 0.95, size * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === 底座:木质方台 ===
+    const baseW = size * 1.8, baseH = size * 0.6;
+    ctx.fillStyle = '#3a2a1a';
+    roundRect(ctx, this.x - baseW / 2, this.y + size * 0.45, baseW, baseH, 3);
+    ctx.fill();
+    // 木纹
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(this.x - baseW / 2 + 2, this.y + size * 0.45 + baseH * 0.35);
+    ctx.lineTo(this.x + baseW / 2 - 2, this.y + size * 0.45 + baseH * 0.35);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,210,150,0.15)';
+    ctx.beginPath();
+    ctx.moveTo(this.x - baseW / 2 + 2, this.y + size * 0.45 + baseH * 0.7);
+    ctx.lineTo(this.x + baseW / 2 - 2, this.y + size * 0.45 + baseH * 0.7);
+    ctx.stroke();
+    // 底座高光
+    ctx.fillStyle = 'rgba(255,210,160,0.18)';
+    roundRect(ctx, this.x - baseW / 2 + 1, this.y + size * 0.45 + 1, baseW - 2, baseH * 0.35, 2);
+    ctx.fill();
+
+    // === 主体:圆角方塔身 ===
+    const bodyX = this.x - size * 0.7;
+    const bodyY = this.y - size * 0.55 + bobY;
+    const bodyW = size * 1.4;
+    const bodyH = size * 1.3;
+
+    // 外发光
+    ctx.shadowColor = this.def.color;
+    ctx.shadowBlur = selected ? 18 : 10;
+    // 主体填充
+    const bodyGrad = ctx.createLinearGradient(bodyX, bodyY, bodyX, bodyY + bodyH);
+    bodyGrad.addColorStop(0, this._colorLight);
+    bodyGrad.addColorStop(0.55, this._colorMid);
+    bodyGrad.addColorStop(1, this._colorDark);
+    ctx.fillStyle = bodyGrad;
+    roundRect(ctx, bodyX, bodyY, bodyW, bodyH, 4);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 顶部亮边
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bodyX + 3, bodyY + 1.5);
+    ctx.lineTo(bodyX + bodyW - 3, bodyY + 1.5);
+    ctx.stroke();
+    // 内部装饰线
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(bodyX + 3, bodyY + bodyH - 2);
+    ctx.lineTo(bodyX + bodyW - 3, bodyY + bodyH - 2);
+    ctx.stroke();
+
+    // 塔身中间一条能量腰线(随等级颜色加深)
+    ctx.fillStyle = this._colorAccent;
+    ctx.fillRect(bodyX + 2, bodyY + bodyH * 0.45, bodyW - 4, 2);
+
+    // === 顶部装饰(每种塔不同) ===
+    ctx.save();
+    ctx.translate(this.x, bodyY - 2);
+    ctx.rotate(rot);
+    this._drawTowerTop(ctx, size, t);
+    ctx.restore();
+
+    // 等级徽章:已移除 (圆圈太小,等级文字会溢出)
+
+    // === 终极形态:外环旋转 ===
+    if (this.isUltimate()) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(-t * 0.6);
+      ctx.strokeStyle = this.def.color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(0, 0, size * 1.25, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      // 终极星点
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      for (let i = 0; i < 6; i++) {
+        ctx.rotate(Math.PI / 3);
+        ctx.fillStyle = '#fff7a8';
+        ctx.beginPath();
+        ctx.arc(size * 1.25, 0, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 塔顶:每种塔不同(画出圆心在 0,0 处的图形)
+  _drawTowerTop(ctx, size, t) {
+    const r = size * 0.55;
+    if (this.type === 'fire') {
+      // 火焰:三层 + 摆动
+      const flick = Math.sin(t * 9) * 0.15;
+      // 外焰
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.2);
+      ctx.quadraticCurveTo(r * 0.5, -r * 0.4 + flick * r, 0, r * 0.2);
+      ctx.quadraticCurveTo(-r * 0.5, -r * 0.4 - flick * r, 0, -r * 1.2);
+      ctx.fill();
+      // 中焰
+      ctx.fillStyle = '#ff9800';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.9 + flick * 2);
+      ctx.quadraticCurveTo(r * 0.35, -r * 0.2, 0, r * 0.1);
+      ctx.quadraticCurveTo(-r * 0.35, -r * 0.2, 0, -r * 0.9 + flick * 2);
+      ctx.fill();
+      // 内焰
+      ctx.fillStyle = '#fff3a0';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.5);
+      ctx.quadraticCurveTo(r * 0.18, -r * 0.1, 0, r * 0.05);
+      ctx.quadraticCurveTo(-r * 0.18, -r * 0.1, 0, -r * 0.5);
+      ctx.fill();
+      // 火星
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc((Math.sin(t * 4) * r * 0.2), (-r * 0.8 + Math.cos(t * 5) * r * 0.1), 1, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.type === 'water') {
+      // 水球 + 旋转水滴
+      const orbR = r * 0.7;
+      // 外环(深水蓝)
+      ctx.fillStyle = '#0d47a1';
+      ctx.beginPath(); ctx.arc(0, 0, orbR + 1.5, 0, Math.PI * 2); ctx.fill();
+      // 主体
+      const wg = ctx.createRadialGradient(-orbR * 0.3, -orbR * 0.3, orbR * 0.1, 0, 0, orbR);
+      wg.addColorStop(0, '#b3e5fc');
+      wg.addColorStop(0.6, '#2196f3');
+      wg.addColorStop(1, '#0d47a1');
+      ctx.fillStyle = wg;
+      ctx.beginPath(); ctx.arc(0, 0, orbR, 0, Math.PI * 2); ctx.fill();
+      // 高光
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath(); ctx.arc(-orbR * 0.35, -orbR * 0.35, orbR * 0.28, 0, Math.PI * 2); ctx.fill();
+      // 旋转的小水滴
+      for (let i = 0; i < 3; i++) {
+        const a = t * 1.5 + i * Math.PI * 2 / 3;
+        const dropX = Math.cos(a) * orbR * 1.2;
+        const dropY = Math.sin(a) * orbR * 1.2;
+        ctx.fillStyle = '#4fc3f7';
+        ctx.beginPath();
+        ctx.moveTo(dropX, dropY - 2);
+        ctx.quadraticCurveTo(dropX + 1.5, dropY, dropX, dropY + 2);
+        ctx.quadraticCurveTo(dropX - 1.5, dropY, dropX, dropY - 2);
+        ctx.fill();
+      }
+    } else if (this.type === 'ice') {
+      // 冰晶:中心 + 6 根尖刺
+      const cR = r * 0.4;
+      // 中心
+      ctx.fillStyle = '#e1f5fe';
+      ctx.beginPath(); ctx.arc(0, 0, cR, 0, Math.PI * 2); ctx.fill();
+      // 6 根冰刺
+      ctx.fillStyle = '#80deea';
+      ctx.strokeStyle = '#00acc1';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const len = r * (1.0 + (i % 2) * 0.3);
+        ctx.save();
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.moveTo(0, -cR);
+        ctx.lineTo(2, -cR - len * 0.3);
+        ctx.lineTo(0, -cR - len);
+        ctx.lineTo(-2, -cR - len * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      // 内层小冰晶
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.arc(0, 0, cR * 0.4, 0, Math.PI * 2); ctx.fill();
+      // 飘雪(随机白点)
+      for (let i = 0; i < 3; i++) {
+        const sx = Math.sin(t * 1.2 + i * 1.7) * r * 0.7;
+        const sy = -r * 1.3 + ((t * 8 + i * 13) % 8);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.beginPath(); ctx.arc(sx, sy, 0.9, 0, Math.PI * 2); ctx.fill();
+      }
+    } else {
+      // 通用兜底
+      ctx.fillStyle = this.def.color;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // 颜色工具:加亮 / 加暗
+  _lighten(hex, amt) {
+    const c = this._parseHex(hex);
+    if (!c) return hex;
+    return `rgb(${Math.min(255, c[0] + (255 - c[0]) * amt) | 0},${Math.min(255, c[1] + (255 - c[1]) * amt) | 0},${Math.min(255, c[2] + (255 - c[2]) * amt) | 0})`;
+  }
+  _darken(hex, amt) {
+    const c = this._parseHex(hex);
+    if (!c) return hex;
+    return `rgb(${(c[0] * (1 - amt)) | 0},${(c[1] * (1 - amt)) | 0},${(c[2] * (1 - amt)) | 0})`;
+  }
+  _parseHex(hex) {
+    if (typeof hex !== 'string' || hex.length < 7) return null;
+    if (hex[0] === '#') hex = hex.slice(1);
+    if (hex.length < 6) return null;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+    return [r, g, b];
+  }
+}
+
+/** 怪物 */
+class Monster {
+  constructor(wave, waypoints, isElite = false) {
+    this.wave = wave;
+    this.isElite = !!isElite;
+    // wave 钳到安全范围,防止 (1 + wave * 0.22) 溢出
+    const safeWave = Math.max(0, Math.min(MAX_SAFE_WAVE, safeFinite(wave, 0)));
+    // 精英怪:血量 × 5,体型 × 1.45,速度 × 0.85
+    const hpMult = this.isElite ? ELITE_HP_MULT : 1;
+    const spMult = this.isElite ? ELITE_SPEED_MULT : 1;
+    const szMult = this.isElite ? ELITE_SIZE_MULT : 1;
+    this.maxHp = safeRound(safeNum(MONSTER_BASE_HP * (1 + safeWave * MONSTER_HP_SCALE) * hpMult, 1, MAX_SAFE_HP));
+    this.hp = this.maxHp;
+    // 抗性 = 基础 + 精英加成(精英 +10%,仍受全局上限约束)
+    const baseResist = Math.min(MONSTER_RESIST_CAP, MONSTER_BASE_RESIST + safeWave * MONSTER_RESIST_SCALE);
+    this.resist = this.isElite
+      ? Math.min(MONSTER_RESIST_CAP, baseResist + ELITE_RESIST_BONUS)
+      : baseResist;
+    this.baseSpeed = MONSTER_SPEED * spMult;
+    this.speed = this.baseSpeed;
+    this.slowTimer = 0;
+    this.slowRate = 0;
+    this.alive = true;
+    this.waypoints = waypoints;
+    this.wpIndex = 0;
+    this.x = waypoints[0].x;
+    this.y = waypoints[0].y;
+    this.pathProgress = 0; // total distance traveled
+    this.radius = 10 * szMult;
+    // === 元素反应状态 ===
+    this.element = null;      // 'fire' | 'water' | 'ice' | null — 当前附着的元素
+    this.elementTimer = 0;    // 元素剩余持续时间(秒)
+    this.frozenTimer = 0;     // 冻结剩余时间(秒) — 期间速度=0, 额外受 1.5x 伤害
+    this.killerTower = null;  // 击杀本怪的那座塔(决定道具归属), 多塔联手时取最后一击
+  }
+  takeDamage(rawDmg, isCrit, towerType, killerTower) {
+    if (!this.alive) return;
+    // === 元素反应判定 ===
+    // 1) 已有元素附着 + 不同元素攻击 => 触发反应(蒸发/冻结/融化)
+    // 2) 无元素 => 附加新元素(持续 5s)
+    // 3) 同元素攻击 => 刷新元素计时器, 不反应
+    // 4) 冻结中受击: 额外 1.5x 伤害(只对"之前"就被冻结的攻击生效,本次造成冻结的攻击不计)
+    const frozenBefore = this.frozenTimer > 0;
+    let reactionMul = 1.0;
+    let reactionLabel = null;
+    let reactionVisual = null;
+    let isReaction = false;
+    if (towerType && (towerType === 'fire' || towerType === 'water' || towerType === 'ice')) {
+      if (this.element && this.element !== towerType) {
+        // 已有元素附着 + 不同元素 => 触发反应
+        const key = towerType + '_' + this.element;
+        const react = ELEMENT_REACTIONS[key];
+        if (react) {
+          reactionMul = react.mul;
+          reactionLabel = react.label;
+          reactionVisual = react.visual;
+          isReaction = true;
+          // 冻结反应额外: 标记 frozenTimer
+          if (react.freeze) {
+            this.frozenTimer = Math.max(this.frozenTimer, FREEZE_DURATION);
+          }
+          // 反应后清掉元素
+          this.element = null;
+          this.elementTimer = 0;
+        }
+      } else if (!this.element) {
+        // 无元素 => 附加新元素
+        this.element = towerType;
+        this.elementTimer = ELEMENT_DURATION;
+      }
+      // 同元素 (e.g. 火+火) => 刷新计时器, 不反应
+      else if (this.element === towerType) {
+        this.elementTimer = ELEMENT_DURATION;
+      }
+    }
+    // === 冻结中额外伤害(1.5x),仅当"之前"就被冻结 ===
+    if (frozenBefore) {
+      reactionMul = reactionMul * REACT_FREEZE;
+    }
+    // safeNum 直接处理 Infinity→MAX_SAFE_ATK / NaN→0,不用 safeFinite 二次包裹
+    const cleanDmg = safeNum(rawDmg, 0, MAX_SAFE_ATK);
+    const factor = safeNum(1 - this.resist, 0, 1);
+    const finalMul = safeNum(reactionMul, 0, 10); // 反应系数封顶 10x 防呆
+    const actualDmg = Math.max(1, safeRound(safeMul(safeMul(cleanDmg, factor, MAX_SAFE_ATK), finalMul, MAX_SAFE_ATK)));
+    this.hp = safeNum(this.hp - actualDmg, 0, this.maxHp);
+    // 飘字：普攻按塔类型颜色,暴击大号金色+⚡图标
+    game.addParticle(new DamageParticle(this.x, this.y - 20, actualDmg, isCrit, towerType));
+    // 反应飘字
+    if (isReaction && reactionLabel) {
+      game.addParticle(new ReactionParticle(this.x, this.y - 40, reactionLabel, reactionVisual));
+    }
+    if (this.hp <= 0) {
+      this.hp = 0;
+      this.alive = false;
+      this.killerTower = killerTower || this.killerTower || null;
+      game.onMonsterKilled(this, this.killerTower);
+    }
+  }
+  applySlow(rate, duration) {
+    this.slowRate = Math.max(this.slowRate, rate);
+    this.slowTimer = Math.max(this.slowTimer, duration);
+  }
+  update(dt) {
+    if (!this.alive) return;
+    // Slow
+    if (this.slowTimer > 0) {
+      this.slowTimer = Math.max(0, this.slowTimer - dt);
+      const slowFactor = safeNum(1 - this.slowRate, 0, 1);
+      this.speed = this.baseSpeed * slowFactor;
+      if (this.slowTimer <= 0) {
+        this.slowRate = 0;
+        this.speed = this.baseSpeed;
+      }
+    }
+    // Element timer countdown
+    if (this.elementTimer > 0) {
+      this.elementTimer = Math.max(0, this.elementTimer - dt);
+      if (this.elementTimer <= 0) this.element = null;
+    }
+    // Frozen timer countdown (frozen = movement stops)
+    if (this.frozenTimer > 0) {
+      this.frozenTimer = Math.max(0, this.frozenTimer - dt);
+    }
+    // Move along waypoints
+    if (this.wpIndex >= this.waypoints.length) {
+      // Loop: go back to waypoint index 1 (the first edge point)
+      this.wpIndex = 1;
+    }
+    const target = this.waypoints[this.wpIndex];
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    // 冻结时速度为 0(被定身)
+    const effectiveSpeed = this.frozenTimer > 0 ? 0 : this.speed;
+    const move = effectiveSpeed * dt;
+    if (d <= move) {
+      this.x = target.x;
+      this.y = target.y;
+      this.pathProgress += d;
+      this.wpIndex++;
+      if (this.wpIndex >= this.waypoints.length) {
+        this.wpIndex = 1; // loop back
+      }
+    } else if (d > 0) {
+      this.x += (dx / d) * move;
+      this.y += (dy / d) * move;
+      this.pathProgress += move;
+    }
+  }
+  draw(ctx) {
+    if (!this.alive) return;
+    // 钳 ratio 防止 NaN/Infinity 渗透到 hpColor
+    const ratio = this.maxHp > 0 ? this.hp / this.maxHp : 0;
+    const color = hpColor(ratio);
+    // 用 game._timeNow(共享时间戳)避免每怪单独读 performance.now()
+    const t = (game._timeNow != null) ? game._timeNow : performance.now() / 1000;
+    const wobble = Math.sin(t * 5 + this.x * 0.1) * 0.12; // 身体弹性
+    const walkCycle = Math.sin(t * 8) * 0.18;
+
+    ctx.save();
+    // 减速光环
+    if (this.slowTimer > 0) {
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    // 阴影
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(this.x, this.y + this.radius * 0.85, this.radius * 0.9, this.radius * 0.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 身体:从基础色 → 顶部亮 → 底部暗的径向渐变
+    const r = this.radius;
+    const grad = ctx.createRadialGradient(this.x - r * 0.3, this.y - r * 0.5, r * 0.1, this.x, this.y, r * 1.2);
+    grad.addColorStop(0, this._lightenCol(color, 0.45));
+    grad.addColorStop(0.5, rgbStr(color));
+    grad.addColorStop(1, this._darkenCol(color, 0.3));
+    ctx.fillStyle = grad;
+    // 略微椭圆的果冻身体(用 scale 模拟)
+    ctx.save();
+    ctx.translate(this.x, this.y + wobble * r);
+    ctx.scale(1 + wobble, 1 - wobble);
+    // 身体(blob 形)
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+    // 顶高光
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.3, -r * 0.45, r * 0.35, r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // 眼睛
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-r * 0.32, -r * 0.12, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r * 0.32, -r * 0.12, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    // 瞳孔(看向路径方向 = right)
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath(); ctx.arc(-r * 0.26, -r * 0.1, r * 0.10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r * 0.38, -r * 0.1, r * 0.10, 0, Math.PI * 2); ctx.fill();
+    // 嘴巴(线)
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, r * 0.18, r * 0.25, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    // 触角
+    ctx.strokeStyle = rgbStr(color);
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, -r * 0.6);
+    ctx.quadraticCurveTo(-r * 0.7, -r * 1.1 + walkCycle * r, -r * 0.6 + walkCycle * 2, -r * 1.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(r * 0.5, -r * 0.6);
+    ctx.quadraticCurveTo(r * 0.7, -r * 1.1 - walkCycle * r, r * 0.6 - walkCycle * 2, -r * 1.2);
+    ctx.stroke();
+    // 触角尖
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-r * 0.6 + walkCycle * 2, -r * 1.2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(r * 0.6 - walkCycle * 2, -r * 1.2, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // === 元素附着图标 (头顶) ===
+    if (this.element) {
+      const ev = ELEMENT_VISUAL[this.element] || ELEMENT_VISUAL.none;
+      const elY = this.y - r - 8;
+      // 脉冲背景
+      const pulseR = 7 + Math.sin(t * 6) * 1.2;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.arc(this.x, elY, pulseR, 0, Math.PI * 2);
+      ctx.fill();
+      // 元素描边圆
+      ctx.strokeStyle = ev.color;
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = ev.glow;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(this.x, elY, pulseR, 0, Math.PI * 2);
+      ctx.stroke();
+      // 图标
+      ctx.shadowBlur = 6;
+      ctx.font = `${Math.max(10, r * 0.65)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(ev.icon, this.x, elY);
+      ctx.restore();
+    }
+
+    // === 冻结状态: 半透明冰色蒙层 + 冰裂纹 ===
+    if (this.frozenTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(128, 222, 234, 0.32)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, r * 0.95, 0, Math.PI * 2);
+      ctx.fill();
+      // 冰裂纹
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(this.x - r * 0.6, this.y);
+      ctx.lineTo(this.x + r * 0.6, this.y);
+      ctx.moveTo(this.x, this.y - r * 0.6);
+      ctx.lineTo(this.x, this.y + r * 0.6);
+      ctx.moveTo(this.x - r * 0.4, this.y - r * 0.4);
+      ctx.lineTo(this.x + r * 0.4, this.y + r * 0.4);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 精英怪专属光环:金红色脉冲 + ★ 角标
+    if (this.isElite) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      // 旋转的金红光环
+      ctx.rotate(-t * 0.8);
+      ctx.strokeStyle = 'rgba(255, 180, 50, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 4 个金红角点
+      for (let i = 0; i < 4; i++) {
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = '#ffb432';
+        ctx.beginPath();
+        ctx.arc(r + 5, 0, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      // ★ 角标
+      ctx.fillStyle = '#ffeb3b';
+      ctx.strokeStyle = '#5b2a00';
+      ctx.lineWidth = 1.5;
+      ctx.font = `bold ${Math.max(11, r * 0.55)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const starY = this.y - r - 10;
+      ctx.strokeText('★', this.x, starY);
+      ctx.fillText('★', this.x, starY);
+    }
+
+    // 抗性光环(>10% 时持续显示)
+    if (this.resist > 0.1) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(-t * 0.5);
+      ctx.strokeStyle = 'rgba(180, 130, 255, 0.65)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    // HP 条
+    const barW = 26, barH = 4;
+    const barX = this.x - barW / 2;
+    const barY = this.y - r - 9;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(barX, barY, barW, barH);
+    const hpCol = `rgb(${color[0]},${color[1]},${color[2]})`;
+    ctx.fillStyle = hpCol;
+    ctx.fillRect(barX, barY, barW * ratio, barH);
+    // HP 描边
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    // (抗性数值/图标已隐藏)
+
+    ctx.restore();
+  }
+
+  _lightenCol(c, amt) {
+    if (!Array.isArray(c) || c.length < 3) return 'rgb(255,255,255)';
+    return `rgb(${Math.min(255, safeFinite(c[0], 0) + (255 - safeFinite(c[0], 0)) * safeFinite(amt, 0)) | 0},${Math.min(255, safeFinite(c[1], 0) + (255 - safeFinite(c[1], 0)) * safeFinite(amt, 0)) | 0},${Math.min(255, safeFinite(c[2], 0) + (255 - safeFinite(c[2], 0)) * safeFinite(amt, 0)) | 0})`;
+  }
+  _darkenCol(c, amt) {
+    if (!Array.isArray(c) || c.length < 3) return 'rgb(0,0,0)';
+    const f = safeNum(1 - safeFinite(amt, 0), 0, 1);
+    return `rgb(${(safeFinite(c[0], 0) * f) | 0},${(safeFinite(c[1], 0) * f) | 0},${(safeFinite(c[2], 0) * f) | 0})`;
+  }
+}
+
+// ======================== 游戏状态 ========================
+const game = {
+  canvas: null,
+  ctx: null,
+  W: 0,
+  H: 0,
+  scale: 1,
+  gold: INITIAL_GOLD,
+  wave: 0,
+  kills: 0,
+  towers: [],
+  monsters: [],
+  projectiles: [],
+  particles: [],
+  selectedTowerType: null,
+  selectedTower: null,
+  gameOver: false,
+  paused: false,        // 暂停开关(loop 跳过 update,draw 仍跑)
+  // Wave state
+  waveTimer: 3, // first wave starts after 3 seconds
+  waveActive: false,
+  monstersToSpawn: 0,
+  spawnTimer: 0,
+  spawnedThisWave: 0,
+  waypoints: [],
+  eliteQueued: false,    // 当前波是否要出精英怪
+  eliteSpawned: false,   // 本波精英怪是否已生成
+  // Timing
+  lastTime: 0,
+  hoverPos: null,
+  // 存档
+  SAVE_KEY: 'tafang_save',
+  autoSaveTimer: null,
+
+  // ----- 存档 -----
+  getSaveData() {
+    return {
+      version: 1,
+      savedAt: Date.now(),
+      state: {
+        gold: safeFinite(this.gold, INITIAL_GOLD),
+        wave: safeFinite(this.wave, 0),
+        kills: safeFinite(this.kills, 0),
+        towers: this.towers.map(t => ({
+          type: t.type,
+          x: Math.round(t.x),
+          y: Math.round(t.y),
+          level: safeFinite(t.level, 1),
+          critRate: safeFinite(t.critRate, 0.05),
+          critDamage: safeFinite(t.critDamage, 1.5),
+          bonusRange: safeFinite(t.bonusRange, 0),
+          bonusSpeed: safeFinite(t.bonusSpeed, 0),
+          items: t.items.slice(),
+          totalDamage: safeFinite(t.totalDamage, 0),
+        })),
+      },
+    };
+  },
+
+  saveGame() {
+    try {
+      const data = this.getSaveData();
+      localStorage.setItem(this.SAVE_KEY, JSON.stringify(data));
+    } catch (e) {
+      // localStorage 满了或不可用，静默失败
+    }
+  },
+
+  loadGame() {
+    try {
+      const raw = localStorage.getItem(this.SAVE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !data.state) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  },
+
+  clearSave() {
+    try {
+      localStorage.removeItem(this.SAVE_KEY);
+    } catch (e) {}
+  },
+
+  // 恢复游戏状态（不含场上怪物，怪物由波次重新生成）
+  restoreGame(data) {
+    const s = data.state;
+    this.gold = safeNum(safeFinite(s.gold, INITIAL_GOLD), 0, MAX_SAFE_GOLD);
+    this.wave = safeNum(safeFinite(s.wave, 0), 0, MAX_SAFE_WAVE);
+    this.kills = safeNum(safeFinite(s.kills, 0), 0, MAX_SAFE_HP);
+    // 恢复塔
+    this.towers = [];
+    if (Array.isArray(s.towers)) {
+      for (const td of s.towers) {
+        if (!TOWER_DEFS[td.type]) continue;
+        const t = new Tower(td.type, td.x, td.y);
+        t.level = safeNum(safeFinite(td.level, 1), 1, 999999);
+        t.critRate = safeNum(safeFinite(td.critRate, 0.05), 0, MAX_CRIT_RATE);
+        t.critDamage = safeNum(safeFinite(td.critDamage, 1.5), 1.5, MAX_CRIT_DMG);
+        t.bonusRange = safeNum(safeFinite(td.bonusRange, 0), 0, 999);
+        t.bonusSpeed = safeNum(safeFinite(td.bonusSpeed, 0), 0, MAX_ATK_SPEED - TOWER_DEFS[td.type].baseSpeed);
+        t.items = Array.isArray(td.items) ? td.items.slice() : [];
+        t.totalDamage = safeNum(safeFinite(td.totalDamage, 0), 0, MAX_SAFE_ATK * 1e6);
+        this.towers.push(t);
+      }
+    }
+    // 恢复后：场上无怪物，waveActive=false，等待玩家手动开始波次
+    this.monsters = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.waveActive = false;
+    this.waveTimer = 3; // 3秒后自动开始
+    this.monstersToSpawn = 0;
+    this.spawnedThisWave = 0;
+    this.spawnTimer = 0;
+    this.gameOver = false;
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this.updateUI();
+  },
+
+  // 定时自动保存（防抖：每次调用后延迟 2 秒写入，期间重复调用会重置计时器）
+  scheduleAutoSave() {
+    if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
+    this.autoSaveTimer = setTimeout(() => {
+      this.saveGame();
+      this.autoSaveTimer = null;
+    }, 2000);
+  },
+
+  init() {
+    this.canvas = document.getElementById('gameCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    // 缓存 HUD DOM 引用,避免 updateUI / update 每帧多次 getElementById
+    this.hud = {
+      waveNum: document.getElementById('waveNum'),
+      goldNum: document.getElementById('goldNum'),
+      monsterCount: document.getElementById('monsterCount'),
+      killCount: document.getElementById('killCount'),
+    };
+    // 缓存建造栏 / 塔槽位 DOM(每帧 updateUI 都要遍历,避免重复 querySelector)
+    this.buildBtns = {};
+    document.querySelectorAll('.build-btn').forEach(btn => {
+      this.buildBtns[btn.dataset.type] = btn;
+    });
+    this.towerSlotEls = {};
+    document.querySelectorAll('#towerSlots .slot').forEach(el => {
+      this.towerSlotEls[el.dataset.slot] = { el, lv: el.querySelector('i.lv') };
+    });
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
+    // Input
+    let lastTapTime = 0;
+    this.canvas.addEventListener('click', (e) => {
+      // 防抖:抑制 touch+click 重复触发(touch 已设 lastTapTime,click 在其后会跳过)
+      // 100ms 足以拦截 touch 派生的 click,又不影响鼠标快速连点(人手最快约 150ms)
+      const now = Date.now();
+      if (now - lastTapTime < 100) return;
+      lastTapTime = now;
+      const pos = this.getCanvasPos(e);
+      this.handleTap(pos.x, pos.y);
+    });
+    this.canvas.addEventListener('mousemove', (e) => {
+      const pos = this.getCanvasPos(e);
+      this.hoverPos = pos;
+    });
+    this.canvas.addEventListener('mouseleave', () => {
+      this.hoverPos = null;
+    });
+    // === 取消建塔/迁塔:右键点击画布 ===
+    this.canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();  // 阻止浏览器默认右键菜单
+      this.cancelTowerSelection();
+    });
+    // === 取消建塔/迁塔:键盘 ESC ===
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        if (this.selectedTowerType || this.selectedTower) {
+          e.preventDefault();
+          this.cancelTowerSelection();
+        }
+      }
+      // 暂停切换:P 键 / 空格键
+      if (e.key === 'p' || e.key === 'P' || e.key === ' ' || e.code === 'Space') {
+        // 防止在 input/textarea 焦点下被吞,游戏没这元素所以一般不会
+        e.preventDefault();
+        this.togglePause();
+      }
+    });
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      lastTapTime = Date.now();
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        const rect = this.canvas.getBoundingClientRect();
+        const pos = {
+          x: (touch.clientX - rect.left) * (this.W / rect.width),
+          y: (touch.clientY - rect.top) * (this.H / rect.height),
+        };
+        this.handleTap(pos.x, pos.y);
+      }
+    }, { passive: false });
+    // Build buttons
+    document.querySelectorAll('.build-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.selectTowerType(btn.dataset.type));
+    });
+    // === infoPanel 升级按钮:用内联 onclick + 全局函数绑定 ===
+    // (避免 updateUI 反复重画 innerHTML 导致 addEventListener / 委托的边角问题)
+    window.tryUpgradeClick = (n) => {
+      if (!this.gameOver && this.selectedTower) this.upgradeMulti(n);
+    };
+    document.getElementById('restartBtn').addEventListener('click', () => this.restart());
+    // === 暂停按钮 + 遮罩恢复按钮 ===
+    document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+    document.getElementById('resumeBtn').addEventListener('click', () => this.togglePause());
+    // 恢复存档按钮
+    document.getElementById('btnRestore').addEventListener('click', () => {
+      if (this._pendingRestoreData) this.restoreGame(this._pendingRestoreData);
+      const ov = document.getElementById('restoreOverlay');
+      if (ov) ov.classList.remove('show');
+      this._pendingRestoreData = null;
+    });
+    document.getElementById('btnNewGame').addEventListener('click', () => {
+      this.clearSave();
+      const ov = document.getElementById('restoreOverlay');
+      if (ov) ov.classList.remove('show');
+      this._pendingRestoreData = null;
+      this.restart();
+    });
+    this.lastTime = performance.now();
+    this.loop(this.lastTime);
+    // 尝试加载存档
+    this._checkAutoSave();
+  },
+
+  // 检查是否有存档并提示恢复
+  _checkAutoSave() {
+    const data = this.loadGame();
+    if (!data) return;
+    this._pendingRestoreData = data; // 保存供按钮使用
+    const savedAt = data.savedAt ? new Date(data.savedAt).toLocaleString('zh-CN') : '未知时间';
+    const s = data.state;
+    // 显示恢复提示
+    const overlay = document.getElementById('restoreOverlay');
+    if (overlay) {
+      document.getElementById('restoreInfo').textContent =
+        `发现存档: 波数${s.wave}, 金币$${s.gold}, 击杀${s.kills}, 塔${s.towers ? s.towers.length : 0}座\n保存于: ${savedAt}`;
+      overlay.classList.add('show');
+    }
+  },
+
+  resize() {
+    const wrap = document.getElementById('canvasWrap');
+    const maxW = wrap.clientWidth - 8;
+    const maxH = wrap.clientHeight - 8;
+    const size = Math.min(maxW, maxH, 600);
+    if (size <= 0) return; // not ready yet
+    this.canvas.width = size;
+    this.canvas.height = size;
+    this.W = size;
+    this.H = size;
+    this.scale = size / 600;
+    // Canvas 比实际地图大，四周留 padding 让血条等 HUD 不被裁剪
+    this.mapPadding = Math.round(size * 0.06);
+    this.mapLeft = this.mapPadding;
+    this.mapTop = this.mapPadding;
+    this.mapRight = size - this.mapPadding;
+    this.mapBottom = size - this.mapPadding;
+    this.mapW = this.mapRight - this.mapLeft;
+    this.mapH = this.mapBottom - this.mapTop;
+    this.buildWaypoints();
+    // 浮层重定位(infoPanel 跟着画布走,画布大小变了要同步)
+    this._positionInfoPanel && this._positionInfoPanel();
+  },
+
+  buildWaypoints() {
+    // 使用 mapLeft/Top/Right/Bottom 作为地图边界
+    const L = this.mapLeft, T = this.mapTop, R = this.mapRight, B = this.mapBottom;
+    const m = Math.round(this.W * 0.10); // 路径距地图边界的余量
+    const spawnX = L + this.mapW * 0.75;
+    const spawnY = T + this.mapH * 0.5;
+    this.waypoints = [
+      { x: spawnX, y: spawnY },           // 0: spawn
+      { x: R - m, y: spawnY },             // 1: right side mid
+      { x: R - m, y: B - m },             // 2: bottom-right
+      { x: L + m, y: B - m },             // 3: bottom-left
+      { x: L + m, y: T + m },             // 4: top-left
+      { x: R - m, y: T + m },             // 5: top-right (loops back to 1)
+    ];
+  },
+
+  selectTowerType(type) {
+    if (this.gameOver) return;
+    const def = TOWER_DEFS[type];
+    const existing = this.towers.find(t => t.type === type);
+    if (existing) {
+      // 同类型塔已存在 → 进入"迁塔模式":等待玩家在地图上选新位置完成迁塔+升级
+      // 不要 setSelected Tower,否则会弹出原塔的属性面板挡住选位置
+      this.selectedTowerType = type;
+      this.selectedTower = null;
+      this.flashRuleHint(`点击地图新位置 = <b>迁塔</b>并升级到 Lv.${existing.level + 1}`);
+      this.updateUI();
+      return;
+    }
+    if (this.gold < def.cost) {
+      this.flashRuleHint(`金币不足,需要 $${def.cost}`);
+      return;
+    }
+    if (this.selectedTowerType === type) {
+      this.selectedTowerType = null;
+    } else {
+      this.selectedTowerType = type;
+      this.selectedTower = null;
+    }
+    this.updateUI();
+  },
+
+  // 取消当前建塔/迁塔选择
+  cancelTowerSelection() {
+    if (this.selectedTowerType || this.selectedTower) {
+      this.selectedTowerType = null;
+      this.selectedTower = null;
+      this.hoverPos = null;
+      this.flashRuleHint('已取消建塔');
+      this.updateUI();
+    }
+  },
+
+  // 暂停切换(状态栏按钮 / P 键 / 空格键 / 遮罩按钮 都调这里)
+  togglePause() {
+    if (this.gameOver) return;             // 死了不让暂停
+    this.paused = !this.paused;
+    const overlay = document.getElementById('pauseOverlay');
+    const btn = document.getElementById('pauseBtn');
+    if (this.paused) {
+      overlay.classList.add('show');
+      btn.textContent = '▶ 继续';
+      btn.style.background = '#4caf50';
+    } else {
+      overlay.classList.remove('show');
+      btn.textContent = '⏸ 暂停';
+      btn.style.background = '';
+      // 恢复时把 lastTime 重置到 now,避免暂停期间累积的 dt 让下一帧 dt 爆 0.1 cap 跳过小步
+      this.lastTime = performance.now();
+    }
+  },
+
+  // 内部纯逻辑:扣金币 + 升级(不触发 UI/粒子/保存)
+  // 返回 { ok, leveledUp, awakened, goldAfter }
+  _applyUpgrade(tower, cost) {
+    if (this.gameOver) return { ok: false, leveledUp: 0, awakened: false };
+    if (this.gold < cost) return { ok: false, leveledUp: 0, awakened: false };
+    const wasUlt = tower.isUltimate();
+    this.gold = safeNum(safeFinite(this.gold, 0) - cost, 0, MAX_SAFE_GOLD);
+    tower.upgrade();
+    const nowUlt = tower.isUltimate();
+    return {
+      ok: true,
+      leveledUp: 1,
+      awakened: !wasUlt && nowUlt,
+      wasUlt,
+      nowUlt,
+    };
+  },
+
+  // 升级一个塔,带反馈
+  tryUpgradeTower(tower) {
+    if (this.gameOver) return false;
+    const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+    const r = this._applyUpgrade(tower, cost);
+    if (!r.ok) {
+      this.flashRuleHint(`金币不足,需要 $${cost}`);
+      return false;
+    }
+    this.selectedTower = tower;
+    this.selectedTowerType = null;
+    this._emitUpgradeFx(tower, r);
+    this.updateUI();
+    this.scheduleAutoSave();
+    return true;
+  },
+
+  // 集中处理升级视觉反馈(单次/批量共用)
+  _emitUpgradeFx(tower, r) {
+    this.spawnMergeBurst(tower.x, tower.y, tower.def.color);
+    if (r.awakened) {
+      this.addParticle(new Particle(tower.x, tower.y - 40, `★ ${tower.def.ult.name} 觉醒!`, '#ffeb3b', 2.2));
+    } else {
+      this.addParticle(new Particle(tower.x, tower.y - 30, `升级! Lv.${tower.level}`, '#4caf50', 1.5));
+    }
+  },
+
+  flashRuleHint(text) {
+    const el = document.getElementById('ruleHint');
+    el.innerHTML = text;
+    el.classList.add('show');
+    clearTimeout(this._hintTimer);
+    this._hintTimer = setTimeout(() => el.classList.remove('show'), 1400);
+  },
+
+  // 合并光效:外扩圆环
+  spawnMergeBurst(x, y, color) {
+    this.addParticle(new MergeBurst(x, y, color));
+  },
+
+  // 判断点是否在路径上(简化版:到线段距离 < 18px 视为路径)
+  isOnPath(x, y) {
+    const wp = this.waypoints;
+    if (!wp || wp.length < 2) return false;
+    const segs = [[wp[0], wp[1]]];
+    for (let i = 1; i < wp.length - 1; i++) segs.push([wp[i], wp[i + 1]]);
+    // 闭合:最后一段回到 wp[1] 表示循环
+    segs.push([wp[wp.length - 1], wp[1]]);
+    for (const [a, b] of segs) {
+      if (distPointSeg(x, y, a.x, a.y, b.x, b.y) < 18) return true;
+    }
+    return false;
+  },
+
+  getCanvasPos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (this.W / rect.width),
+      y: (e.clientY - rect.top) * (this.H / rect.height),
+    };
+  },
+
+  handleTap(x, y) {
+    if (this.gameOver) return;
+    // Check if tapped on a tower (统一 22px 命中半径,与坐标尺度无关)
+    let tappedTower = null;
+    for (const t of this.towers) {
+      if (dist(x, y, t.x, t.y) < 22) {
+        tappedTower = t;
+        break;
+      }
+    }
+    if (tappedTower) {
+      this.selectedTower = tappedTower;
+      this.selectedTowerType = null;
+      this.updateUI();
+      return;
+    }
+    // Place tower
+    if (this.selectedTowerType) {
+      const type = this.selectedTowerType;
+      const def = TOWER_DEFS[type];
+      const existing = this.towers.find(t => t.type === type);
+      if (existing) {
+        // 同类型已存在: 塔移动到新位置并升 1 级(消耗 = 升级费用)
+        if (!this.isInsideMap(x, y)) {
+          this.flashRuleHint('不能放在地图外');
+          return;
+        }
+        if (this.isOnPath(x, y)) {
+          this.flashRuleHint('不能放在路径上,换个位置');
+          return;
+        }
+        const cost = safeFinite(existing.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+        if (this.gold < cost) {
+          this.flashRuleHint(`金币不足,需要 $${cost}`);
+          return;
+        }
+        this.gold = safeNum(safeFinite(this.gold, 0) - cost, 0, MAX_SAFE_GOLD);
+        const oldX = existing.x, oldY = existing.y;
+        existing.x = x;
+        existing.y = y;
+        existing.level++;
+        const wasUlt = existing.level - 1 >= ULTIMATE_LEVEL;
+        const nowUlt = existing.isUltimate();
+        this.selectedTower = existing;
+        this.selectedTowerType = null;
+        // 移动轨迹 + 升级光效
+        this.addParticle(new TrailParticle(oldX, oldY, x, y, def.color));
+        this.spawnMergeBurst(x, y, def.color);
+        if (!wasUlt && nowUlt) {
+          this.addParticle(new Particle(x, y - 40, `★ ${def.ult.name} 觉醒!`, '#ffeb3b', 2.2));
+        } else {
+          this.addParticle(new Particle(x, y - 30, `迁塔+升级! Lv.${existing.level}`, '#4caf50', 1.5));
+        }
+        this.updateUI();
+        this.scheduleAutoSave();
+        return;
+      }
+      // 校验位置
+      if (!this.isInsideMap(x, y)) {
+        this.flashRuleHint('不能放在地图外');
+        return;
+      }
+      if (this.isOnPath(x, y)) {
+        this.flashRuleHint('不能放在路径上,换个位置');
+        return;
+      }
+      if (this.gold < def.cost) {
+        this.flashRuleHint(`金币不足,需要 $${def.cost}`);
+        return;
+      }
+      const tower = new Tower(type, x, y);
+      this.towers.push(tower);
+      this.gold = safeNum(safeFinite(this.gold, 0) - def.cost, 0, MAX_SAFE_GOLD);
+      this.selectedTowerType = null;
+      this.selectedTower = tower;
+      this.spawnMergeBurst(x, y, def.color);
+      this.updateUI();
+      this.scheduleAutoSave();
+      return;
+    }
+    // Deselect
+    this.selectedTower = null;
+    this.updateUI();
+  },
+
+  isInsideMap(x, y) {
+    return x >= this.mapLeft && x <= this.mapRight && y >= this.mapTop && y <= this.mapBottom;
+  },
+
+  startWave() {
+    this.wave = Math.min(MAX_SAFE_WAVE, safeFinite(this.wave, 0) + 1);
+    // 每波怪物数量：5 + 波数 * 3，后期波次怪更多
+    this.monstersToSpawn = safeAdd(5, this.wave * 3, MAX_SAFE_HP);
+    this.spawnedThisWave = 0;
+    this.spawnTimer = 0;
+    this.waveActive = true;
+    // 精英怪标记:每 10 波出 1 只 (放在队列最前)
+    this.eliteSpawned = false;
+    if (this.wave % ELITE_WAVE_INTERVAL === 0) {
+      this.eliteQueued = true;
+      this.showWaveNotice(`⚠ 第 ${this.wave} 波 · 精英怪来袭!`);
+    } else {
+      this.eliteQueued = false;
+      this.showWaveNotice(`第 ${this.wave} 波!`);
+    }
+    this.updateUI();
+    this.scheduleAutoSave();
+  },
+
+  showWaveNotice(text) {
+    const el = document.getElementById('waveNotice');
+    el.textContent = text;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 1500);
+  },
+
+  onMonsterKilled(monster, killerTower) {
+    this.kills = safeAdd(safeFinite(this.kills, 0), 1, MAX_SAFE_HP);
+    // 精英怪击杀金币 × 3
+    const goldMult = monster.isElite ? ELITE_GOLD_MULT : 1;
+    const reward = safeRound((KILL_GOLD_BASE + this.wave * KILL_GOLD_PER_WAVE) * goldMult);
+    this.gold = safeAdd(safeFinite(this.gold, 0), reward, MAX_SAFE_GOLD);
+    const goldColor = monster.isElite ? '#ffb432' : '#ffd700';
+    this.addParticle(new Particle(monster.x, monster.y - 10, `+${reward}💰`, goldColor, monster.isElite ? 1.6 : 1.2));
+    // 精英怪击杀:额外飘"精英!"提示
+    if (monster.isElite) {
+      this.addParticle(new Particle(monster.x, monster.y - 30, '精英击杀!', '#ff6f00', 1.8));
+    }
+    // Item drop — 精英怪高爆率,普通怪降权
+    if (monster.isElite) {
+      // 精英:固定 ELITE_DROP_PROB 必掉,优先保底 1 件
+      if (Math.random() < ELITE_DROP_PROB) {
+        // 从 4 件道具中随机抽 1 件(均匀)
+        const item = ITEM_DEFS[Math.floor(Math.random() * ITEM_DEFS.length)];
+        this.dropItem(monster, item);
+      }
+      // 额外追加:40% 概率再掉 1 件 (精英可能掉 2 件)
+      if (Math.random() < 0.40) {
+        const item2 = ITEM_DEFS[Math.floor(Math.random() * ITEM_DEFS.length)];
+        this.dropItem(monster, item2);
+      }
+    } else {
+      // 普通怪:每件道具的实际概率 = 原 prob × DROP_NORM_PROB_MUL (50% 降权)
+      for (const item of ITEM_DEFS) {
+        if (Math.random() < item.prob * DROP_NORM_PROB_MUL) {
+          this.dropItem(monster, item);
+          break; // only one item per kill
+        }
+      }
+    }
+    this.updateUI();
+    this.scheduleAutoSave();
+  },
+
+  dropItem(monster, item) {
+    // 优先级 1: 击杀本怪的那座塔(谁是真正"打最后一下的"谁拿奖励)
+    // 优先级 2: 兜底(没记录到 killerTower 时) → 取第一座已有塔
+    let preferred = monster.killerTower || null;
+    if (!preferred || !this.towers.includes(preferred)) {
+      preferred = this.towers[0] || null;
+    }
+    if (!preferred) return;
+
+    // 尝试应用到击杀塔
+    let targetTower = null;
+    let applied = preferred.applyItem(item);
+
+    if (applied) {
+      targetTower = preferred;
+    } else {
+      // 击杀塔属性已满, 按 buildBar 顺序找其他未满的塔分配
+      for (const t of this.towers) {
+        if (t === preferred) continue;
+        applied = t.applyItem(item);
+        if (applied) {
+          targetTower = t;
+          break;
+        }
+      }
+    }
+
+    if (targetTower) {
+      this.addParticle(new Particle(targetTower.x, targetTower.y - 30, `道具: ${item.name}`, '#e040fb', 2.0));
+      // Also a particle at monster location
+      this.addParticle(new Particle(monster.x, monster.y - 25, `掉落!`, '#ce93d8', 1.0));
+
+      // 如果道具被分配到了非击杀塔, 显示提示
+      if (targetTower !== preferred) {
+        this.addParticle(new Particle(targetTower.x, targetTower.y - 50, `${preferred.def.name}已满,分配给${targetTower.def.name}`, '#ff9800', 2.0));
+      }
+    }
+    // 所有塔都满了, 道具消失(不显示任何效果)
+  },
+
+  addParticle(p) {
+    this.particles.push(p);
+  },
+
+  checkGameOver() {
+    // 复用 updateUI 算好的 _lastAliveCount(updateUI 在 checkGameOver 之前跑)
+    const aliveCount = this._lastAliveCount || 0;
+    if (aliveCount >= MAX_MONSTERS_GAMEOVER) {
+      this.gameOver = true;
+      document.getElementById('goWave').textContent = this.wave;
+      document.getElementById('goKills').textContent = this.kills;
+      document.getElementById('gameOverOverlay').classList.add('show');
+      // 游戏结束，清除存档
+      this.clearSave();
+      this._pendingRestoreData = null;
+    }
+  },
+
+  restart() {
+    this.gold = INITIAL_GOLD;
+    this.wave = 0;
+    this.kills = 0;
+    this.towers = [];
+    this.monsters = [];
+    this.projectiles = [];
+    this.particles = [];
+    this.selectedTowerType = null;
+    this.selectedTower = null;
+    this.gameOver = false;
+    // 清掉 UI 缓存,让 updateUI 重新写入文本
+    this._lastWave = this._lastGold = this._lastKills = this._lastAliveDisp = null;
+    this._lastInfoPanelSig = null;
+    // 重新开始时如果之前在暂停态,恢复(避免遮罩卡住)
+    if (this.paused) this.togglePause();
+    this.waveTimer = 3;
+    this.waveActive = false;
+    this.monstersToSpawn = 0;
+    this.spawnedThisWave = 0;
+    this.spawnTimer = 0;
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    this._pendingRestoreData = null;
+    this.updateUI();
+  },
+
+  updateUI() {
+    const h = this.hud;
+    // HUD 文本:只在值变化时写,避免每帧 60 次 textContent 写(浏览器仍会做 diff,但少调用一层)
+    if (this._lastWave !== this.wave) { h.waveNum.textContent = this.wave; this._lastWave = this.wave; }
+    if (this._lastGold !== this.gold) { h.goldNum.textContent = this.gold; this._lastGold = this.gold; }
+    if (this._lastKills !== this.kills) { h.killCount.textContent = this.kills; this._lastKills = this.kills; }
+    // monsters 数组的清理在 update() 末尾统一做,这里直接遍历
+    let aliveCount = 0;
+    for (let i = 0; i < this.monsters.length; i++) if (this.monsters[i].alive) aliveCount++;
+    if (this._lastAliveDisp !== aliveCount) {
+      h.monsterCount.textContent = `${aliveCount}/${MAX_MONSTERS_GAMEOVER}`;
+      this._lastAliveDisp = aliveCount;
+    }
+    this._lastAliveCount = aliveCount; // 给 checkGameOver / draw 复用
+
+    // 倒计时 / 出怪中信息已合并到地图正上方的画布文字,此处不再重复显示
+
+    // Build buttons — 只显示图标+名称,等级与价格都隐藏(等级在顶部塔槽位已展示)
+    for (const [type, def] of Object.entries(TOWER_DEFS)) {
+      const btn = this.buildBtns[type];
+      if (!btn) continue;
+      const built = this.towers.find(t => t.type === type);
+      btn.classList.toggle('selected', this.selectedTowerType === type);
+      if (built) {
+        const upgCost = built.getUpgradeCost();
+        btn.classList.toggle('disabled', this.gold < upgCost);
+      } else {
+        btn.classList.toggle('disabled', this.gold < def.cost);
+      }
+    }
+
+    // 顶部塔槽位
+    for (const type of Object.keys(this.towerSlotEls)) {
+      const { el, lv } = this.towerSlotEls[type];
+      const built = this.towers.find(t => t.type === type);
+      el.classList.toggle('built', !!built);
+      el.classList.toggle('selected', this.selectedTowerType === type);
+      if (built) {
+        lv.textContent = built.isUltimate() ? '★' : `Lv${built.level}`;
+      } else {
+        lv.textContent = '·';
+      }
+    }
+
+    // Info panel
+    // 关键修复:每帧 60 次重写 innerHTML 会导致升级按钮 DOM 在 mousedown→mouseup 之间被替换,
+    // 浏览器认为不是同一节点 → click 事件丢失 → 升级无反应。
+    // 解决:计算签名,仅在影响 infoPanel 内容的状态变化时才重建 DOM。
+    const sig = this._computeInfoPanelSig();
+    if (sig !== this._lastInfoPanelSig) {
+      this._renderInfoPanel();
+      this._lastInfoPanelSig = sig;
+    }
+    // 局部刷新 disabled 状态 + 满级按钮 N(不重建 DOM,避免 click 丢失)
+    this._refreshInfoPanelDynamic();
+    // 浮层定位:有选中塔 → 放在塔的右上角;否则彻底隐藏 (位置每帧都要算,因为塔可能被迁移)
+    this._positionInfoPanel();
+  },
+
+  // 计算 infoPanel 内容签名:仅在"DOM 结构需要变化"时才重建
+  // 注意:signature 不能依赖任何高频变动量(如 this.gold/maxLvl),否则怪物掉金币会让签名变化
+  //       导致按钮 DOM 在 mousedown→mouseup 之间被替换 → click 丢失 → 升级<n。
+  //       这里只追踪结构变化:塔身份/等级/属性/有无满级按钮(N>1)。
+  //       按钮文字与 disabled 状态由 _refreshInfoPanelDynamic 局部更新,不重建 DOM。
+  _computeInfoPanelSig() {
+    if (this.selectedTower) {
+      const t = this.selectedTower;
+      const upgCost = t.getUpgradeCost();
+      const hasMaxBtn = this.gold >= upgCost && Math.floor(this.gold / upgCost) > 1 ? 1 : 0;
+      return [
+        'tower', t.type, t.level, t.getAtk(), Math.round(t.getRange()),
+        t.getSpeed().toFixed(1), t.critRate.toFixed(3), t.critDamage.toFixed(3),
+        upgCost, hasMaxBtn,
+      ].join('|');
+    } else if (this.selectedTowerType) {
+      const existing = this.towers.find(t => t.type === this.selectedTowerType);
+      return ['type', this.selectedTowerType, existing ? existing.level : 0].join('|');
+    }
+    return 'none';
+  },
+
+  // 局部更新升级按钮的 disabled 状态 + 满级按钮文本/数值,不重建 DOM 节点
+  // 这样金币高频变化(怪物掉金币)不会让玩家点击的按钮节点被替换。
+  _refreshInfoPanelDynamic() {
+    if (!this.selectedTower) return;
+    const t = this.selectedTower;
+    const upgCost = t.getUpgradeCost();
+    const cost10 = upgCost * 10;
+    const btn1 = document.getElementById('upgradeBtn');
+    const btn10 = document.getElementById('upgradeBtn10');
+    const btnMax = document.getElementById('upgradeBtnMax');
+    if (btn1) btn1.disabled = this.gold < upgCost;
+    if (btn10) btn10.disabled = this.gold < cost10;
+    if (btnMax) {
+      const maxLvl = this.gold >= upgCost ? Math.floor(this.gold / upgCost) : 0;
+      // onclick 中的 N 用闭包重写,避免依赖 inline string
+      btnMax.onclick = () => window.tryUpgradeClick(maxLvl);
+      btnMax.textContent = `满级 ×${maxLvl}  $${maxLvl * upgCost}`;
+      btnMax.disabled = maxLvl <= 1;
+    }
+  },
+
+  _renderInfoPanel() {
+    const infoEl = document.getElementById('infoContent');
+    const logEl = document.getElementById('itemLog');
+    if (this.selectedTower) {
+      const t = this.selectedTower;
+      const upgCost = t.getUpgradeCost();
+      let html = `<div class="info-title">${t.def.icon} ${t.def.name} Lv.${t.level}${t.isUltimate() ? ' ★' : ''}</div>`;
+      html += `<div class="info-row">`;
+      html += `<span class="info-item">攻击 <b>${t.getAtk()}</b></span>`;
+      html += `<span class="info-item">范围 <b>${Math.round(t.getRange())}px</b></span>`;
+      html += `<span class="info-item">攻速 <b>${t.getSpeed().toFixed(1)}/s</b></span>`;
+      html += `</div>`;
+      html += `<div class="info-row">`;
+      html += `<span class="info-item">暴击 <b>${(t.critRate * 100).toFixed(0)}%</b></span>`;
+      html += `<span class="info-item">爆伤 <b>${(t.critDamage * 100).toFixed(0)}%</b></span>`;
+      html += `</div>`;
+      // 终极提示
+      if (t.isUltimate()) {
+        html += `<div style="color:#ffeb3b;font-size:12px;margin-top:2px;">★ ${t.def.ult.name} 觉醒 — ${t.def.ult.desc}</div>`;
+      } else if (t.level === ULTIMATE_LEVEL - 1) {
+        html += `<div style="color:#ff9800;font-size:12px;margin-top:2px;">下一级解锁 ★ ${t.def.ult.name}</div>`;
+      }
+      // 升级按钮组:升级 / ×10 一行,满级独占第二行
+      const canUpg = this.gold >= upgCost;
+      const cost10 = upgCost * 10;
+      // 内联 onclick,避免 updateUI 反复重画时事件委托漏触发的隐患
+      const upgBtn = `<button id="upgradeBtn" class="upg-main" ${canUpg ? '' : 'disabled'} onclick="tryUpgradeClick(1)">升级 $${upgCost}</button>`;
+      const upg10 = `<button id="upgradeBtn10" class="upg-multi" ${this.gold >= cost10 ? '' : 'disabled'} onclick="tryUpgradeClick(10)">×10 $${cost10}</button>`;
+      const maxLvl = this.gold >= upgCost ? Math.floor(this.gold / upgCost) : 0;
+      const upgAll = maxLvl > 1
+        ? `<button id="upgradeBtnMax" class="upg-multi upg-max" onclick="tryUpgradeClick(${maxLvl})">满级 ×${maxLvl}  $${maxLvl * upgCost}</button>`
+        : '';
+      html += `<div class="upg-row upg-row-main">${upgBtn}${upg10}</div>`;
+      if (upgAll) html += `<div class="upg-row upg-row-max\">${upgAll}</div>`;
+      html += `<div class="upg-hint">金币多时直接点 ×10 / 升到顶</div>`;
+      infoEl.innerHTML = html;
+      this._lastMaxLvl = maxLvl;
+      logEl.textContent = '';
+    } else if (this.selectedTowerType) {
+      // 用户需求:点最下面三个造塔按钮时,完全不弹属性面板
+      // 面板会被 _positionInfoPanel 隐藏(!selectedTower),这里同时清空内容确保不残留
+      infoEl.innerHTML = '';
+      logEl.innerHTML = '';
+    } else {
+      infoEl.innerHTML = '点击地图放置防御塔，点击已有塔查看信息';
+      logEl.textContent = '';
+    }
+  },
+
+  _positionInfoPanel() {
+    const panel = document.getElementById('infoPanel');
+    const wrap = document.getElementById('canvasWrap');
+    if (!panel || !wrap) return;
+    // 用户需求:点最下面三个建塔按钮时,完全不弹属性面板
+    // (包括 selectedTowerType != null 时,以及根本没选任何东西时)
+    if (!this.selectedTower) {
+      panel.classList.remove('show');
+      return;
+    }
+    const wrapW = wrap.clientWidth;
+    const wrapH = wrap.clientHeight;
+    // 不参与布局,先按内容展开,再读尺寸
+    panel.classList.add('show');
+    const pw = panel.offsetWidth;
+    const ph = panel.offsetHeight;
+    let left, top;
+    const t = this.selectedTower;
+    const cx = (wrapW - this.W) / 2;
+    const cy = (wrapH - this.H) / 2;
+    // 优先放右侧,空间不够放左侧
+    left = cx + t.x + 30;
+    if (left + pw > wrapW - 4) left = cx + t.x - pw - 30;
+    // 垂直对齐到塔中心
+    top = cy + t.y - ph / 2;
+    // 越界则夹到 wrap 内
+    if (left < 4) left = 4;
+    if (left + pw > wrapW - 4) left = wrapW - pw - 4;
+    if (top < 4) top = 4;
+    if (top + ph > wrapH - 4) top = wrapH - ph - 4;
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+  },
+
+  upgradeTower() {
+    if (!this.selectedTower) return;
+    this.tryUpgradeTower(this.selectedTower);
+  },
+
+  // 一次连续升级 N 次(中途金币不足自动停止)
+  // 优化:预算预检 + 循环调内部纯逻辑 + 末尾一次性 UI/粒子/保存,避免每级 1000 次重渲染
+  upgradeMulti(n) {
+    if (this.gameOver) return 0;
+    if (!this.selectedTower) return 0;
+    const tower = this.selectedTower;
+    n = Math.max(1, safeRound(safeNum(n, 1, 1000)) | 0);
+    const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+    if (cost <= 0) return 0;
+
+    // 预算预检:一次算出能升多少级,避免循环里逐级校验
+    const affordable = Math.min(n, Math.floor(this.gold / cost));
+    if (affordable <= 0) {
+      this.flashRuleHint(`金币不足,需要 $${cost}`);
+      return 0;
+    }
+
+    let awakened = false;
+    for (let i = 0; i < affordable; i++) {
+      const r = this._applyUpgrade(tower, cost);
+      if (!r.ok) break;
+      if (r.awakened) awakened = true;
+    }
+
+    // 末尾统一刷一次反馈
+    this.selectedTower = tower;
+    this.selectedTowerType = null;
+    this._emitUpgradeFx(tower, { awakened });
+    this.updateUI();
+    this.scheduleAutoSave();
+    return affordable;
+  },
+
+  // ======================== 游戏循环 ========================
+  loop(now) {
+    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    this.lastTime = now;
+
+    // FPS 计数(滑动窗口,1 秒刷新一次)
+    this.fpsFrames = (this.fpsFrames || 0) + 1;
+    this.fpsAcc = (this.fpsAcc || 0) + dt;
+    if (this.fpsAcc >= 1) {
+      this.fps = this.fpsFrames;
+      this.fpsFrames = 0;
+      this.fpsAcc = 0;
+    }
+
+    // 暂停时:跳过 update 让所有时间相关逻辑(出怪/塔攻击/倒计时)冻结;
+    // draw 仍跑让呼吸高亮/粒子飘字继续动,画面不死板。
+    if (!this.gameOver && !this.paused) {
+      this.update(dt);
+    }
+    this.draw();
+    requestAnimationFrame((t) => this.loop(t));
+  },
+
+  update(dt) {
+    // 出怪策略：正常按 wave * t 周期倒计时出怪，但如果场上怪物提前全灭则2秒后立即出下一波
+    if (!this.waveActive) {
+      // 复用 updateUI 算好的 aliveCount（每帧算一次,这里是 0 的话加速下一波）
+      if ((this._lastAliveCount || 0) === 0 && this.waveTimer > 2) {
+        // 怪物提前全灭，缩短倒计时为2秒
+        this.waveTimer = 2;
+      }
+      this.waveTimer -= dt;
+      if (this.waveTimer <= 0) {
+        this.startWave();
+      }
+    }
+    // Spawn monsters within current wave
+    if (this.waveActive) {
+      if (this.spawnedThisWave < this.monstersToSpawn) {
+        this.spawnTimer -= dt;
+        if (this.spawnTimer <= 0) {
+          // 精英怪:本波第一只 (占一个 spawn 名额)
+          let isElite = false;
+          if (this.eliteQueued && !this.eliteSpawned && this.spawnedThisWave === 0) {
+            isElite = true;
+            this.eliteSpawned = true;
+          }
+          const m = new Monster(this.wave, this.waypoints, isElite);
+          m.wpIndex = 1; // start moving toward first waypoint after spawn
+          this.monsters.push(m);
+          this.spawnedThisWave++;
+          this.spawnTimer = MONSTER_SPAWN_INTERVAL;
+        }
+      } else {
+        // 当前波所有怪物已出完，开始下一波倒计时（周期 = wave * WAVE_BASE_INTERVAL）
+        this.waveActive = false;
+        this.waveTimer = this.wave * WAVE_BASE_INTERVAL;
+        this.monsters = this.monsters.filter(m => m.alive); // cleanup dead
+      }
+    }
+
+    // Update towers
+    for (const t of this.towers) {
+      t.update(dt);
+      if (t.canShoot()) {
+        const target = t.findTarget(this.monsters);
+        if (target) {
+          this.projectiles.push(new Projectile(t.x, t.y, target, t));
+          t.resetCooldown();
+        }
+      }
+    }
+
+    // Update monsters
+    for (const m of this.monsters) {
+      m.update(dt);
+    }
+
+    // Update projectiles
+    for (const p of this.projectiles) {
+      p.update(dt);
+    }
+
+    // Update particles
+    for (const p of this.particles) {
+      p.update(dt);
+    }
+
+    // Cleanup
+    this.projectiles = this.projectiles.filter(p => p.alive);
+    this.particles = this.particles.filter(p => p.alive);
+
+    // HUD + aliveCount: 复用 updateUI,避免一帧内多次 filter + 多次 getElementById
+    this.updateUI();
+
+    // Check game over
+    this.checkGameOver();
+  },
+
+  draw() {
+    const ctx = this.ctx;
+    const W = this.W, H = this.H;
+    const mL = this.mapLeft, mT = this.mapTop, mR = this.mapRight, mB = this.mapBottom;
+    // 共享时间戳:draw 内多处要 (performance.now()/1000), 一次性算好
+    const timeNow = performance.now() / 1000;
+    this._timeNow = timeNow;
+
+    // ===== 外圈(地图外的"原野"延伸) =====
+    ctx.fillStyle = '#1a2a14';
+    ctx.fillRect(0, 0, W, H);
+
+    // ===== 草地:主体多层叠加 =====
+    // 1) 底色(深草)
+    ctx.fillStyle = '#2d4a1f';
+    ctx.fillRect(mL, mT, this.mapW, this.mapH);
+    // 2) 中心亮一点(被踩出小径的草场,略有光照感)
+    const cx = (mL + mR) / 2, cy = (mT + mB) / 2;
+    const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, this.mapW * 0.6);
+    grad.addColorStop(0, 'rgba(120, 170, 60, 0.30)');
+    grad.addColorStop(0.6, 'rgba(80, 130, 50, 0.10)');
+    grad.addColorStop(1, 'rgba(30, 50, 20, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(mL, mT, this.mapW, this.mapH);
+
+    // 3) 草丛(种子随机,固定 seed 让每次都一致)
+    if (this.waypoints && this.waypoints.length >= 6) {
+      this.drawGrass(ctx, mL, mT, mR, mB);
+    } else {
+      ctx.fillStyle = '#2d4a1f';
+      ctx.fillRect(mL, mT, this.mapW, this.mapH);
+    }
+
+    // 4) 地图边框(深木栅栏感)
+    ctx.strokeStyle = '#0a1a05';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(mL, mT, this.mapW, this.mapH);
+    // 内圈淡色高光
+    ctx.strokeStyle = 'rgba(180, 220, 120, 0.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(mL + 2, mT + 2, this.mapW - 4, this.mapH - 4);
+
+    // Draw path
+    this.drawPath(ctx);
+
+    // Draw spawn point (怪物入口 — 紫色传送门)
+    if (!this.waypoints || this.waypoints.length < 1) return;
+    const spawn = this.waypoints[0];
+    const t = timeNow; // 复用 draw() 顶部算好的 timeNow
+    ctx.save();
+    // 外晕
+    const portalGrad = ctx.createRadialGradient(spawn.x, spawn.y, 2, spawn.x, spawn.y, 14);
+    portalGrad.addColorStop(0, 'rgba(220, 120, 255, 0.85)');
+    portalGrad.addColorStop(0.6, 'rgba(150, 50, 220, 0.45)');
+    portalGrad.addColorStop(1, 'rgba(80, 0, 160, 0)');
+    ctx.fillStyle = portalGrad;
+    ctx.beginPath();
+    ctx.arc(spawn.x, spawn.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    // 旋转的符文
+    for (let i = 0; i < 4; i++) {
+      const a = t * 1.5 + i * Math.PI / 2;
+      const rr = 9;
+      const px = spawn.x + Math.cos(a) * rr;
+      const py = spawn.y + Math.sin(a) * rr;
+      ctx.fillStyle = '#ff8aee';
+      ctx.beginPath();
+      ctx.arc(px, py, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // 中心
+    ctx.fillStyle = '#1a0033';
+    ctx.beginPath();
+    ctx.arc(spawn.x, spawn.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ff8aee';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Draw towers
+    for (const t of this.towers) {
+      t.draw(ctx, t === this.selectedTower);
+    }
+
+    // 同类型塔已存在时: 旧塔呼吸高亮 → 提示"再次点击新位置 = 迁塔+升级"
+    if (this.selectedTowerType) {
+      const existing = this.towers.find(t => t.type === this.selectedTowerType);
+      if (existing) {
+        const ph = (timeNow * 10 / 6) % 1; // (performance.now()/600) % 1 — 复用 timeNow
+        ctx.save();
+        ctx.globalAlpha = 0.5 + 0.4 * Math.sin(ph * Math.PI * 2);
+        ctx.strokeStyle = TOWER_DEFS[existing.type].color;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.arc(existing.x, existing.y, 26 + Math.sin(ph * Math.PI * 2) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffeb3b';
+        ctx.fillText('原位置 → 选新位置迁塔+升级', existing.x, existing.y - 36);
+        ctx.restore();
+      }
+    }
+
+    // Draw monsters
+    for (const m of this.monsters) {
+      m.draw(ctx);
+    }
+
+    // Draw projectiles
+    for (const p of this.projectiles) {
+      p.draw(ctx);
+    }
+
+    // Draw particles
+    for (const p of this.particles) {
+      p.draw(ctx);
+    }
+
+    // Wave status display on canvas
+    // 复用 updateUI 算好的 _lastAliveCount,不再独立 filter
+    const aliveForDisplay = this._lastAliveCount || 0;
+    if (this.waveActive && this.wave > 0) {
+      // 正在出怪
+      ctx.save();
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = 'rgba(255,152,0,0.7)';
+      ctx.textAlign = 'center';
+      const spawnLeft = this.monstersToSpawn - this.spawnedThisWave;
+      ctx.fillText(`第${this.wave}波 · 出怪中 剩余${spawnLeft}只`, W / 2, mT - 6);
+      ctx.restore();
+    } else if (!this.waveActive && this.waveTimer > 0) {
+      // 倒计时中（始终显示，无论场上有无怪物）
+      const isCleared = aliveForDisplay === 0;
+      const fullInterval = this.wave * WAVE_BASE_INTERVAL;
+      ctx.save();
+      ctx.font = isCleared ? 'bold 16px sans-serif' : '14px sans-serif';
+      ctx.textAlign = 'center';
+      if (isCleared) {
+        // 怪物已全灭，2秒加速倒计时
+        ctx.fillStyle = 'rgba(76,175,80,0.8)';
+        ctx.fillText(`第${this.wave + 1}波: ${Math.ceil(this.waveTimer)}s`, W / 2, mT - 6);
+      } else {
+        // 还有怪，正常倒计时
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText(`第${this.wave + 1}波: ${Math.ceil(this.waveTimer)}s · 剩余${aliveForDisplay}怪`, W / 2, mT - 6);
+      }
+      // Draw countdown bar
+      const barW = 120, barH = 4;
+      const barX = W / 2 - barW / 2;
+      const barY = mT - 1;
+      const progress = 1 - (this.waveTimer / fullInterval);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = isCleared ? '#4caf50' : '#e94560';
+      ctx.fillRect(barX, barY, barW * progress, barH);
+      ctx.restore();
+    }
+
+    // 放置鬼影 + 范围圆 + 合法/非法提示 (新建或迁塔都要预览)
+    if (this.selectedTowerType && this.hoverPos) {
+      const def = TOWER_DEFS[this.selectedTowerType];
+      const hx = this.hoverPos.x, hy = this.hoverPos.y;
+      const valid = this.isInsideMap(hx, hy) && !this.isOnPath(hx, hy);
+      // 合法 = 绿色描边 + 范围圆用塔色但低透明度(避免和"非法红"混淆,也避免火塔的橘红看起来像警告)
+      // 非法 = 红色 (固定 #ff4c4c,和任何塔色都明显不同)
+      const col = valid ? '#4caf50' : '#ff4c4c';
+      const fillCol = valid ? def.color : '#ff4c4c';
+      ctx.save();
+      // 范围圆
+      ctx.globalAlpha = valid ? 0.18 : 0.22;
+      ctx.fillStyle = fillCol;
+      ctx.beginPath();
+      ctx.arc(hx, hy, def.baseRange, 0, Math.PI * 2);
+      ctx.fill();
+      // 鬼影塔
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = fillCol;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = col;
+      ctx.fillText(def.icon, hx, hy);
+      if (!valid) {
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#ff4c4c';
+        ctx.fillText('不可放置', hx, hy + 26);
+      } else {
+        // 合法提示,绿色,和非法红彻底区分
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#4caf50';
+        ctx.fillText('可放置', hx, hy + 26);
+      }
+      ctx.restore();
+    }
+
+    // ===== FPS 指示器(地图左上角) =====
+    this._drawFps(ctx);
+  },
+
+  _drawFps(ctx) {
+    const fps = this.fps != null ? this.fps : 0;
+    // 颜色:>=50 绿, 30-49 黄, <30 红
+    const col = fps >= 50 ? '#69f0ae' : (fps >= 30 ? '#ffd54f' : '#ff5252');
+    const text = `FPS ${fps}`;
+    ctx.save();
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    // 半透明深色底,保证浅色/深色地图都看得清
+    const padX = 6, padY = 3;
+    const w = ctx.measureText(text).width;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(this.mapLeft + 6, this.mapTop + 6, w + padX * 2, 13 + padY * 2);
+    ctx.fillStyle = col;
+    ctx.fillText(text, this.mapLeft + 6 + padX, this.mapTop + 6 + padY);
+    ctx.restore();
+  },
+
+  drawPath(ctx) {
+    const wp = this.waypoints;
+    if (!wp || wp.length < 2) return;
+    ctx.save();
+
+    // 怪物路径: spawn(0) -> 1 -> 2 -> 3 -> 4 -> 5 -> 1 -> 2 -> ...
+    // 整条走廊(从 spawn 一路画到 wp[1] 然后绕圈回到 wp[1]) 是一条折线
+    const polyline = [wp[0], wp[1], wp[2], wp[3], wp[4], wp[5], wp[1]];
+    const tileW = 22, tileH = 18;
+    const corridorR = tileW * 0.55; // 走廊半宽(同时也是石板外接半径)
+
+    // 1) 先用"粗线+圆头+圆角"画一层"石板底色"作为整条走廊,
+    //    这样转角是自动圆角,接缝/边缘都不会露草或漏底色
+    this.strokePolyline(ctx, polyline, corridorR, '#2c2820');
+
+    // 2) 沿折线按弧长均匀铺石板
+    this.drawCobbleOnPolyline(ctx, polyline, tileW, tileH);
+
+    // 3) 路径中心箭头(浅色,指明方向)
+    ctx.fillStyle = 'rgba(245, 240, 220, 0.55)';
+    const arrowSize = 5;
+    for (let i = 0; i < polyline.length - 1; i++) {
+      const a = polyline[i], b = polyline[i + 1];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const angle = Math.atan2(b.y - a.y, b.x - a.x);
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(arrowSize, 0);
+      ctx.lineTo(-arrowSize, -arrowSize * 0.6);
+      ctx.lineTo(-arrowSize, arrowSize * 0.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.restore();
+  },
+
+  // 沿一条带 waypoint 的折线画"走廊"—— 用 lineCap='round' + lineJoin='round' 的粗描边
+  strokePolyline(ctx, wps, halfWidth, color) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = halfWidth * 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(wps[0].x, wps[0].y);
+    for (let i = 1; i < wps.length; i++) ctx.lineTo(wps[i].x, wps[i].y);
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  // 沿一条折线(带 waypoint)按弧长均匀铺设石板
+  drawCobbleOnPolyline(ctx, wps, tileW, tileH) {
+    const L = this.mapLeft, T = this.mapTop, R = this.mapRight, B = this.mapBottom;
+    if (!isFinite(wps[0].x)) return;
+    // 1) 计算每段的累计弧长
+    const segs = [];
+    let totalLen = 0;
+    for (let i = 0; i < wps.length - 1; i++) {
+      const dx = wps[i+1].x - wps[i].x;
+      const dy = wps[i+1].y - wps[i].y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) continue;
+      segs.push({ a: wps[i], b: wps[i+1], dx, dy, len, cum: totalLen });
+      totalLen += len;
+    }
+    if (totalLen < 1) return;
+    // 2) 按弧长均匀铺石板
+    const nTiles = Math.max(2, Math.floor(totalLen / tileW));
+    const seedBase = Math.floor(wps[0].x * 13 + wps[0].y * 7 + (wps[1]?.x || 0) * 3 + (wps[1]?.y || 0) * 17) | 0;
+    let s = seedBase >>> 0;
+    const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+
+    for (let i = 0; i <= nTiles; i++) {
+      const t = (i / nTiles) * totalLen;
+      // 找段
+      let seg = segs[segs.length - 1];
+      for (let k = 0; k < segs.length - 1; k++) {
+        if (t < segs[k+1].cum) { seg = segs[k]; break; }
+      }
+      const local = Math.max(0, Math.min(seg.len, t - seg.cum));
+      const px = seg.a.x + seg.dx * (local / seg.len) + (rnd() - 0.5) * 1.5;
+      const py = seg.a.y + seg.dy * (local / seg.len) + (rnd() - 0.5) * 1.5;
+      const tangAng = Math.atan2(seg.dy, seg.dx) + (rnd() - 0.5) * 0.18;
+      const w = tileW * (0.9 + rnd() * 0.18);
+      const h = tileH * (0.95 + rnd() * 0.15);
+      // 旋转后外接矩形(轴对齐):( |cos|*w + |sin|*h ) / 2
+      const cosA = Math.abs(Math.cos(tangAng));
+      const sinA = Math.abs(Math.sin(tangAng));
+      const halfW = (w * cosA + h * sinA) / 2;
+      const halfH = (w * sinA + h * cosA) / 2;
+      const margin = 0.5;
+      if (px - halfW < L + margin || px + halfW > R - margin ||
+          py - halfH < T + margin || py + halfH > B - margin) {
+        // 越界石板:用纯石板色填充,确保不露底色
+        this.drawFallbackStone(ctx, px, py, tangAng, w, h);
+        continue;
+      }
+      this.drawStone(ctx, px, py, tangAng, w, h, rnd);
+    }
+  },
+
+  // 越界回退石板:只填石板色 + 暗描边(不画高光/青苔/裂痕,避免越界颜色不一致)
+  drawFallbackStone(ctx, px, py, ang, w, h) {
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+    ctx.fillStyle = 'rgb(165,163,153)';
+    roundRect(ctx, -w / 2, -h / 2, w, h, 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1a1812';
+    ctx.lineWidth = 1;
+    roundRect(ctx, -w / 2, -h / 2, w, h, 2);
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  // 一块完整石板
+  drawStone(ctx, px, py, ang, w, h, rnd) {
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+    // 石板外描边(深灰,模拟砂浆缝)
+    ctx.fillStyle = '#1a1812';
+    roundRect(ctx, -w / 2, -h / 2, w, h, 3);
+    ctx.fill();
+    // 石板主色(冷灰)
+    const shade = 0.78 + rnd() * 0.22;
+    const r = Math.floor(170 * shade);
+    const g = Math.floor(168 * shade);
+    const bch = Math.floor(158 * shade);
+    ctx.fillStyle = `rgb(${r},${g},${bch})`;
+    roundRect(ctx, -w / 2 + 1, -h / 2 + 1, w - 2, h - 2, 2);
+    ctx.fill();
+    // 顶部高光
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    roundRect(ctx, -w / 2 + 2, -h / 2 + 2, w - 4, (h - 4) * 0.35, 2);
+    ctx.fill();
+    // 散点青苔(小概率)
+    if (rnd() < 0.18) {
+      ctx.fillStyle = 'rgba(110, 160, 70, 0.55)';
+      ctx.beginPath();
+      ctx.arc((rnd() - 0.5) * w * 0.6, (rnd() - 0.5) * h * 0.5, 1.2 + rnd() * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // 裂痕(低概率)
+    if (rnd() < 0.12) {
+      ctx.strokeStyle = 'rgba(60,50,40,0.35)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-w * 0.3, -h * 0.1);
+      ctx.lineTo((rnd() - 0.5) * w * 0.6, (rnd() - 0.5) * h * 0.5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+
+  // 草地(随机草丛和小花,seed 固定)
+  drawGrass(ctx, x0, y0, x1, y1) {
+    if (!this._grassSeed) this._grassSeed = (Math.random() * 1e9) >>> 0;
+    // 缓存:尺寸变了重建
+    if (this._grassCache && (this._grassCache.w !== this.mapW || this._grassCache.h !== this.mapH)) {
+      this._grassCache = null;
+    }
+    if (!this._grassCache) {
+      const w = this.mapW, h = this.mapH;
+      const off = document.createElement('canvas');
+      off.width = w; off.height = h;
+      const o = off.getContext('2d');
+      let s = this._grassSeed >>> 0;
+      const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff; };
+      const blades = Math.floor((w * h) / 240); // ~密度
+      for (let i = 0; i < blades; i++) {
+        const x = rnd() * w, y = rnd() * h;
+        // 跳过路径(用 isOnPath 简化判断,这里直接以中心空出也够用;走个便宜的距离阈值)
+        if (this._nearPath(x + x0, y + y0, 12)) continue;
+        const ang = -Math.PI / 2 + (rnd() - 0.5) * 0.5;
+        const len = 3 + rnd() * 4;
+        o.strokeStyle = `rgba(${60 + (rnd()*30)|0}, ${110 + (rnd()*40)|0}, ${50 + (rnd()*30)|0}, ${0.55 + rnd() * 0.3})`;
+        o.lineWidth = 0.9;
+        o.beginPath();
+        o.moveTo(x, y);
+        o.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+        o.stroke();
+      }
+      // 小花(白色/黄色)
+      const flowers = Math.floor(blades * 0.05);
+      for (let i = 0; i < flowers; i++) {
+        const x = rnd() * w, y = rnd() * h;
+        if (this._nearPath(x + x0, y + y0, 14)) continue;
+        const col = rnd() < 0.7 ? '#fff8b8' : '#ffe07a';
+        o.fillStyle = col;
+        o.beginPath();
+        o.arc(x, y, 1.4, 0, Math.PI * 2);
+        o.fill();
+      }
+      // 阴影点(深一些,增加斑驳感)
+      for (let i = 0; i < blades * 0.4; i++) {
+        const x = rnd() * w, y = rnd() * h;
+        if (this._nearPath(x + x0, y + y0, 10)) continue;
+        o.fillStyle = `rgba(0,0,0,${0.06 + rnd() * 0.06})`;
+        o.beginPath();
+        o.arc(x, y, 1.5 + rnd() * 1.2, 0, Math.PI * 2);
+        o.fill();
+      }
+      this._grassCache = { canvas: off, w, h };
+    }
+    ctx.drawImage(this._grassCache.canvas, x0, y0);
+  },
+
+  // 离路径 < dist 的点(用于跳过路径上的草丛)
+  _nearPath(x, y, dist) {
+    const wp = this.waypoints;
+    if (!wp || wp.length < 2) return false;
+    const segs = [
+      [wp[0], wp[1]], [wp[1], wp[2]], [wp[2], wp[3]],
+      [wp[3], wp[4]], [wp[4], wp[5]], [wp[5], wp[1]],
+    ];
+    for (const [a, b] of segs) {
+      if (distPointSeg(x, y, a.x, a.y, b.x, b.y) < dist) return true;
+    }
+    return false;
+  },
+};
+
+// ======================== 启动 ========================
+window.addEventListener('DOMContentLoaded', () => {
+  game.init();
+});
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1bb31ba7cf8f4ec384176c31f8f95e2b","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
