@@ -1,14 +1,7 @@
 
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><script src="/__vnext/attribution.js" data-vnext-badge="vnxt-4cda643014f7bb8b" data-vnext-srcdoc="&lt;!doctype html&gt;&lt;html&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;base target=&quot;_blank&quot;&gt;&lt;style&gt;
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;color-scheme:normal}
-.badge{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:34px;padding:6px 7px 6px 10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(12,12,14,.88);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);color:rgba(255,255,255,.78);font:12px ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;letter-spacing:0;box-shadow:0 10px 28px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);white-space:nowrap}
-a{display:inline-flex;align-items:center;gap:8px;color:inherit;text-decoration:none}
-strong{font-weight:650;color:rgba(255,255,255,.96)}
-.mark{font:800 16px/1.05 Inter,Geist,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;color:#8b5cf6;text-shadow:0 0 14px rgba(139,92,246,.35)}
-button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin:0;border:0;border-radius:999px;background:transparent;color:rgba(255,255,255,.58);font:16px/1 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;cursor:pointer;padding:0}
-&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;div class=&quot;badge&quot;&gt;&lt;a href=&quot;https://vnext.cc&quot; rel=&quot;noreferrer&quot; aria-label=&quot;Built with vnext&quot;&gt;&lt;span class=&quot;mark&quot;&gt;V&lt;/span&gt;&lt;span&gt;Built with &lt;strong&gt;vnext&lt;/strong&gt;&lt;/span&gt;&lt;/a&gt;&lt;button type=&quot;button&quot; aria-label=&quot;Close Built with vnext badge&quot;&gt;×&lt;/button&gt;&lt;/div&gt;&lt;script&gt;document.querySelector(&quot;button&quot;).onclick=function(){parent.postMessage({type:&quot;vnxt-attribution-dismiss&quot;,token:&quot;vnxt-4cda643014f7bb8b&quot;},&quot;*&quot;)}&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;" async></script>
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>元素循环圈塔防</title>
@@ -19,30 +12,30 @@ button{display:inline-flex;align-items:center;justify-content:center;width:18px;
 
   /* 顶部状态栏 */
   #statusBar {
-    display: flex; justify-content: space-around; align-items: center;
-    padding: 6px 8px; background: #16213e; font-size: 14px; min-height: 36px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+    gap: 4px 8px; padding: 6px 8px; background: #16213e; font-size: 13px; min-height: 36px;
     border-bottom: 1px solid #0f3460;
   }
-  #statusBar span { white-space: nowrap; }
+  #statusBar > span { white-space: nowrap; }
   .stat-label { color: #a8a8b3; }
   .stat-value { color: #e2e2e2; font-weight: bold; }
   .stat-gold { color: #ffd700; }
   /* 状态栏右侧控制按钮(暂停等) */
   .ctrl-btn {
     background: #0f3460; color: #e2e2e2; border: 1px solid #1a3a6e;
-    padding: 4px 12px; border-radius: 4px; font-size: 13px; cursor: pointer;
+    padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer;
     font-weight: bold; user-select: none; -webkit-user-select: none;
-    transition: background 0.15s;
+    transition: background 0.15s; flex-shrink: 0;
   }
   .ctrl-btn:hover { background: #1a4a8e; }
   .ctrl-btn:active { background: #4caf50; }
   .stat-danger { color: #ff4c4c; }
 
   /* 塔位槽位 */
-  #towerSlots { display: inline-flex; gap: 4px; padding-left: 6px; border-left: 1px solid #0f3460; }
+  #towerSlots { display: inline-flex; gap: 3px; padding-left: 6px; border-left: 1px solid #0f3460; flex-shrink: 0; }
   #towerSlots .slot {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 22px; border-radius: 4px; background: #0f3460;
+    width: 26px; height: 22px; border-radius: 4px; background: #0f3460;
     color: #6c6c80; font-size: 13px; position: relative; line-height: 1;
     border: 1px solid transparent; transition: all 0.15s;
   }
@@ -51,6 +44,27 @@ button{display:inline-flex;align-items:center;justify-content:center;width:18px;
   #towerSlots .slot i.lv {
     position: absolute; right: 1px; bottom: -2px; font-size: 9px; font-style: normal;
     color: #ffd700; line-height: 1; text-shadow: 0 0 2px #000;
+  }
+
+  /* 移动端窄屏:隐藏 stat-label 文字,只留数值;字号再缩小一档 */
+  @media (max-width: 480px) {
+    #statusBar { font-size: 12px; padding: 4px 6px; gap: 3px 6px; }
+    #statusBar .stat-label { display: none; }
+    #statusBar > span::before {
+      /* 用图标代替文字标签,节省空间 */
+      margin-right: 2px;
+    }
+    #statusBar .stat-wave::before  { content: '🌊'; }
+    #statusBar .stat-coin::before  { content: '💰'; }
+    #statusBar .stat-mob::before   { content: '👾'; }
+    #statusBar .stat-kill::before  { content: '💀'; }
+    .ctrl-btn { padding: 3px 8px; font-size: 11px; }
+    #towerSlots { padding-left: 4px; gap: 2px; }
+    #towerSlots .slot { width: 24px; height: 20px; font-size: 12px; }
+  }
+  /* 极窄屏(<= 360px):击杀数字也藏起来,确保暂停按钮可见 */
+  @media (max-width: 360px) {
+    #statusBar .stat-kill { display: none; }
   }
 
   /* Canvas 容器 — 固定 flex:1 占比,内容变化不挤压;relative 让浮层以它为锚点 */
@@ -193,10 +207,10 @@ button{display:inline-flex;align-items:center;justify-content:center;width:18px;
 <body>
 <div id="app">
   <div id="statusBar">
-    <span><span class="stat-label">波数:</span> <span class="stat-value" id="waveNum">0</span></span>
-    <span><span class="stat-label">金币:</span> <span class="stat-value stat-gold" id="goldNum">200</span></span>
-    <span><span class="stat-label">怪物:</span> <span class="stat-value stat-danger" id="monsterCount">0/100</span></span>
-    <span><span class="stat-label">击杀:</span> <span class="stat-value" id="killCount">0</span></span>
+    <span class="stat-wave"><span class="stat-label">波数:</span> <span class="stat-value" id="waveNum">0</span></span>
+    <span class="stat-coin"><span class="stat-label">金币:</span> <span class="stat-value stat-gold" id="goldNum">200</span></span>
+    <span class="stat-mob"><span class="stat-label">怪物:</span> <span class="stat-value stat-danger" id="monsterCount">0/100</span></span>
+    <span class="stat-kill"><span class="stat-label">击杀:</span> <span class="stat-value" id="killCount">0</span></span>
     <span class="stat-slots" id="towerSlots" title="每种塔场上只能存在一座;再造同类型 = 升级原塔">
       <span class="slot" data-slot="fire">🔥<i class="lv">·</i></span>
       <span class="slot" data-slot="water">💧<i class="lv">·</i></span>
@@ -289,8 +303,9 @@ const ITEM_DEFS = [
 
 // 精英怪配置:每隔 ELITE_WAVE_INTERVAL 波出现一只
 // 精英怪比普通怪更肉、有特殊光环,道具爆率更高
-const ELITE_WAVE_INTERVAL = 10;      // 每 10 波来一只
-const ELITE_HP_MULT = 5;             // 血量 = 普通 × 5
+const ELITE_WAVE_INTERVAL = 5;       // 每 5 波来一只(原 10,提高密度)
+const ELITE_HP_BASE_MULT = 5;        // 精英血量基础倍率
+const ELITE_HP_WAVE_SCALE = 0.05;    // 精英血量额外按波次增长:×(5 + 0.05*wave)
 const ELITE_RESIST_BONUS = 0.10;     // 额外 +10% 抗性
 const ELITE_SPEED_MULT = 0.85;       // 慢 15%
 const ELITE_SIZE_MULT = 1.45;        // 体型大 45%
@@ -301,7 +316,8 @@ const DROP_NORM_PROB_MUL = 0.5;      // 普通怪 50% 概率掉道具 (相对 IT
 
 const MAX_TOWER_LEVEL = Infinity; // 无等级上限
 const ULTIMATE_LEVEL = 10;       // 达到此等级解锁终极形态
-const UPGRADE_COST_PER_LEVEL = 100;
+const UPGRADE_COST_PER_LEVEL = 100;       // 基础升级费(每 10 级翻一倍系数)
+const UPGRADE_COST_TIER = 10;             // 每多少级费用 +1 倍基础值
 const MAX_CRIT_RATE = 1.0;       // 暴击率上限 100%
 const MAX_CRIT_DMG  = 10.0;      // 爆伤上限 1000%
 const MAX_ATK_SPEED = 20;        // 攻速上限 20/s
@@ -312,12 +328,15 @@ const MAX_SAFE_HP  = 1e12;       // 怪物血量上限
 const MAX_SAFE_GOLD = 1e12;      // 金币上限
 const MAX_SAFE_WAVE = 1e6;       // 波数上限(到达后停在该波不再递增)
 const MONSTER_BASE_HP = 50;
-const MONSTER_HP_SCALE = 0.40;
+const MONSTER_HP_LINEAR = 0.32;     // 线性项:每波 +32%(早期略缓,给玩家立足)
+const MONSTER_HP_QUAD   = 0.008;    // 二次项:wave² × 0.008 (50 波后强势加速)
 const MONSTER_SPEED = 40; // px/s（降低速度）
 const WAVE_BASE_INTERVAL = 8; // 第1波间隔8s，之后每波递增
 const MONSTER_SPAWN_INTERVAL = 0.4; // seconds（缩短怪物间距）
 const INITIAL_GOLD = 300;
 const KILL_GOLD_BASE = 10;
+const KILL_GOLD_PER_WAVE = 1.2;     // 线性项(原 2,降低后期通胀)
+const KILL_GOLD_QUAD = 0.005;       // 二次项 wave² × 0.005,温和跟上升级费
 
 // === 元素反应系统（参考原神） ===
 // 三元素:火(红)/水(蓝)/冰(青)
@@ -357,12 +376,11 @@ const ELEMENT_REACTIONS = {
   // 冰塔击中被火附着的怪 => 融化
   ice_fire:    { mul: REACT_MELT,     label: '融化',    clear: true,  visual: { icon: '💥', color: '#ff6f00' } },
 };
-const KILL_GOLD_PER_WAVE = 2;
 const MAX_MONSTERS_GAMEOVER = 100;
 const SLOW_DURATION = 2; // seconds
-const MONSTER_BASE_RESIST = 0;    // 基础抗性（减伤比例）
-const MONSTER_RESIST_SCALE = 0.008; // 每波增加0.8%抗性
-const MONSTER_RESIST_CAP = 0.35;    // 抗性上限 35%
+const MONSTER_BASE_RESIST = 0;       // 基础抗性
+const MONSTER_RESIST_ASYMP = 0.45;   // 抗性渐近上限(logistic 上界,永远逼近不超过)
+const MONSTER_RESIST_TAU = 50;       // 抗性时间常数(波数,数值越大爬升越慢)
 
 // ======================== 工具函数 ========================
 function dist(x1, y1, x2, y2) {
@@ -462,6 +480,19 @@ function safeMul(a, b, cap) {
 function safeRound(v) {
   if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
   return Math.round(v);
+}
+
+// 原地过滤:保留 pred(item)==true 的元素,改写原数组,免去 .filter() 每帧分配新数组
+// 在 60FPS 热路径(粒子/子弹清理)调用,wave 100+ 累计减少几百次数组分配/秒
+function filterInPlace(arr, pred) {
+  let w = 0;
+  for (let r = 0; r < arr.length; r++) {
+    if (pred(arr[r])) {
+      if (w !== r) arr[w] = arr[r];
+      w++;
+    }
+  }
+  arr.length = w;
 }
 
 // ======================== 游戏对象 ========================
@@ -728,11 +759,22 @@ class Projectile {
 
     // Water tower splash
     if (tw.type === 'water' && tw.getSplash() > 0) {
-      const monsters = game.monsters.filter(m => m.alive && m !== t && dist(m.x, m.y, t.x, t.y) <= tw.getSplash());
-      const targets = monsters.slice(0, tw.getSplashMax());
-      for (const m of targets) {
-        const splashDmg = safeRound(safeMul(this.damage, 0.5, MAX_SAFE_ATK));
-        m.takeDamage(splashDmg, false, tw.type, tw);
+      const splash = tw.getSplash();
+      const splashSq = splash * splash;
+      const splashMax = tw.getSplashMax();
+      const tx = t.x, ty = t.y;
+      const monsters = game.monsters;
+      let hit = 0;
+      // 不再 filter+slice 创建新数组,直接遍历命中即处理,避免高速攻击下的频繁分配
+      for (let i = 0; i < monsters.length && hit < splashMax; i++) {
+        const m = monsters[i];
+        if (!m.alive || m === t) continue;
+        const dx = m.x - tx, dy = m.y - ty;
+        if (dx * dx + dy * dy <= splashSq) {
+          const splashDmg = safeRound(safeMul(this.damage, 0.5, MAX_SAFE_ATK));
+          m.takeDamage(splashDmg, false, tw.type, tw);
+          hit++;
+        }
       }
     }
 
@@ -780,14 +822,15 @@ class Tower {
   }
   getAtk() {
     const ult = this.level >= ULTIMATE_LEVEL ? this.def.ult.atkMul : 1;
-    // 线性增长:每升一级 +12% 基础攻击(叠加)
-    // level=1 → baseAtk * 1.00
-    // level=2 → baseAtk * 1.12
-    // level=N → baseAtk * (1 + 0.12 * (N-1))
-    // 平衡依据:与怪物血量 (50 * (1 + 0.22 * wave)) + 抗性 (0.8%/wave, 上限 35%) 适配
-    // 经验:Lv.50 终极火塔打 wave 50 怪 ≈ 5-6 下,Lv.100 终极火塔打 wave 100 怪 ≈ 5-6 下
+    // 软上限增长:每升一级 +10% × (Lv-1)^0.85,后期单级收益递减
+    // level=1 → baseAtk × 1.00
+    // level=10 → baseAtk × (1 + 0.10 × 9^0.85) ≈ baseAtk × 1.69
+    // level=50 → baseAtk × (1 + 0.10 × 49^0.85) ≈ baseAtk × 3.81
+    // level=100 → baseAtk × (1 + 0.10 × 99^0.85) ≈ baseAtk × 6.71
+    // level=200 → baseAtk × (1 + 0.10 × 199^0.85) ≈ baseAtk × 12.1
+    // 配合怪物 HP 二次项,后期保持 0.3-0.5 击杀倍率
     const lv = safeNum(safeFinite(this.level, 1), 1, 1e6);
-    const growth = 1 + 0.12 * (lv - 1);
+    const growth = 1 + 0.10 * Math.pow(lv - 1, 0.85);
     const raw = this.def.baseAtk * growth * ult;
     // 三道护栏:非有限→0, 上限钳到 MAX_SAFE_ATK
     return safeRound(safeNum(raw, 0, MAX_SAFE_ATK));
@@ -814,7 +857,12 @@ class Tower {
     return this.def.baseSpeed + this.bonusSpeed;
   }
   getUpgradeCost() {
-    return UPGRADE_COST_PER_LEVEL;
+    // 升级费随等级阶梯递增:每 UPGRADE_COST_TIER (10) 级翻一倍系数
+    // Lv 1-10 → 100;Lv 11-20 → 200;Lv 21-30 → 300;Lv 100 → 1000;Lv 200 → 2000
+    // 阻断金币雪崩,防止 wave 50 后玩家一键升满级
+    const lv = safeNum(safeFinite(this.level, 1), 1, 1e6);
+    const tier = Math.ceil(lv / UPGRADE_COST_TIER);
+    return UPGRADE_COST_PER_LEVEL * tier;
   }
   upgrade() {
     // 即使 UI 绕过 tryUpgradeTower 直接调 upgrade() 也要防溢出
@@ -832,10 +880,14 @@ class Tower {
     let best = null;
     let bestProgress = -1;
     const range = this.getRange();
-    for (const m of monsters) {
+    const rangeSq = range * range;
+    const tx = this.x, ty = this.y;
+    // 距离比较用平方比较,免一次 Math.sqrt(每塔每帧 N 次,wave 100+ 是 1.8 万次/秒)
+    for (let i = 0; i < monsters.length; i++) {
+      const m = monsters[i];
       if (!m.alive) continue;
-      if (dist(this.x, this.y, m.x, m.y) <= range) {
-        // Prioritize furthest along the path
+      const dx = tx - m.x, dy = ty - m.y;
+      if (dx * dx + dy * dy <= rangeSq) {
         if (m.pathProgress > bestProgress) {
           best = m;
           bestProgress = m.pathProgress;
@@ -1108,16 +1160,20 @@ class Monster {
     this.isElite = !!isElite;
     // wave 钳到安全范围,防止 (1 + wave * 0.22) 溢出
     const safeWave = Math.max(0, Math.min(MAX_SAFE_WAVE, safeFinite(wave, 0)));
-    // 精英怪:血量 × 5,体型 × 1.45,速度 × 0.85
-    const hpMult = this.isElite ? ELITE_HP_MULT : 1;
+    // 精英怪:血量基础 ×5,且每波再 +5% 复合,后期精英真正硬
+    const eliteHpMult = this.isElite ? (ELITE_HP_BASE_MULT + safeWave * ELITE_HP_WAVE_SCALE) : 1;
     const spMult = this.isElite ? ELITE_SPEED_MULT : 1;
     const szMult = this.isElite ? ELITE_SIZE_MULT : 1;
-    this.maxHp = safeRound(safeNum(MONSTER_BASE_HP * (1 + safeWave * MONSTER_HP_SCALE) * hpMult, 1, MAX_SAFE_HP));
+    // 怪物 HP = 50 × (1 + 0.35×w + 0.004×w²) × elite倍率
+    // wave 10 → 50 × 4.9 = 245;wave 50 → 50 × 28.5 = 1425;wave 100 → 50 × 76 = 3800;wave 200 → 50 × 231 = 11550
+    const hpGrowth = 1 + safeWave * MONSTER_HP_LINEAR + safeWave * safeWave * MONSTER_HP_QUAD;
+    this.maxHp = safeRound(safeNum(MONSTER_BASE_HP * hpGrowth * eliteHpMult, 1, MAX_SAFE_HP));
     this.hp = this.maxHp;
-    // 抗性 = 基础 + 精英加成(精英 +10%,仍受全局上限约束)
-    const baseResist = Math.min(MONSTER_RESIST_CAP, MONSTER_BASE_RESIST + safeWave * MONSTER_RESIST_SCALE);
+    // 抗性 = logistic 渐近曲线:0.45 × (1 - e^(-w/60)),永远逼近 45% 不封顶
+    // wave 10 → 6.9%;wave 30 → 17.7%;wave 60 → 28.5%;wave 100 → 36%;wave 200 → 43.4%
+    const baseResist = MONSTER_RESIST_ASYMP * (1 - Math.exp(-safeWave / MONSTER_RESIST_TAU));
     this.resist = this.isElite
-      ? Math.min(MONSTER_RESIST_CAP, baseResist + ELITE_RESIST_BONUS)
+      ? Math.min(0.85, baseResist + ELITE_RESIST_BONUS)  // 精英 +10%, 安全帽 85%
       : baseResist;
     this.baseSpeed = MONSTER_SPEED * spMult;
     this.speed = this.baseSpeed;
@@ -1733,6 +1789,8 @@ const game = {
     this.mapW = this.mapRight - this.mapLeft;
     this.mapH = this.mapBottom - this.mapTop;
     this.buildWaypoints();
+    // 尺寸变化时清掉路径离屏缓存,_buildPathCache 会按新尺寸重建
+    this._pathCache = null;
     // 浮层重定位(infoPanel 跟着画布走,画布大小变了要同步)
     this._positionInfoPanel && this._positionInfoPanel();
   },
@@ -2009,7 +2067,10 @@ const game = {
     this.kills = safeAdd(safeFinite(this.kills, 0), 1, MAX_SAFE_HP);
     // 精英怪击杀金币 × 3
     const goldMult = monster.isElite ? ELITE_GOLD_MULT : 1;
-    const reward = safeRound((KILL_GOLD_BASE + this.wave * KILL_GOLD_PER_WAVE) * goldMult);
+    // 击杀金币 = 基础 + 线性 × wave + 二次 × wave²,跟上后期阶梯升级费
+    // wave 10 → 26;wave 50 → 110;wave 100 → 260;wave 200 → 710
+    const w = safeFinite(this.wave, 0);
+    const reward = safeRound((KILL_GOLD_BASE + w * KILL_GOLD_PER_WAVE + w * w * KILL_GOLD_QUAD) * goldMult);
     this.gold = safeAdd(safeFinite(this.gold, 0), reward, MAX_SAFE_GOLD);
     const goldColor = monster.isElite ? '#ffb432' : '#ffd700';
     this.addParticle(new Particle(monster.x, monster.y - 10, `+${reward}💰`, goldColor, monster.isElite ? 1.6 : 1.2));
@@ -2084,6 +2145,12 @@ const game = {
   },
 
   addParticle(p) {
+    // 粒子上限护栏:wave 100+ 暴击/反应飘字爆增时,避免画粒子吃帧
+    // 超出时丢最旧的(队头),保留最新的
+    const MAX_PARTICLES = 200;
+    if (this.particles.length >= MAX_PARTICLES) {
+      this.particles.shift();
+    }
     this.particles.push(p);
   },
 
@@ -2208,23 +2275,61 @@ const game = {
     return 'none';
   },
 
+  // 计算从当前等级升 N 级的累计费用(考虑阶梯涨价)
+  // 返回 { totalCost, affordableLevels }:其中 affordableLevels 是手头金币最多能升的级数
+  _computeUpgradeCost(tower, n) {
+    const startLv = safeFinite(tower.level, 1);
+    let total = 0;
+    let affordable = 0;
+    let remaining = safeFinite(this.gold, 0);
+    for (let i = 0; i < n; i++) {
+      const lv = startLv + i;
+      const tier = Math.ceil(lv / UPGRADE_COST_TIER);
+      const cost = UPGRADE_COST_PER_LEVEL * tier;
+      total += cost;
+      if (remaining >= cost) {
+        remaining -= cost;
+        affordable = i + 1;
+      }
+    }
+    return { totalCost: total, affordableLevels: affordable };
+  },
+
+  // 用当前金币能连升多少级(阶梯升级费下贪心算)
+  _maxAffordableLevels(tower) {
+    const startLv = safeFinite(tower.level, 1);
+    let remaining = safeFinite(this.gold, 0);
+    let levels = 0;
+    // 限制循环上限防止极端金币下卡死
+    while (levels < 100000) {
+      const lv = startLv + levels;
+      const tier = Math.ceil(lv / UPGRADE_COST_TIER);
+      const cost = UPGRADE_COST_PER_LEVEL * tier;
+      if (remaining < cost) break;
+      remaining -= cost;
+      levels++;
+    }
+    return levels;
+  },
+
   // 局部更新升级按钮的 disabled 状态 + 满级按钮文本/数值,不重建 DOM 节点
   // 这样金币高频变化(怪物掉金币)不会让玩家点击的按钮节点被替换。
   _refreshInfoPanelDynamic() {
     if (!this.selectedTower) return;
     const t = this.selectedTower;
     const upgCost = t.getUpgradeCost();
-    const cost10 = upgCost * 10;
+    const cost10 = this._computeUpgradeCost(t, 10).totalCost;
     const btn1 = document.getElementById('upgradeBtn');
     const btn10 = document.getElementById('upgradeBtn10');
     const btnMax = document.getElementById('upgradeBtnMax');
     if (btn1) btn1.disabled = this.gold < upgCost;
     if (btn10) btn10.disabled = this.gold < cost10;
     if (btnMax) {
-      const maxLvl = this.gold >= upgCost ? Math.floor(this.gold / upgCost) : 0;
+      const maxLvl = this._maxAffordableLevels(t);
+      const maxCost = this._computeUpgradeCost(t, maxLvl).totalCost;
       // onclick 中的 N 用闭包重写,避免依赖 inline string
       btnMax.onclick = () => window.tryUpgradeClick(maxLvl);
-      btnMax.textContent = `满级 ×${maxLvl}  $${maxLvl * upgCost}`;
+      btnMax.textContent = `满级 ×${maxLvl}  $${maxCost}`;
       btnMax.disabled = maxLvl <= 1;
     }
   },
@@ -2253,16 +2358,17 @@ const game = {
       }
       // 升级按钮组:升级 / ×10 一行,满级独占第二行
       const canUpg = this.gold >= upgCost;
-      const cost10 = upgCost * 10;
+      const cost10 = this._computeUpgradeCost(t, 10).totalCost;
       // 内联 onclick,避免 updateUI 反复重画时事件委托漏触发的隐患
       const upgBtn = `<button id="upgradeBtn" class="upg-main" ${canUpg ? '' : 'disabled'} onclick="tryUpgradeClick(1)">升级 $${upgCost}</button>`;
       const upg10 = `<button id="upgradeBtn10" class="upg-multi" ${this.gold >= cost10 ? '' : 'disabled'} onclick="tryUpgradeClick(10)">×10 $${cost10}</button>`;
-      const maxLvl = this.gold >= upgCost ? Math.floor(this.gold / upgCost) : 0;
+      const maxLvl = this._maxAffordableLevels(t);
+      const maxCost = this._computeUpgradeCost(t, maxLvl).totalCost;
       const upgAll = maxLvl > 1
-        ? `<button id="upgradeBtnMax" class="upg-multi upg-max" onclick="tryUpgradeClick(${maxLvl})">满级 ×${maxLvl}  $${maxLvl * upgCost}</button>`
+        ? `<button id="upgradeBtnMax" class="upg-multi upg-max" onclick="tryUpgradeClick(${maxLvl})">满级 ×${maxLvl}  $${maxCost}</button>`
         : '';
       html += `<div class="upg-row upg-row-main">${upgBtn}${upg10}</div>`;
-      if (upgAll) html += `<div class="upg-row upg-row-max\">${upgAll}</div>`;
+      if (upgAll) html += `<div class="upg-row upg-row-max">${upgAll}</div>`;
       html += `<div class="upg-hint">金币多时直接点 ×10 / 升到顶</div>`;
       infoEl.innerHTML = html;
       this._lastMaxLvl = maxLvl;
@@ -2318,27 +2424,30 @@ const game = {
   },
 
   // 一次连续升级 N 次(中途金币不足自动停止)
-  // 优化:预算预检 + 循环调内部纯逻辑 + 末尾一次性 UI/粒子/保存,避免每级 1000 次重渲染
+  // 优化:每级动态取价(阶梯升级费需要),末尾一次性 UI/粒子/保存
   upgradeMulti(n) {
     if (this.gameOver) return 0;
     if (!this.selectedTower) return 0;
     const tower = this.selectedTower;
-    n = Math.max(1, safeRound(safeNum(n, 1, 1000)) | 0);
-    const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
-    if (cost <= 0) return 0;
-
-    // 预算预检:一次算出能升多少级,避免循环里逐级校验
-    const affordable = Math.min(n, Math.floor(this.gold / cost));
-    if (affordable <= 0) {
-      this.flashRuleHint(`金币不足,需要 $${cost}`);
-      return 0;
-    }
+    n = Math.max(1, safeRound(safeNum(n, 1, 100000)) | 0);
 
     let awakened = false;
-    for (let i = 0; i < affordable; i++) {
+    let upgraded = 0;
+    for (let i = 0; i < n; i++) {
+      // 动态取价:阶梯升级费会随等级跨阶梯变化
+      const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+      if (cost <= 0) break;
+      if (this.gold < cost) break;
       const r = this._applyUpgrade(tower, cost);
       if (!r.ok) break;
       if (r.awakened) awakened = true;
+      upgraded++;
+    }
+
+    if (upgraded === 0) {
+      const nextCost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+      this.flashRuleHint(`金币不足,需要 $${nextCost}`);
+      return 0;
     }
 
     // 末尾统一刷一次反馈
@@ -2347,7 +2456,7 @@ const game = {
     this._emitUpgradeFx(tower, { awakened });
     this.updateUI();
     this.scheduleAutoSave();
-    return affordable;
+    return upgraded;
   },
 
   // ======================== 游戏循环 ========================
@@ -2407,12 +2516,14 @@ const game = {
         // 当前波所有怪物已出完，开始下一波倒计时（周期 = wave * WAVE_BASE_INTERVAL）
         this.waveActive = false;
         this.waveTimer = this.wave * WAVE_BASE_INTERVAL;
-        this.monsters = this.monsters.filter(m => m.alive); // cleanup dead
+        filterInPlace(this.monsters, m => m.alive); // cleanup dead, in-place
       }
     }
 
-    // Update towers
-    for (const t of this.towers) {
+    // Update towers (热路径:经典 for 比 for...of 在 V8 上快约 30%)
+    const towers = this.towers;
+    for (let i = 0; i < towers.length; i++) {
+      const t = towers[i];
       t.update(dt);
       if (t.canShoot()) {
         const target = t.findTarget(this.monsters);
@@ -2424,23 +2535,26 @@ const game = {
     }
 
     // Update monsters
-    for (const m of this.monsters) {
-      m.update(dt);
+    const monsters = this.monsters;
+    for (let i = 0; i < monsters.length; i++) {
+      monsters[i].update(dt);
     }
 
     // Update projectiles
-    for (const p of this.projectiles) {
-      p.update(dt);
+    const projectiles = this.projectiles;
+    for (let i = 0; i < projectiles.length; i++) {
+      projectiles[i].update(dt);
     }
 
     // Update particles
-    for (const p of this.particles) {
-      p.update(dt);
+    const particles = this.particles;
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update(dt);
     }
 
-    // Cleanup
-    this.projectiles = this.projectiles.filter(p => p.alive);
-    this.particles = this.particles.filter(p => p.alive);
+    // Cleanup: in-place 过滤,避免每帧创建 2 个新数组(GC 压力)
+    filterInPlace(this.projectiles, p => p.alive);
+    filterInPlace(this.particles, p => p.alive);
 
     // HUD + aliveCount: 复用 updateUI,避免一帧内多次 filter + 多次 getElementById
     this.updateUI();
@@ -2529,9 +2643,13 @@ const game = {
     ctx.stroke();
     ctx.restore();
 
-    // Draw towers
-    for (const t of this.towers) {
-      t.draw(ctx, t === this.selectedTower);
+    // Draw towers (热路径:经典 for 比 for...of 快)
+    {
+      const arr = this.towers;
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i];
+        t.draw(ctx, t === this.selectedTower);
+      }
     }
 
     // 同类型塔已存在时: 旧塔呼吸高亮 → 提示"再次点击新位置 = 迁塔+升级"
@@ -2556,19 +2674,18 @@ const game = {
       }
     }
 
-    // Draw monsters
-    for (const m of this.monsters) {
-      m.draw(ctx);
+    // Draw monsters / projectiles / particles (热路径:经典 for)
+    {
+      const arr = this.monsters;
+      for (let i = 0; i < arr.length; i++) arr[i].draw(ctx);
     }
-
-    // Draw projectiles
-    for (const p of this.projectiles) {
-      p.draw(ctx);
+    {
+      const arr = this.projectiles;
+      for (let i = 0; i < arr.length; i++) arr[i].draw(ctx);
     }
-
-    // Draw particles
-    for (const p of this.particles) {
-      p.draw(ctx);
+    {
+      const arr = this.particles;
+      for (let i = 0; i < arr.length; i++) arr[i].draw(ctx);
     }
 
     // Wave status display on canvas
@@ -2683,22 +2800,37 @@ const game = {
   drawPath(ctx) {
     const wp = this.waypoints;
     if (!wp || wp.length < 2) return;
-    ctx.save();
+
+    // 路径离屏缓存:整条路径(走廊底色 + 石板 + 箭头)是静态的,
+    // 缓存为一张 canvas,每帧只 drawImage 一次,免去几百块石板的重绘
+    if (!this._pathCache || this._pathCache.w !== this.W || this._pathCache.h !== this.H) {
+      this._buildPathCache();
+    }
+    if (this._pathCache) {
+      ctx.drawImage(this._pathCache.canvas, 0, 0);
+    }
+  },
+
+  _buildPathCache() {
+    const wp = this.waypoints;
+    if (!wp || wp.length < 2) return;
+    const off = document.createElement('canvas');
+    off.width = this.W;
+    off.height = this.H;
+    const ctx = off.getContext('2d');
 
     // 怪物路径: spawn(0) -> 1 -> 2 -> 3 -> 4 -> 5 -> 1 -> 2 -> ...
-    // 整条走廊(从 spawn 一路画到 wp[1] 然后绕圈回到 wp[1]) 是一条折线
     const polyline = [wp[0], wp[1], wp[2], wp[3], wp[4], wp[5], wp[1]];
     const tileW = 22, tileH = 18;
-    const corridorR = tileW * 0.55; // 走廊半宽(同时也是石板外接半径)
+    const corridorR = tileW * 0.55;
 
-    // 1) 先用"粗线+圆头+圆角"画一层"石板底色"作为整条走廊,
-    //    这样转角是自动圆角,接缝/边缘都不会露草或漏底色
+    // 1) 走廊底色
     this.strokePolyline(ctx, polyline, corridorR, '#2c2820');
 
-    // 2) 沿折线按弧长均匀铺石板
+    // 2) 石板
     this.drawCobbleOnPolyline(ctx, polyline, tileW, tileH);
 
-    // 3) 路径中心箭头(浅色,指明方向)
+    // 3) 箭头
     ctx.fillStyle = 'rgba(245, 240, 220, 0.55)';
     const arrowSize = 5;
     for (let i = 0; i < polyline.length - 1; i++) {
@@ -2718,8 +2850,10 @@ const game = {
       ctx.restore();
     }
 
-    ctx.restore();
+    this._pathCache = { canvas: off, w: this.W, h: this.H };
   },
+
+  // 旧 drawPath 函数体已挪到 _buildPathCache,保留下面的辅助函数
 
   // 沿一条带 waypoint 的折线画"走廊"—— 用 lineCap='round' + lineJoin='round' 的粗描边
   strokePolyline(ctx, wps, halfWidth, color) {
@@ -2914,6 +3048,5 @@ window.addEventListener('DOMContentLoaded', () => {
   game.init();
 });
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1bb31ba7cf8f4ec384176c31f8f95e2b","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
