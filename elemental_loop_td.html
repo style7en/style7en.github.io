@@ -232,7 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
-    <div id="versionTag">v2026.06.18</div>
+    <div id="versionTag">v2026.06.19</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
@@ -275,12 +275,12 @@
 
 <script>
 // ======================== 常量定义 ========================
-// 范围相关字段全部用"地图尺寸比例"(0~√2),运行时乘以 mapW 得到像素值
+// 范围相关字段全部用"地图尺寸比例"(0~RANGE_RATIO_MAX),运行时乘以 mapW 得到像素值
 //   rangeRatio:  攻击范围 / 地图边长
 //   splashRatio: 溅射半径 / 地图边长
 //   ult.rangeMul: 觉醒范围倍率(乘到 rangeRatio 上)
-// 上限 = √2 (覆盖整张地图正方形的对角线)
-const RANGE_RATIO_MAX = Math.SQRT2; // ≈ 1.4142
+// 上限 0.80 = 地图边长的 80%(覆盖大部分地图但不至于无脑全图打)
+const RANGE_RATIO_MAX = 0.80;
 const TOWER_DEFS = {
   fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 15, rangeRatio: 0.227, baseSpeed: 1.0, cost: 100, splashRatio: 0,     slowRate: 0,    slowDur: 0, desc: '单体伤害',
            ult: { name: '焚天', desc: '攻击附带范围灼烧', atkMul: 1.6, rangeMul: 1.2, splashRatio: 0.076 } },
