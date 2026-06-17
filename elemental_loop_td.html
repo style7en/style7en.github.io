@@ -275,12 +275,18 @@
 
 <script>
 // ======================== 常量定义 ========================
+// 范围相关字段全部用"地图尺寸比例"(0~√2),运行时乘以 mapW 得到像素值
+//   rangeRatio:  攻击范围 / 地图边长
+//   splashRatio: 溅射半径 / 地图边长
+//   ult.rangeMul: 觉醒范围倍率(乘到 rangeRatio 上)
+// 上限 = √2 (覆盖整张地图正方形的对角线)
+const RANGE_RATIO_MAX = Math.SQRT2; // ≈ 1.4142
 const TOWER_DEFS = {
-  fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 15, baseRange: 120, baseSpeed: 1.0, cost: 100, splash: 0, slowRate: 0, slowDur: 0, desc: '单体伤害',
-           ult: { name: '焚天', desc: '攻击附带范围灼烧', atkMul: 1.6, rangeMul: 1.2, splash: 40 } },
-  water: { name: '水塔', icon: '💧', color: '#2196f3', baseAtk: 8,  baseRange: 100, baseSpeed: 1.5, cost: 80,  splash: 50, splashMax: 3, slowRate: 0, slowDur: 0, desc: '溅射50px',
-           ult: { name: '怒涛', desc: '溅射范围+数量翻倍', atkMul: 1.4, rangeMul: 1.1, splash: 80, splashMax: 5 } },
-  ice:   { name: '冰塔', icon: '❄️', color: '#00bcd4', baseAtk: 5,  baseRange: 110, baseSpeed: 0.8, cost: 90,  splash: 0, slowRate: 0.5, slowDur: 2, desc: '减速50%',
+  fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 15, rangeRatio: 0.227, baseSpeed: 1.0, cost: 100, splashRatio: 0,     slowRate: 0,    slowDur: 0, desc: '单体伤害',
+           ult: { name: '焚天', desc: '攻击附带范围灼烧', atkMul: 1.6, rangeMul: 1.2, splashRatio: 0.076 } },
+  water: { name: '水塔', icon: '💧', color: '#2196f3', baseAtk: 8,  rangeRatio: 0.189, baseSpeed: 1.5, cost: 80,  splashRatio: 0.095, splashMax: 3, slowRate: 0,    slowDur: 0, desc: '溅射(地图 9.5%)',
+           ult: { name: '怒涛', desc: '溅射范围+数量翻倍', atkMul: 1.4, rangeMul: 1.1, splashRatio: 0.151, splashMax: 5 } },
+  ice:   { name: '冰塔', icon: '❄️', color: '#00bcd4', baseAtk: 5,  rangeRatio: 0.208, baseSpeed: 0.8, cost: 90,  splashRatio: 0,     slowRate: 0.5,  slowDur: 2, desc: '减速50%',
            ult: { name: '极寒', desc: '减速至25%并冻结0.5s', atkMul: 1.3, rangeMul: 1.1, slowRate: 0.75, slowDur: 3 } },
 };
 
@@ -295,11 +301,10 @@ const ITEM_DEFS = [
     t.critDamage = Math.min(MAX_CRIT_DMG, t.critDamage + 0.20);
     return true;
   } },
-  { id: 'range',     name: '范围+10px',     prob: 0.10, apply: (t) => {
-    // 攻击范围上限 = 地图宽高中的较大值
-    const maxR = Math.max((game.mapW || 600), (game.mapH || 600));
-    if (t.getRange() + 10 > maxR) return false;
-    t.bonusRange += 10;
+  { id: 'range',     name: '范围+2%地图',   prob: 0.10, apply: (t) => {
+    // 攻击范围上限 = 地图正方形的对角线长度(rangeRatio = √2)
+    if (t.getRangeRatio() + 0.02 > RANGE_RATIO_MAX) return false;
+    t.bonusRangeRatio += 0.02;
     return true;
   } },
   { id: 'atkSpeed',  name: '攻速+0.1/s',   prob: 0.10, apply: (t) => {
@@ -818,7 +823,7 @@ class Tower {
     this.cooldown = 0;
     this.critRate = 0.05;
     this.critDamage = 1.5;
-    this.bonusRange = 0;
+    this.bonusRangeRatio = 0;  // 道具加的"地图比例"增量(原 bonusRange:px → 现 ratio)
     this.bonusSpeed = 0;
     this.items = []; // item log
     this.totalDamage = 0;
@@ -843,13 +848,24 @@ class Tower {
     // 三道护栏:非有限→0, 上限钳到 MAX_SAFE_ATK
     return safeRound(safeNum(raw, 0, MAX_SAFE_ATK));
   }
-  getRange() {
-    // 升级不再增加攻击范围,只在终极形态 + 道具 bonusRange 时改变
+  // 当前总比例(基础 × 觉醒倍率 + 道具增量),钳到 [0, √2]
+  getRangeRatio() {
     const ult = this.level >= ULTIMATE_LEVEL ? this.def.ult.rangeMul : 1;
-    return this.def.baseRange * ult + this.bonusRange;
+    const r = this.def.rangeRatio * ult + this.bonusRangeRatio;
+    return Math.min(RANGE_RATIO_MAX, Math.max(0, r));
   }
+  // 实际像素范围 = 比例 × 地图边长(用 mapW;mapW===mapH 因为是正方形)
+  getRange() {
+    const mapW = (game && game.mapW) ? game.mapW : 600;
+    return this.getRangeRatio() * mapW;
+  }
+  // 溅射半径(像素)
   getSplash() {
-    return this.level >= ULTIMATE_LEVEL && this.def.ult.splash > 0 ? this.def.ult.splash : this.def.splash;
+    const mapW = (game && game.mapW) ? game.mapW : 600;
+    const ratio = this.level >= ULTIMATE_LEVEL && this.def.ult.splashRatio > 0
+      ? this.def.ult.splashRatio
+      : (this.def.splashRatio || 0);
+    return ratio * mapW;
   }
   getSplashMax() {
     return this.level >= ULTIMATE_LEVEL && this.def.ult.splashMax > 0 ? this.def.ult.splashMax : (this.def.splashMax || 0);
@@ -1575,7 +1591,7 @@ const game = {
           level: safeFinite(t.level, 1),
           critRate: safeFinite(t.critRate, 0.05),
           critDamage: safeFinite(t.critDamage, 1.5),
-          bonusRange: safeFinite(t.bonusRange, 0),
+          bonusRangeRatio: safeFinite(t.bonusRangeRatio, 0),
           bonusSpeed: safeFinite(t.bonusSpeed, 0),
           items: t.items.slice(),
           totalDamage: safeFinite(t.totalDamage, 0),
@@ -1626,7 +1642,13 @@ const game = {
         t.level = safeNum(safeFinite(td.level, 1), 1, 999999);
         t.critRate = safeNum(safeFinite(td.critRate, 0.05), 0, MAX_CRIT_RATE);
         t.critDamage = safeNum(safeFinite(td.critDamage, 1.5), 1.5, MAX_CRIT_DMG);
-        t.bonusRange = safeNum(safeFinite(td.bonusRange, 0), 0, 999);
+        // 兼容旧存档:旧字段 bonusRange(px) → 新字段 bonusRangeRatio(地图比例)
+        // 旧存档假设 mapW≈600 时建立,直接除以 600 换算
+        if (td.bonusRangeRatio != null) {
+          t.bonusRangeRatio = safeNum(safeFinite(td.bonusRangeRatio, 0), 0, RANGE_RATIO_MAX);
+        } else if (td.bonusRange != null) {
+          t.bonusRangeRatio = safeNum(safeFinite(td.bonusRange, 0) / 600, 0, RANGE_RATIO_MAX);
+        }
         t.bonusSpeed = safeNum(safeFinite(td.bonusSpeed, 0), 0, MAX_ATK_SPEED - TOWER_DEFS[td.type].baseSpeed);
         t.items = Array.isArray(td.items) ? td.items.slice() : [];
         t.totalDamage = safeNum(safeFinite(td.totalDamage, 0), 0, MAX_SAFE_ATK * 1e6);
@@ -2272,7 +2294,7 @@ const game = {
       const upgCost = t.getUpgradeCost();
       const hasMaxBtn = this.gold >= upgCost && Math.floor(this.gold / upgCost) > 1 ? 1 : 0;
       return [
-        'tower', t.type, t.level, t.getAtk(), Math.round(t.getRange()),
+        'tower', t.type, t.level, t.getAtk(), t.getRangeRatio().toFixed(3),
         t.getSpeed().toFixed(1), t.critRate.toFixed(3), t.critDamage.toFixed(3),
         upgCost, hasMaxBtn,
       ].join('|');
@@ -2351,7 +2373,7 @@ const game = {
       let html = `<div class="info-title">${t.def.icon} ${t.def.name} Lv.${t.level}${t.isUltimate() ? ' ★' : ''}</div>`;
       html += `<div class="info-row">`;
       html += `<span class="info-item">攻击 <b>${t.getAtk()}</b></span>`;
-      html += `<span class="info-item">范围 <b>${Math.round(t.getRange())}px</b></span>`;
+      html += `<span class="info-item">范围 <b>${(t.getRangeRatio() * 100).toFixed(1)}%</b></span>`;
       html += `<span class="info-item">攻速 <b>${t.getSpeed().toFixed(1)}/s</b></span>`;
       html += `</div>`;
       html += `<div class="info-row">`;
@@ -2746,11 +2768,11 @@ const game = {
       const col = valid ? '#4caf50' : '#ff4c4c';
       const fillCol = valid ? def.color : '#ff4c4c';
       ctx.save();
-      // 范围圆
+      // 范围圆(用比例 × 当前 mapW)
       ctx.globalAlpha = valid ? 0.18 : 0.22;
       ctx.fillStyle = fillCol;
       ctx.beginPath();
-      ctx.arc(hx, hy, def.baseRange, 0, Math.PI * 2);
+      ctx.arc(hx, hy, def.rangeRatio * this.mapW, 0, Math.PI * 2);
       ctx.fill();
       // 鬼影塔
       ctx.globalAlpha = 0.55;
