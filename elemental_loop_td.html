@@ -90,7 +90,14 @@
   .build-btn .btn-cost { font-size: 11px; color: #ffd700; }
   .build-btn .btn-built { font-size: 10px; color: #4caf50; }
 
-  /* 浮层信息面板 — 跟随选中的塔定位,绝对定位不参与布局 */
+  /* 版本号水印(右下角,固定在 canvasWrap 内) */
+  #versionTag {
+    position: absolute; right: 6px; bottom: 4px;
+    font: 10px/1 ui-monospace, Menlo, Consolas, monospace;
+    color: rgba(255, 255, 255, 0.35); pointer-events: none;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+    z-index: 5; user-select: none; -webkit-user-select: none;
+  }
   #infoPanel {
     position: absolute; top: 0; left: 0; width: 260px;
     padding: 6px 10px; background: rgba(15, 52, 96, 0.96); font-size: 13px;
@@ -225,6 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
+    <div id="versionTag">v2026.06.17</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
