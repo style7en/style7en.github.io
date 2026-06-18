@@ -232,7 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
-    <div id="versionTag">v2026.06.18.03</div>
+    <div id="versionTag">v2026.06.18.04</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
@@ -344,7 +344,7 @@ const MONSTER_BASE_HP = 100;        // 50 -> 100,初期就有"压迫感"
 const MONSTER_HP_LINEAR = 0.40;     // 0.35 -> 0.40
 const MONSTER_HP_QUAD   = 0.012;    // 0.010 -> 0.012
 const MONSTER_SPEED = 50;           // 65 -> 50,前期太快会淹没
-const WAVE_BASE_INTERVAL = 4;       // 波间隔基础值(秒)
+const WAVE_BASE_INTERVAL = 5;       // 波间隔基础值(秒,清场后开始计)
 const WAVE_INTERVAL_PER_WAVE = 0.2; // 每波递增量(秒)
 const WAVE_INTERVAL_CAP = 8;        // 10 -> 8,后期更紧凑
 const MONSTER_SPAWN_INTERVAL = 0.4; // 0.25 -> 0.4 回退,避免前期被淹没
@@ -2516,16 +2516,19 @@ const game = {
   },
 
   update(dt) {
-    // 出怪策略：正常按 wave * t 周期倒计时出怪，但如果场上怪物提前全灭则2秒后立即出下一波
+    // 出怪策略:必须先清光场上的怪,才能开始下一波倒计时
+    // 这是塔防的标准节奏 — 防止前波没清完后波又涌出导致雪崩
     if (!this.waveActive) {
-      // 复用 updateUI 算好的 aliveCount（每帧算一次,这里是 0 的话加速下一波）
-      if ((this._lastAliveCount || 0) === 0 && this.waveTimer > 1.5) {
-        // 怪物提前全灭，缩短倒计时为 1.5 秒
-        this.waveTimer = 1.5;
-      }
-      this.waveTimer -= dt;
-      if (this.waveTimer <= 0) {
-        this.startWave();
+      const aliveCount = this._lastAliveCount || 0;
+      if (aliveCount > 0) {
+        // 场上还有上一波残留 → 暂停倒计时,等玩家清完
+        // (倒计时 UI 仍会显示当前 waveTimer,但不再递减)
+      } else {
+        // 场上空了 → 倒计时正常推进
+        this.waveTimer -= dt;
+        if (this.waveTimer <= 0) {
+          this.startWave();
+        }
       }
     }
     // Spawn monsters within current wave
@@ -2735,30 +2738,33 @@ const game = {
       ctx.fillText(`第${this.wave}波 · 出怪中 剩余${spawnLeft}只`, W / 2, mT - 6);
       ctx.restore();
     } else if (!this.waveActive && this.waveTimer > 0) {
-      // 倒计时中（始终显示，无论场上有无怪物）
+      // 倒计时中
       const isCleared = aliveForDisplay === 0;
       const fullInterval = Math.min(WAVE_INTERVAL_CAP, WAVE_BASE_INTERVAL + this.wave * WAVE_INTERVAL_PER_WAVE);
       ctx.save();
-      ctx.font = isCleared ? 'bold 16px sans-serif' : '14px sans-serif';
       ctx.textAlign = 'center';
       if (isCleared) {
-        // 怪物已全灭，2秒加速倒计时
+        // 怪物已全灭,倒计时正常推进
+        ctx.font = 'bold 16px sans-serif';
         ctx.fillStyle = 'rgba(76,175,80,0.8)';
         ctx.fillText(`第${this.wave + 1}波: ${Math.ceil(this.waveTimer)}s`, W / 2, mT - 6);
       } else {
-        // 还有怪，正常倒计时
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.fillText(`第${this.wave + 1}波: ${Math.ceil(this.waveTimer)}s · 剩余${aliveForDisplay}怪`, W / 2, mT - 6);
+        // 场上还有怪,倒计时暂停 — 显式提示玩家
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = 'rgba(255,180,0,0.85)';
+        ctx.fillText(`⏸ 清完剩余 ${aliveForDisplay} 怪后开始第 ${this.wave + 1} 波`, W / 2, mT - 6);
       }
-      // Draw countdown bar
-      const barW = 120, barH = 4;
-      const barX = W / 2 - barW / 2;
-      const barY = mT - 1;
-      const progress = 1 - (this.waveTimer / fullInterval);
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillRect(barX, barY, barW, barH);
-      ctx.fillStyle = isCleared ? '#4caf50' : '#e94560';
-      ctx.fillRect(barX, barY, barW * progress, barH);
+      // 倒计时进度条(只在清场后显示)
+      if (isCleared) {
+        const barW = 120, barH = 4;
+        const barX = W / 2 - barW / 2;
+        const barY = mT - 1;
+        const progress = 1 - (this.waveTimer / fullInterval);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.fillStyle = '#4caf50';
+        ctx.fillRect(barX, barY, barW * progress, barH);
+      }
       ctx.restore();
     }
 
