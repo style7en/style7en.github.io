@@ -232,7 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
-    <div id="versionTag">v2026.06.18.05</div>
+    <div id="versionTag">v2026.06.18.06</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
@@ -340,14 +340,14 @@ const MAX_SAFE_ATK = 1e9;        // 单次攻击伤害上限(游戏数值上完�
 const MAX_SAFE_HP  = 1e12;       // 怪物血量上限
 const MAX_SAFE_GOLD = 1e12;      // 金币上限
 const MAX_SAFE_WAVE = 1e6;       // 波数上限(到达后停在该波不再递增)
-const MONSTER_BASE_HP = 100;        // 50 -> 100,初期就有"压迫感"
-const MONSTER_HP_LINEAR = 0.40;     // 0.35 -> 0.40
-const MONSTER_HP_QUAD   = 0.012;    // 0.010 -> 0.012
-const MONSTER_SPEED = 50;           // 65 -> 50,前期太快会淹没
-const WAVE_BASE_INTERVAL = 8;       // 波间隔基础值(秒) — 给清场留时间但有限
+const MONSTER_BASE_HP = 80;         // 100 -> 80, 前期更合理
+const MONSTER_HP_LINEAR = 0.40;     // 每波 +40%
+const MONSTER_HP_QUAD   = 0.012;    // 二次项 wave² × 0.012
+const MONSTER_SPEED = 50;           // px/s
+const WAVE_BASE_INTERVAL = 10;      // 波间隔基础值(秒) — 给清场留足时间
 const WAVE_INTERVAL_PER_WAVE = 0.2; // 每波递增量(秒)
-const WAVE_INTERVAL_CAP = 12;       // 后期封顶(秒)
-const MONSTER_SPAWN_INTERVAL = 0.4; // 出怪间距
+const WAVE_INTERVAL_CAP = 16;       // 后期封顶(秒)
+const MONSTER_SPAWN_INTERVAL = 0.65; // 出怪间距 — 间隔越大塔越能逐个击破
 const INITIAL_GOLD = 300;
 const KILL_GOLD_BASE = 25;          // 15 -> 25, 早期金币丰厚
 const KILL_GOLD_PER_WAVE = 3.0;     // 2.0 -> 3.0
@@ -2071,8 +2071,8 @@ const game = {
   startWave() {
     this.wave = Math.min(MAX_SAFE_WAVE, safeFinite(this.wave, 0) + 1);
     // 每波怪物数量：5 + 波数 * 3，后期波次怪更多
-    // 每波怪物数:5 + 3*wave (回退至原始,避免前期淹没)
-    this.monstersToSpawn = safeAdd(5, this.wave * 3, MAX_SAFE_HP);
+    // 每波怪物数:3 + 2*wave (温和起步,wave 10 = 23只而不是 35只)
+    this.monstersToSpawn = safeAdd(3, this.wave * 2, MAX_SAFE_HP);
     this.spawnedThisWave = 0;
     this.spawnTimer = 0;
     this.waveActive = true;
