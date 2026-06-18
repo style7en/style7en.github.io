@@ -232,7 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
-    <div id="versionTag">v2026.06.18.02</div>
+    <div id="versionTag">v2026.06.18.03</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
@@ -282,11 +282,11 @@
 // 上限 0.80 = 地图边长的 80%(覆盖大部分地图但不至于无脑全图打)
 const RANGE_RATIO_MAX = 0.80;
 const TOWER_DEFS = {
-  fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 15, rangeRatio: 0.227, baseSpeed: 1.2, cost: 100, splashRatio: 0,     slowRate: 0,    slowDur: 0, desc: '单体伤害',
+  fire:  { name: '火塔', icon: '🔥', color: '#ff5722', baseAtk: 23, rangeRatio: 0.227, baseSpeed: 1.2, cost: 100, splashRatio: 0,     slowRate: 0,    slowDur: 0, desc: '单体伤害',
            ult: { name: '焚天', desc: '攻击附带范围灼烧', atkMul: 1.6, rangeMul: 1.2, splashRatio: 0.076 } },
-  water: { name: '水塔', icon: '💧', color: '#2196f3', baseAtk: 8,  rangeRatio: 0.189, baseSpeed: 1.8, cost: 80,  splashRatio: 0.095, splashMax: 3, slowRate: 0,    slowDur: 0, desc: '溅射(地图 9.5%)',
+  water: { name: '水塔', icon: '💧', color: '#2196f3', baseAtk: 12, rangeRatio: 0.189, baseSpeed: 1.8, cost: 80,  splashRatio: 0.095, splashMax: 3, slowRate: 0,    slowDur: 0, desc: '溅射(地图 9.5%)',
            ult: { name: '怒涛', desc: '溅射范围+数量翻倍', atkMul: 1.4, rangeMul: 1.1, splashRatio: 0.151, splashMax: 5 } },
-  ice:   { name: '冰塔', icon: '❄️', color: '#00bcd4', baseAtk: 5,  rangeRatio: 0.208, baseSpeed: 1.0, cost: 90,  splashRatio: 0,     slowRate: 0.5,  slowDur: 2, desc: '减速50%',
+  ice:   { name: '冰塔', icon: '❄️', color: '#00bcd4', baseAtk: 8,  rangeRatio: 0.208, baseSpeed: 1.0, cost: 90,  splashRatio: 0,     slowRate: 0.5,  slowDur: 2, desc: '减速50%',
            ult: { name: '极寒', desc: '减速至25%并冻结0.5s', atkMul: 1.3, rangeMul: 1.1, slowRate: 0.75, slowDur: 3 } },
 };
 
@@ -329,7 +329,7 @@ const DROP_NORM_PROB_MUL = 0.5;      // 普通怪 50% 概率掉道具 (相对 IT
 
 const MAX_TOWER_LEVEL = Infinity; // 无等级上限
 const ULTIMATE_LEVEL = 10;       // 达到此等级解锁终极形态
-const UPGRADE_COST_PER_LEVEL = 100;       // 基础升级费(每 10 级翻一倍系数)
+const UPGRADE_COST_PER_LEVEL = 50;        // 100 -> 50,升级提速一倍
 const UPGRADE_COST_TIER = 10;             // 每多少级费用 +1 倍基础值
 const MAX_CRIT_RATE = 1.0;       // 暴击率上限 100%
 const MAX_CRIT_DMG  = 10.0;      // 爆伤上限 1000%
@@ -340,18 +340,18 @@ const MAX_SAFE_ATK = 1e9;        // 单次攻击伤害上限(游戏数值上完�
 const MAX_SAFE_HP  = 1e12;       // 怪物血量上限
 const MAX_SAFE_GOLD = 1e12;      // 金币上限
 const MAX_SAFE_WAVE = 1e6;       // 波数上限(到达后停在该波不再递增)
-const MONSTER_BASE_HP = 70;
-const MONSTER_HP_LINEAR = 0.35;     // 线性项:每波 +35%
-const MONSTER_HP_QUAD   = 0.010;    // 二次项:wave² × 0.010
-const MONSTER_SPEED = 65; // px/s（提速:原 40,一圈从 50s → 30s）
+const MONSTER_BASE_HP = 100;        // 50 -> 100,初期就有"压迫感"
+const MONSTER_HP_LINEAR = 0.40;     // 0.35 -> 0.40
+const MONSTER_HP_QUAD   = 0.012;    // 0.010 -> 0.012
+const MONSTER_SPEED = 50;           // 65 -> 50,前期太快会淹没
 const WAVE_BASE_INTERVAL = 4;       // 波间隔基础值(秒)
 const WAVE_INTERVAL_PER_WAVE = 0.2; // 每波递增量(秒)
-const WAVE_INTERVAL_CAP = 10;       // 波间隔封顶(秒,防后期等待过久)
-const MONSTER_SPAWN_INTERVAL = 0.25; // seconds（出怪更密:0.4 → 0.25）
+const WAVE_INTERVAL_CAP = 8;        // 10 -> 8,后期更紧凑
+const MONSTER_SPAWN_INTERVAL = 0.4; // 0.25 -> 0.4 回退,避免前期被淹没
 const INITIAL_GOLD = 300;
-const KILL_GOLD_BASE = 15;
-const KILL_GOLD_PER_WAVE = 2.0;     // 线性项(早期金币提速)
-const KILL_GOLD_QUAD = 0.008;       // 二次项 wave² × 0.008
+const KILL_GOLD_BASE = 25;          // 15 -> 25, 早期金币丰厚
+const KILL_GOLD_PER_WAVE = 3.0;     // 2.0 -> 3.0
+const KILL_GOLD_QUAD = 0.015;       // 0.008 -> 0.015
 
 // === 元素反应系统（参考原神） ===
 // 三元素:火(红)/水(蓝)/冰(青)
@@ -2071,8 +2071,8 @@ const game = {
   startWave() {
     this.wave = Math.min(MAX_SAFE_WAVE, safeFinite(this.wave, 0) + 1);
     // 每波怪物数量：5 + 波数 * 3，后期波次怪更多
-    // 每波怪物数:8 + 3*wave (起步多一些,前期更密集)
-    this.monstersToSpawn = safeAdd(8, this.wave * 3, MAX_SAFE_HP);
+    // 每波怪物数:5 + 3*wave (回退至原始,避免前期淹没)
+    this.monstersToSpawn = safeAdd(5, this.wave * 3, MAX_SAFE_HP);
     this.spawnedThisWave = 0;
     this.spawnTimer = 0;
     this.waveActive = true;
