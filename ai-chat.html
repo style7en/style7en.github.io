@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AI Chat</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,6 +24,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
             background: var(--bg);
             height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -110,6 +111,7 @@
         #input-area {
             background: white;
             padding: 8px 12px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
             border-top: 1px solid var(--border);
             display: flex;
             flex-direction: column;
