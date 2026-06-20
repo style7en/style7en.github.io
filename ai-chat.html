@@ -80,14 +80,14 @@
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
-            padding: 16px;
+            padding: 12px;
             scroll-behavior: smooth;
         }
 
         .message-wrapper {
             display: flex;
             flex-direction: column;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
             max-width: 80%;
         }
         .message-wrapper.user { margin-left: auto; }
@@ -95,9 +95,10 @@
         .message-wrapper.system { margin: 0 auto; max-width: 100%; }
 
         .message {
-            padding: 12px 16px;
+            padding: 9px 13px;
             border-radius: 12px;
-            line-height: 1.5;
+            line-height: 1.45;
+            font-size: 14px;
             white-space: pre-wrap;
             word-break: break-word;
         }
@@ -108,27 +109,69 @@
 
         #input-area {
             background: white;
-            padding: 12px 16px;
+            padding: 8px 12px;
             border-top: 1px solid var(--border);
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 6px;
             flex-shrink: 0;
+        }
+        .input-row { display: flex; gap: 6px; align-items: flex-end; }
+
+        #image-preview {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #image-preview.show { display: flex; }
+        .preview-item { position: relative; width: 64px; height: 64px; }
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+        .preview-item .remove-img {
+            position: absolute; top: -6px; right: -6px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--danger); color: white; border: none;
+            font-size: 12px; line-height: 1; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #image-btn {
+            display: none;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            background: #f0f0f0;
+            color: var(--text2);
+            font-size: 18px;
+        }
+        #image-btn.show { display: flex; align-items: center; justify-content: center; }
+        #image-btn:hover { background: #e0e0e0; }
+
+        .message img.msg-image {
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 8px;
+            margin-top: 6px;
+            display: block;
         }
 
         #message-input {
             flex: 1;
-            padding: 12px;
+            padding: 9px 10px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
             font-family: inherit;
             resize: none;
             max-height: 150px;
-            min-height: 44px;
+            min-height: 40px;
             line-height: 1.4;
         }
         #message-input:focus { outline: none; border-color: var(--primary); }
-        #send-btn { padding: 12px 20px; min-width: 70px; }
+        #send-btn { padding: 9px 18px; min-width: 64px; }
+
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: var(--danger-hover); }
 
         #settings-modal {
             display: none;
@@ -145,48 +188,59 @@
         .modal-content {
             background: white;
             border-radius: 12px;
-            padding: 20px;
+            padding: 16px;
             width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
+            max-width: 480px;
+            max-height: 92vh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-        .modal-content h2 { margin-bottom: 20px; font-size: 20px; }
+        .modal-content h2 { margin-bottom: 12px; font-size: 18px; }
 
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: var(--text2); }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 4px; font-size: 13px; color: var(--text2); }
         .form-group input, .form-group select {
-            width: 100%; padding: 12px; border: 1px solid #ddd;
-            border-radius: 8px; font-size: 16px; font-family: inherit;
+            width: 100%; padding: 8px 10px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 14px; font-family: inherit;
         }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); }
-        .form-hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+        .form-hint { font-size: 11px; color: var(--text3); margin-top: 3px; }
 
-        .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
-        .modal-actions .btn { flex: 1; padding: 14px; font-size: 16px; }
+        .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .modal-actions .btn { flex: 1; padding: 10px; font-size: 15px; }
 
-        .model-list { margin-bottom: 12px; }
+        .model-list { margin-bottom: 8px; }
         .model-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
+            padding: 8px 10px;
             background: #f8f8f8;
-            border-radius: 8px;
-            margin-bottom: 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
             cursor: pointer;
             transition: background 0.2s;
         }
         .model-item:hover { background: #f0f0f0; }
         .model-item.active { background: #e3f2fd; border: 1px solid var(--primary); }
         .model-item-info { flex: 1; min-width: 0; }
-        .model-item-name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .model-item-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
-        .model-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .model-item-name { font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vision-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 5px;
+            font-size: 10px;
+            font-weight: 400;
+            color: #7b1fa2;
+            background: #f3e5f5;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        .model-item-detail { font-size: 11px; color: var(--text3); margin-top: 1px; }
+        .model-item-actions { display: flex; gap: 5px; flex-shrink: 0; }
         .model-item-actions button {
-            padding: 8px 12px; font-size: 13px; border: none;
-            border-radius: 6px; cursor: pointer; font-family: inherit; transition: all 0.2s;
+            padding: 5px 9px; font-size: 12px; border: none;
+            border-radius: 5px; cursor: pointer; font-family: inherit; transition: all 0.2s;
         }
         .btn-edit { background: #e3f2fd; color: var(--primary); }
         .btn-edit:hover { background: #bbdefb; }
@@ -200,10 +254,10 @@
         .btn-test.status-error:hover { background: #ffcdd2; }
         .btn-test:disabled { background: #eee; color: #999; cursor: not-allowed; }
 
-        .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
         .preset-btn {
-            padding: 10px 14px; font-size: 14px; background: #f0f0f0;
-            border: 1px solid #ddd; border-radius: 6px; cursor: pointer;
+            padding: 6px 10px; font-size: 13px; background: #f0f0f0;
+            border: 1px solid #ddd; border-radius: 5px; cursor: pointer;
             font-family: inherit; transition: all 0.2s;
         }
         .preset-btn:hover { background: #e0e0e0; }
@@ -252,17 +306,17 @@
             header h1 { font-size: 16px; }
             .header-left { gap: 8px; }
             #model-select { max-width: 180px; font-size: 12px; padding: 5px 8px; }
-            .clear-btn, .btn-secondary { padding: 8px 12px; font-size: 13px; }
-            #chat-container { padding: 12px; }
+            .clear-btn, .btn-secondary { padding: 7px 11px; font-size: 13px; }
+            #chat-container { padding: 10px; }
             .message-wrapper { max-width: 90%; }
-            .message { padding: 10px 14px; font-size: 15px; }
-            #input-area { padding: 10px 12px; }
-            #message-input { padding: 10px 12px; font-size: 16px; }
-            #send-btn { padding: 10px 14px; min-width: 60px; }
-            .modal-content { padding: 16px; }
-            .modal-content h2 { font-size: 18px; }
-            .form-group input { padding: 12px; font-size: 16px; }
-            .model-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .message { padding: 9px 13px; font-size: 14px; }
+            #input-area { padding: 8px 10px; }
+            #message-input { padding: 9px 10px; font-size: 16px; }
+            #send-btn { padding: 9px 12px; min-width: 56px; }
+            .modal-content { padding: 14px; }
+            .modal-content h2 { font-size: 17px; }
+            .form-group input { padding: 9px 10px; font-size: 16px; }
+            .model-item { flex-direction: column; align-items: flex-start; gap: 8px; }
             .model-item-actions { width: 100%; justify-content: flex-end; }
             .preset-btn { flex: 1; min-width: calc(50% - 4px); text-align: center; }
         }
@@ -290,8 +344,13 @@
     </div>
 
     <div id="input-area">
-        <textarea id="message-input" placeholder="输入消息，Shift+Enter 换行..." rows="1"></textarea>
-        <button class="btn btn-primary" id="send-btn">发送</button>
+        <div id="image-preview"></div>
+        <div class="input-row">
+            <button class="btn" id="image-btn" title="添加图片">🖼️</button>
+            <input type="file" id="image-input" accept="image/*" multiple style="display:none">
+            <textarea id="message-input" placeholder="输入消息，Shift+Enter 换行..." rows="1"></textarea>
+            <button class="btn btn-primary" id="send-btn">发送</button>
+        </div>
     </div>
 
     <div id="settings-modal">
@@ -306,7 +365,7 @@
                 <label>已配置的模型（点击切换）</label>
                 <div id="model-list" class="model-list"></div>
             </div>
-            <hr style="margin:20px 0;border:none;border-top:1px solid #eee">
+            <hr style="margin:12px 0;border:none;border-top:1px solid #eee">
             <div class="form-group">
                 <label>快速预设</label>
                 <div class="presets">
@@ -379,6 +438,66 @@
         };
 
         let isSending = false;
+        let pendingImages = []; // 待发送图片的 base64 dataURL 列表
+        let abortController = null; // 用于终止正在进行的对话请求
+
+        function setSendingState(sending) {
+            isSending = sending;
+            const sendBtn = document.getElementById('send-btn');
+            if (sending) {
+                sendBtn.textContent = '停止';
+                sendBtn.classList.remove('btn-primary');
+                sendBtn.classList.add('btn-danger');
+            } else {
+                sendBtn.textContent = '发送';
+                sendBtn.classList.remove('btn-danger');
+                sendBtn.classList.add('btn-primary');
+            }
+        }
+
+        function stopGeneration() {
+            if (abortController) abortController.abort();
+        }
+
+        // 当前激活模型是否支持视觉，据此显示/隐藏图片相关 UI
+        function updateVisionUI() {
+            const config = getActiveConfig();
+            const supportsVision = !!config?.vision;
+            const imageBtn = document.getElementById('image-btn');
+            imageBtn.classList.toggle('show', supportsVision);
+            if (!supportsVision) {
+                pendingImages = [];
+                renderImagePreview();
+            }
+        }
+
+        function renderImagePreview() {
+            const box = document.getElementById('image-preview');
+            box.classList.toggle('show', pendingImages.length > 0);
+            box.innerHTML = pendingImages.map((url, i) =>
+                `<div class="preview-item"><img src="${url}"><button class="remove-img" data-index="${i}">×</button></div>`
+            ).join('');
+        }
+
+        function fileToDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleImageFiles(files) {
+            for (const file of files) {
+                if (!file.type.startsWith('image/')) continue;
+                if (file.size > 5 * 1024 * 1024) { showToast('图片不能超过 5MB', 'error'); continue; }
+                try {
+                    pendingImages.push(await fileToDataURL(file));
+                } catch { showToast('图片读取失败', 'error'); }
+            }
+            renderImagePreview();
+        }
 
         // --- ui helpers ---
         function escapeHtml(str) {
@@ -405,7 +524,11 @@
             // header select
             const select = document.getElementById('model-select');
             select.innerHTML = models.length
-                ? models.map(m => `<option value="${escapeHtml(m.id)}" ${m.id === activeId ? 'selected' : ''}>${escapeHtml(m.configName || m.model || '未命名')}</option>`).join('')
+                ? models.map(m => {
+                    const label = m.configName || m.model || '未命名';
+                    const type = m.vision ? ' 👁' : ' 💬';
+                    return `<option value="${escapeHtml(m.id)}" ${m.id === activeId ? 'selected' : ''}>${escapeHtml(label + type)}</option>`;
+                  }).join('')
                 : '<option value="">未配置模型</option>';
 
             // settings list
@@ -416,13 +539,15 @@
             }
             list.innerHTML = models.map(m => {
                 const ok = m.status === 'ok', err = m.status === 'error';
+                const visionBadge = m.vision ? '<span class="vision-badge">👁 视觉</span>' : '';
+                const testLabel = ok ? (m.vision ? '✓ 可用·视觉' : '✓ 可用') : err ? '✗ 不可用' : '测试';
                 return `<div class="model-item ${m.id === activeId ? 'active' : ''}" data-model-id="${escapeHtml(m.id)}">
                     <div class="model-item-info">
-                        <div class="model-item-name">${escapeHtml(m.configName || '未命名')}</div>
+                        <div class="model-item-name">${escapeHtml(m.configName || '未命名')}${visionBadge}</div>
                         <div class="model-item-detail">${escapeHtml(m.model || '未指定模型')}</div>
                     </div>
                     <div class="model-item-actions">
-                        <button class="btn-test ${ok ? 'status-ok' : err ? 'status-error' : ''}" data-action="test" data-model-id="${escapeHtml(m.id)}">${ok ? '✓ 可用' : err ? '✗ 不可用' : '测试'}</button>
+                        <button class="btn-test ${ok ? 'status-ok' : err ? 'status-error' : ''}" data-action="test" data-model-id="${escapeHtml(m.id)}">${testLabel}</button>
                         <button class="btn-edit" data-action="edit" data-model-id="${escapeHtml(m.id)}">编辑</button>
                         <button class="btn-delete" data-action="delete" data-model-id="${escapeHtml(m.id)}">删除</button>
                     </div>
@@ -447,6 +572,7 @@
             store.saveModels(next);
             if (store.getActiveId() === modelId) store.setActiveId(next[0]?.id || '');
             refreshModelUI();
+            updateVisionUI();
             showToast('已删除', 'success');
         }
 
@@ -475,8 +601,14 @@
 
                 model.status = 'ok';
                 btn.className = 'btn-test status-ok';
-                btn.textContent = '✓ 可用';
-                showToast('连接成功', 'success');
+                btn.textContent = '检测视觉...';
+
+                // 探测多模态(视觉)能力
+                model.vision = await detectVision(model);
+
+                btn.className = 'btn-test status-ok';
+                btn.textContent = model.vision ? '✓ 可用·视觉' : '✓ 可用';
+                showToast(model.vision ? '连接成功，支持视觉' : '连接成功（纯文本）', 'success');
             } catch (err) {
                 model.status = 'error';
                 btn.className = 'btn-test status-error';
@@ -485,7 +617,37 @@
             }
 
             store.saveModels(models);
-            btn.disabled = false;
+            refreshModelUI();
+            updateVisionUI();
+        }
+
+        // 1x1 透明 PNG，用于探测视觉能力
+        const PROBE_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+
+        async function detectVision(model) {
+            try {
+                const res = await fetch(getApiUrl(model.apiUrl), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${model.apiKey}` },
+                    body: JSON.stringify({
+                        model: model.model,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: 'ok' },
+                                { type: 'image_url', image_url: { url: PROBE_IMAGE } }
+                            ]
+                        }],
+                        max_tokens: 1,
+                        stream: false
+                    })
+                });
+                const data = await res.json().catch(() => ({}));
+                // 图文请求成功返回 → 支持视觉；失败(模型拒绝图像/参数错误等) → 视为不支持
+                return res.ok && !data.error;
+            } catch {
+                return false;
+            }
         }
 
         function saveModelConfig() {
@@ -505,7 +667,7 @@
             const models = store.getModels();
             if (editId) {
                 const i = models.findIndex(m => m.id === editId);
-                if (i >= 0) models[i] = { ...config, status: models[i].status };
+                if (i >= 0) models[i] = { ...config, status: models[i].status, vision: models[i].vision };
             } else {
                 const i = models.findIndex(m => m.configName === config.configName);
                 if (i >= 0) {
@@ -519,6 +681,7 @@
             store.saveModels(models);
             if (!store.getActiveId() || editId) store.setActiveId(config.id);
             refreshModelUI();
+            updateVisionUI();
             clearForm();
             showToast('保存成功', 'success');
         }
@@ -529,7 +692,25 @@
             wrapper.className = `message-wrapper ${msg.role}`;
             const div = document.createElement('div');
             div.className = `message ${msg.role}`;
-            div.textContent = msg.content;
+
+            if (Array.isArray(msg.content)) {
+                // 多模态内容:文本 + 图片
+                msg.content.forEach(part => {
+                    if (part.type === 'text' && part.text) {
+                        const span = document.createElement('span');
+                        span.textContent = part.text;
+                        div.appendChild(span);
+                    } else if (part.type === 'image_url' && part.image_url?.url) {
+                        const img = document.createElement('img');
+                        img.className = 'msg-image';
+                        img.src = part.image_url.url;
+                        div.appendChild(img);
+                    }
+                });
+            } else {
+                div.textContent = msg.content;
+            }
+
             wrapper.appendChild(div);
             return wrapper;
         }
@@ -561,26 +742,37 @@
 
         async function sendMessage() {
             const input = document.getElementById('message-input');
-            const sendBtn = document.getElementById('send-btn');
             const content = input.value.trim();
-            if (!content || isSending) return;
+            const hasImages = pendingImages.length > 0;
+            if ((!content && !hasImages) || isSending) return;
 
             const config = getActiveConfig();
             if (!config) { showToast('请先在设置中添加模型配置', 'error'); showSettings(); return; }
             if (!config.apiKey) { showToast('请先在设置中配置 API Key', 'error'); showSettings(); return; }
+            if (hasImages && !config.vision) { showToast('当前模型不支持图片', 'error'); return; }
 
-            isSending = true;
-            sendBtn.disabled = true;
-            sendBtn.textContent = '发送中';
+            abortController = new AbortController();
+            setSendingState(true);
 
             const messages = store.getHistory();
-            const userMsg = { role: 'user', content };
+            // 含图片时使用多模态数组格式，否则保持纯文本字符串
+            let userContent;
+            if (hasImages) {
+                userContent = [];
+                if (content) userContent.push({ type: 'text', text: content });
+                pendingImages.forEach(url => userContent.push({ type: 'image_url', image_url: { url } }));
+            } else {
+                userContent = content;
+            }
+            const userMsg = { role: 'user', content: userContent };
             messages.push(userMsg);
             store.saveHistory(messages);
             appendMsg(userMsg);
 
             input.value = '';
             input.style.height = 'auto';
+            pendingImages = [];
+            renderImagePreview();
 
             // loading indicator
             const loadingWrapper = createMsgEl({ role: 'assistant', content: 'AI 正在思考...' });
@@ -603,7 +795,8 @@
                 const res = await fetch(getApiUrl(config.apiUrl), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
-                    body: JSON.stringify({ model: config.model, messages: apiPayload, stream: true })
+                    body: JSON.stringify({ model: config.model, messages: apiPayload, stream: true }),
+                    signal: abortController.signal
                 });
 
                 if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
@@ -653,30 +846,34 @@
                 store.saveHistory(messages);
 
             } catch (err) {
+                const aborted = err.name === 'AbortError';
                 // 若流已开始（assistantWrapper 已挂载），保存已收到的内容或移除空气泡
                 if (assistantWrapper?.parentNode) {
                     if (assistantContent) {
                         // 有部分内容：标注中断，保存到历史
-                        assistantContent += '\n\n[回复中断]';
+                        assistantContent += aborted ? '\n\n[已停止]' : '\n\n[回复中断]';
                         assistantDiv.textContent = assistantContent;
                         messages.push({ role: 'assistant', content: assistantContent });
                         store.saveHistory(messages);
                     } else {
-                        // 无内容：直接移除空气泡，改为显示错误消息
+                        // 无内容：直接移除空气泡
                         assistantWrapper.remove();
                     }
                 } else {
                     loadingWrapper.remove();
                 }
-                const errorMsg = { role: 'error', content: `请求失败: ${err.message}` };
-                messages.push(errorMsg);
-                store.saveHistory(messages);
-                appendMsg(errorMsg);
-                showToast('请求失败', 'error');
+                if (aborted) {
+                    showToast('已停止', 'info');
+                } else {
+                    const errorMsg = { role: 'error', content: `请求失败: ${err.message}` };
+                    messages.push(errorMsg);
+                    store.saveHistory(messages);
+                    appendMsg(errorMsg);
+                    showToast('请求失败', 'error');
+                }
             } finally {
-                isSending = false;
-                sendBtn.disabled = false;
-                sendBtn.textContent = '发送';
+                abortController = null;
+                setSendingState(false);
             }
         }
 
@@ -698,6 +895,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             refreshModelUI();
             renderAllMessages();
+            updateVisionUI();
 
             const input = document.getElementById('message-input');
             input.addEventListener('input', e => {
@@ -708,7 +906,10 @@
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
             });
 
-            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            document.getElementById('send-btn').addEventListener('click', () => {
+                if (isSending) stopGeneration();
+                else sendMessage();
+            });
             document.getElementById('clear-btn').addEventListener('click', () => {
                 if (confirm('确定要清空所有聊天记录吗？')) {
                     store.clearHistory();
@@ -729,7 +930,22 @@
                 modalMouseDownTarget = null;
             });
             document.getElementById('model-select').addEventListener('change', e => {
-                if (e.target.value) store.setActiveId(e.target.value);
+                if (e.target.value) { store.setActiveId(e.target.value); updateVisionUI(); }
+            });
+
+            // 图片上传相关
+            document.getElementById('image-btn').addEventListener('click', () => {
+                document.getElementById('image-input').click();
+            });
+            document.getElementById('image-input').addEventListener('change', async e => {
+                await handleImageFiles(e.target.files);
+                e.target.value = '';
+            });
+            document.getElementById('image-preview').addEventListener('click', e => {
+                const btn = e.target.closest('.remove-img');
+                if (!btn) return;
+                pendingImages.splice(parseInt(btn.dataset.index, 10), 1);
+                renderImagePreview();
             });
             document.querySelector('.presets').addEventListener('click', e => {
                 const p = PRESETS[e.target.closest('.preset-btn')?.dataset.preset];
@@ -746,7 +962,7 @@
                 if (!item) return;
                 const modelId = item.dataset.modelId;
                 const action = btn?.dataset.action;
-                if (!action) { store.setActiveId(modelId); refreshModelUI(); return; }
+                if (!action) { store.setActiveId(modelId); refreshModelUI(); updateVisionUI(); return; }
                 if (action === 'test') testModel(modelId);
                 else if (action === 'edit') {
                     const m = store.getModels().find(x => x.id === modelId);
