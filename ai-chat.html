@@ -525,9 +525,10 @@
             const select = document.getElementById('model-select');
             select.innerHTML = models.length
                 ? models.map(m => {
-                    const label = m.configName || m.model || '未命名';
+                    const label = m.configName || '未命名';
+                    const modelName = m.model ? `[${m.model}]` : '';
                     const type = m.vision ? ' 👁' : ' 💬';
-                    return `<option value="${escapeHtml(m.id)}" ${m.id === activeId ? 'selected' : ''}>${escapeHtml(label + type)}</option>`;
+                    return `<option value="${escapeHtml(m.id)}" ${m.id === activeId ? 'selected' : ''}>${escapeHtml(label + modelName + type)}</option>`;
                   }).join('')
                 : '<option value="">未配置模型</option>';
 
