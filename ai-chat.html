@@ -719,8 +719,14 @@
             document.getElementById('settings-btn').addEventListener('click', showSettings);
             document.getElementById('close-settings-btn').addEventListener('click', hideSettings);
             document.getElementById('save-model-btn').addEventListener('click', saveModelConfig);
-            document.getElementById('settings-modal').addEventListener('click', e => {
-                if (e.target === e.currentTarget) hideSettings();
+            let modalMouseDownTarget = null;
+            const settingsModal = document.getElementById('settings-modal');
+            settingsModal.addEventListener('mousedown', e => {
+                modalMouseDownTarget = e.target;
+            });
+            settingsModal.addEventListener('click', e => {
+                if (e.target === e.currentTarget && modalMouseDownTarget === e.currentTarget) hideSettings();
+                modalMouseDownTarget = null;
             });
             document.getElementById('model-select').addEventListener('change', e => {
                 if (e.target.value) store.setActiveId(e.target.value);
