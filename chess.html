@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国象棋</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f0e6; }
+#app { max-width: 920px; margin: 0 auto; padding: 16px; }
+#topbar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 14px; padding: 10px 12px; background: #efe2c4; border: 1px solid #d8c39a; border-radius: 8px; }
+#topbar label { display: flex; flex-direction: column; font-size: 11px; gap: 3px; color: #6b4a2a; font-weight: 600; }
+#topbar select { font: inherit; font-size: 13px; padding: 5px 8px; border: 1px solid #7a5230; border-radius: 5px; background: #fdf6e4; color: #4a2f15; cursor: pointer; }
+#topbar button, .modal-card button { font: inherit; font-size: 14px; padding: 7px 16px; border: 1px solid #7a5230; border-radius: 6px; background: linear-gradient(#f7e8c4, #e8c986); color: #4a2f15; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.15); transition: background .15s, transform .05s; }
+#topbar button:hover, .modal-card button:hover { background: linear-gradient(#f0d8a8, #dcbb78); }
+#topbar button:active, .modal-card button:active { transform: translateY(1px); box-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+#status { font-weight: bold; color: #b00; padding: 6px 12px; background: #fff8e7; border: 1px solid #e3c98a; border-radius: 20px; align-self: center; }
+#main { display: flex; gap: 16px; align-items: flex-start; }
+#board { background: #e8c986; border: 2px solid #7a5230; touch-action: none; max-width: 100%; height: auto; border-radius: 4px; }
+#sidepanel { width: 240px; }
+#thinking { color: #b00; font-weight: bold; margin-bottom: 8px; padding: 6px 12px; background: #fff8e7; border: 1px solid #e3c98a; border-radius: 20px; }
+.panel-title { font-size: 13px; font-weight: 700; color: #4a2f15; margin: 0 0 6px; letter-spacing: 4px; padding-left: 2px; }
+#history { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow-y: auto; background: #fdf6e4; border: 1px solid #d8c39a; border-radius: 8px; font-size: 14px; box-shadow: inset 0 0 0 1px #fff; }
+#history li { display: flex; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #ece0c4; }
+#history li:nth-child(even) { background: #f6ecd6; }
+#history li:last-child { border-bottom: none; }
+#history .mv-no { color: #b08a55; width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+#history .mv-r { color: #b00; flex: 1; }
+#history .mv-b { color: #222; flex: 1; }
+#modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
+#modal[hidden] { display: none; }
+.modal-card { background: #fff; padding: 28px 36px; border-radius: 10px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.modal-card p { font-size: 22px; font-weight: bold; color: #4a2f15; margin: 0; }
+.modal-card button { margin-top: 18px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <label>模式
+      <select id="mode">
+        <option value="pvp">人人对战</option>
+        <option value="pvc">人机对战</option>
+      </select>
+    </label>
+    <label>难度
+      <select id="difficulty">
+        <option value="3">普通</option>
+        <option value="4">困难</option>
+      </select>
+    </label>
+    <label>执棋
+      <select id="side">
+        <option value="r">执红(先)</option>
+        <option value="b">执黑</option>
+      </select>
+    </label>
+    <button id="new" type="button">新局</button>
+    <button id="undo" type="button">悔棋</button>
+    <span id="status">红方走棋</span>
+  </div>
+  <div id="main">
+    <canvas id="board" width="540" height="600"></canvas>
+    <div id="sidepanel">
+      <div id="thinking" hidden>AI 思考中…</div>
+      <div class="panel-title">棋谱</div>
+      <ol id="history"></ol>
+    </div>
+  </div>
+</div>
+<div id="modal" hidden>
+  <div class="modal-card">
+    <p id="modal-text"></p>
+    <button id="modal-close" type="button">再来一局</button>
+  </div>
+</div>
+
+<script id="core">
+// ===== engine =====
+const RED = 'r';
+const BLACK = 'b';
+const KING = 'K';
+const ADVISOR = 'A';
+const BISHOP = 'B';
+const KNIGHT = 'N';
+const ROOK = 'R';
+const CANNON = 'C';
+const PAWN = 'P';
+const COLS = 9;
+const ROWS = 10;
+
+function index(row, col) { return row * COLS + col; }
+function rowOf(i) { return Math.floor(i / COLS); }
+function colOf(i) { return i % COLS; }
+function inBounds(row, col) { return row >= 0 && row < ROWS && col >= 0 && col < COLS; }
+
+function inPalace(row, col, side) {
+  if (col < 3 || col > 5) return false;
+  return side === RED ? (row >= 7 && row <= 9) : (row >= 0 && row <= 2);
+}
+
+function crossedRiver(row, side) {
+  return side === RED ? row <= 4 : row >= 5;
+}
+
+const INITIAL_SETUP = [
+  { r: 0, c: 0, t: ROOK, s: BLACK }, { r: 0, c: 1, t: KNIGHT, s: BLACK },
+  { r: 0, c: 2, t: BISHOP, s: BLACK }, { r: 0, c: 3, t: ADVISOR, s: BLACK },
+  { r: 0, c: 4, t: KING, s: BLACK }, { r: 0, c: 5, t: ADVISOR, s: BLACK },
+  { r: 0, c: 6, t: BISHOP, s: BLACK }, { r: 0, c: 7, t: KNIGHT, s: BLACK },
+  { r: 0, c: 8, t: ROOK, s: BLACK },
+  { r: 2, c: 1, t: CANNON, s: BLACK }, { r: 2, c: 7, t: CANNON, s: BLACK },
+  { r: 3, c: 0, t: PAWN, s: BLACK }, { r: 3, c: 2, t: PAWN, s: BLACK },
+  { r: 3, c: 4, t: PAWN, s: BLACK }, { r: 3, c: 6, t: PAWN, s: BLACK },
+  { r: 3, c: 8, t: PAWN, s: BLACK },
+  { r: 9, c: 0, t: ROOK, s: RED }, { r: 9, c: 1, t: KNIGHT, s: RED },
+  { r: 9, c: 2, t: BISHOP, s: RED }, { r: 9, c: 3, t: ADVISOR, s: RED },
+  { r: 9, c: 4, t: KING, s: RED }, { r: 9, c: 5, t: ADVISOR, s: RED },
+  { r: 9, c: 6, t: BISHOP, s: RED }, { r: 9, c: 7, t: KNIGHT, s: RED },
+  { r: 9, c: 8, t: ROOK, s: RED },
+  { r: 7, c: 1, t: CANNON, s: RED }, { r: 7, c: 7, t: CANNON, s: RED },
+  { r: 6, c: 0, t: PAWN, s: RED }, { r: 6, c: 2, t: PAWN, s: RED },
+  { r: 6, c: 4, t: PAWN, s: RED }, { r: 6, c: 6, t: PAWN, s: RED },
+  { r: 6, c: 8, t: PAWN, s: RED },
+];
+
+function createBoard() {
+  const board = new Array(90).fill(null);
+  for (const p of INITIAL_SETUP) board[index(p.r, p.c)] = { type: p.t, side: p.s };
+  return board;
+}
+
+function cloneBoard(board) {
+  const out = new Array(90);
+  for (let i = 0; i < 90; i++) out[i] = board[i] ? { type: board[i].type, side: board[i].side } : null;
+  return out;
+}
+
+function findKing(board, side) {
+  for (let i = 0; i < 90; i++) {
+    const p = board[i];
+    if (p && p.type === KING && p.side === side) return i;
+  }
+  return -1;
+}
+
+function applyMove(board, move) {
+  const captured = board[move.to];
+  board[move.to] = board[move.from];
+  board[move.from] = null;
+  return captured;
+}
+
+function undoMove(board, move, captured) {
+  board[move.from] = board[move.to];
+  board[move.to] = captured;
+}
+
+function createGame() {
+  return { board: createBoard(), turn: RED, history: [], status: 'playing' };
+}
+
+function makeMove(state, move, notation) {
+  const piece = state.board[move.from];
+  const captured = applyMove(state.board, move);
+  state.history.push({
+    from: move.from, to: move.to,
+    piece: { type: piece.type, side: piece.side },
+    captured: captured ? { type: captured.type, side: captured.side } : null,
+    side: piece.side,
+    notation: notation || null,
+  });
+  state.turn = state.turn === RED ? BLACK : RED;
+  return { captured };
+}
+
+function undo(state) {
+  if (!state.history.length) return false;
+  const e = state.history.pop();
+  undoMove(state.board, { from: e.from, to: e.to }, e.captured);
+  state.turn = e.side;
+  return true;
+}
+
+// ===== moves =====
+function canLand(board, i, side) {
+  const p = board[i];
+  return p === null || p.side !== side;
+}
+
+function pushIf(moves, board, from, r, c, side) {
+  if (!inBounds(r, c)) return;
+  const to = index(r, c);
+  if (canLand(board, to, side)) moves.push({ from, to });
+}
+
+function pseudoMoves(board, from) {
+  const piece = board[from];
+  if (!piece) return [];
+  const side = piece.side;
+  const r = rowOf(from), c = colOf(from);
+  const moves = [];
+  switch (piece.type) {
+    case KING: {
+      const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (inPalace(nr, nc, side)) pushIf(moves, board, from, nr, nc, side);
+      }
+      break;
+    }
+    case ADVISOR: {
+      const dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (inPalace(nr, nc, side)) pushIf(moves, board, from, nr, nc, side);
+      }
+      break;
+    }
+    case BISHOP: {
+      const dirs = [[-2, -2], [-2, 2], [2, -2], [2, 2]];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr, nc = c + dc;
+        if (!inBounds(nr, nc)) continue;
+        if (crossedRiver(nr, side)) continue;
+        if (board[index(r + dr / 2, c + dc / 2)] !== null) continue;
+        pushIf(moves, board, from, nr, nc, side);
+      }
+      break;
+    }
+    case KNIGHT: {
+      const opts = [
+        [-2, -1, -1, 0], [-2, 1, -1, 0], [2, -1, 1, 0], [2, 1, 1, 0],
+        [-1, -2, 0, -1], [1, -2, 0, -1], [-1, 2, 0, 1], [1, 2, 0, 1],
+      ];
+      for (const [dr, dc, lr, lc] of opts) {
+        const nr = r + dr, nc = c + dc;
+        if (!inBounds(nr, nc)) continue;
+        if (board[index(r + lr, c + lc)] !== null) continue;
+        pushIf(moves, board, from, nr, nc, side);
+      }
+      break;
+    }
+    case ROOK: {
+      const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+      for (const [dr, dc] of dirs) {
+        let nr = r + dr, nc = c + dc;
+        while (inBounds(nr, nc)) {
+          const to = index(nr, nc);
+          if (board[to] === null) {
+            moves.push({ from, to });
+          } else {
+            if (board[to].side !== side) moves.push({ from, to });
+            break;
+          }
+          nr += dr; nc += dc;
+        }
+      }
+      break;
+    }
+    case CANNON: {
+      const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+      for (const [dr, dc] of dirs) {
+        let nr = r + dr, nc = c + dc;
+        let screen = false;
+        while (inBounds(nr, nc)) {
+          const to = index(nr, nc);
+          if (!screen) {
+            if (board[to] === null) moves.push({ from, to });
+            else screen = true;
+          } else {
+            if (board[to] !== null) {
+              if (board[to].side !== side) moves.push({ from, to });
+              break;
+            }
+          }
+          nr += dr; nc += dc;
+        }
+      }
+      break;
+    }
+    case PAWN: {
+      const fwd = side === RED ? -1 : 1;
+      const cands = [[fwd, 0]];
+      if (crossedRiver(r, side)) cands.push([0, -1], [0, 1]);
+      for (const [dr, dc] of cands) pushIf(moves, board, from, r + dr, c + dc, side);
+      break;
+    }
+    default:
+      break;
+  }
+  return moves;
+}
+
+function isAttacked(board, row, col, bySide) {
+  const target = index(row, col);
+  for (let i = 0; i < 90; i++) {
+    const p = board[i];
+    if (!p || p.side !== bySide) continue;
+    const ms = pseudoMoves(board, i);
+    for (const m of ms) if (m.to === target) return true;
+  }
+  return false;
+}
+
+function kingsFacing(board) {
+  const rk = findKing(board, RED);
+  const bk = findKing(board, BLACK);
+  if (rk < 0 || bk < 0) return false;
+  if (colOf(rk) !== colOf(bk)) return false;
+  const c = colOf(rk);
+  const lo = Math.min(rowOf(rk), rowOf(bk));
+  const hi = Math.max(rowOf(rk), rowOf(bk));
+  for (let r = lo + 1; r < hi; r++) {
+    if (board[index(r, c)] !== null) return false;
+  }
+  return true;
+}
+
+function isInCheck(state, side) {
+  const board = state.board;
+  const ki = findKing(board, side);
+  if (ki < 0) return true;
+  if (isAttacked(board, rowOf(ki), colOf(ki), side === RED ? BLACK : RED)) return true;
+  if (kingsFacing(board)) return true;
+  return false;
+}
+
+function legalMoves(state, from) {
+  const piece = state.board[from];
+  if (!piece || piece.side !== state.turn) return [];
+  const side = piece.side;
+  const out = [];
+  for (const m of pseudoMoves(state.board, from)) {
+    const captured = applyMove(state.board, m);
+    const safe = !isInCheck({ board: state.board, turn: side }, side);
+    undoMove(state.board, m, captured);
+    if (safe) out.push(m);
+  }
+  return out;
+}
+
+function allLegalMoves(state) {
+  const side = state.turn;
+  const out = [];
+  for (let i = 0; i < 90; i++) {
+    const p = state.board[i];
+    if (p && p.side === side) {
+      for (const m of legalMoves(state, i)) out.push(m);
+    }
+  }
+  return out;
+}
+
+function gameStatus(state) {
+  const board = state.board;
+  if (findKing(board, RED) < 0) return 'black-win';
+  if (findKing(board, BLACK) < 0) return 'red-win';
+  const side = state.turn;
+  const inCheck = isInCheck(state, side);
+  if (allLegalMoves(state).length === 0) {
+    return side === RED ? 'black-win' : 'red-win';
+  }
+  return inCheck ? 'check' : 'playing';
+}
+
+// ===== notation =====
+const CN_NUM = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '七', 8: '八', 9: '九' };
+const PIECE_NAME = {
+  r: { K: '帅', A: '仕', B: '相', N: '傌', R: '车', C: '炮', P: '兵' },
+  b: { K: '将', A: '士', B: '象', N: '马', R: '车', C: '砲', P: '卒' },
+};
+
+function colNum(side, col) {
+  return side === RED ? (9 - col) : (col + 1);
+}
+function colLabel(side, col) {
+  const n = colNum(side, col);
+  return side === RED ? CN_NUM[n] : String(n);
+}
+
+function toNotation(state, move) {
+  const board = state.board;
+  const piece = board[move.from];
+  const side = piece.side;
+  const fr = rowOf(move.from), fc = colOf(move.from);
+  const tr = rowOf(move.to), tc = colOf(move.to);
+  const name = PIECE_NAME[side][piece.type];
+  const diagonal = piece.type === 'N' || piece.type === 'B' || piece.type === 'A';
+
+  let prefix = name + colLabel(side, fc);
+  for (let r = 0; r < 10; r++) {
+    if (r === fr) continue;
+    const other = board[r * 9 + fc];
+    if (other && other.type === piece.type && other.side === side) {
+      const isFront = side === RED ? (fr < r) : (fr > r);
+      prefix = (isFront ? '前' : '后') + name;
+      break;
+    }
+  }
+
+  let action, target;
+  if (tr === fr) {
+    action = '平';
+    target = colLabel(side, tc);
+  } else {
+    const forward = side === RED ? (tr < fr) : (tr > fr);
+    action = forward ? '进' : '退';
+    if (diagonal) target = colLabel(side, tc);
+    else {
+      const steps = Math.abs(tr - fr);
+      target = side === RED ? CN_NUM[steps] : String(steps);
+    }
+  }
+  return prefix + action + target;
+}
+
+// ===== ai =====
+const PIECE_VALUE = { K: 10000, R: 900, N: 400, C: 450, A: 200, B: 200, P: 100 };
+
+function fileHasNoPawn(board, c) {
+  for (let r = 0; r < 10; r++) {
+    const p = board[index(r, c)];
+    if (p && p.type === PAWN) return false;
+  }
+  return true;
+}
+
+function pieceScore(board, i, p) {
+  const r = rowOf(i), c = colOf(i);
+  let v = PIECE_VALUE[p.type];
+  switch (p.type) {
+    case PAWN: {
+      const adv = p.side === RED ? (6 - r) : (r - 3);
+      v += Math.max(0, adv) * 10;
+      if ((p.side === RED && r <= 4) || (p.side === BLACK && r >= 5)) v += 50;
+      break;
+    }
+    case 'N':
+      v += (4 - Math.abs(c - 4)) * 4;
+      break;
+    case 'R':
+      if (fileHasNoPawn(board, c)) v += 30;
+      v += (4 - Math.abs(c - 4)) * 2;
+      break;
+    case 'C':
+      if (c === 4) v += 20;
+      break;
+    default:
+      break;
+  }
+  return v;
+}
+
+function evaluate(board) {
+  let score = 0;
+  for (let i = 0; i < 90; i++) {
+    const p = board[i];
+    if (!p) continue;
+    const v = pieceScore(board, i, p);
+    score += p.side === RED ? v : -v;
+  }
+  return score;
+}
+
+function orderMoves(state, moves) {
+  return moves.slice().sort((a, b) => {
+    const va = state.board[a.to] ? PIECE_VALUE[state.board[a.to].type] : 0;
+    const vb = state.board[b.to] ? PIECE_VALUE[state.board[b.to].type] : 0;
+    return vb - va;
+  });
+}
+
+function quiescence(state, alpha, beta, qdepth) {
+  const standPat = evaluate(state.board);
+  const maximizing = state.turn === RED;
+  if (maximizing) {
+    if (standPat >= beta) return beta;
+    if (standPat > alpha) alpha = standPat;
+  } else {
+    if (standPat <= alpha) return alpha;
+    if (standPat < beta) beta = standPat;
+  }
+  if (qdepth === 0) return maximizing ? alpha : beta;
+  const captures = orderMoves(state, allLegalMoves(state).filter(m => state.board[m.to] !== null));
+  for (const m of captures) {
+    makeMove(state, m, null);
+    const score = quiescence(state, alpha, beta, qdepth - 1);
+    undo(state);
+    if (maximizing) {
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    } else {
+      if (score <= alpha) return alpha;
+      if (score < beta) beta = score;
+    }
+  }
+  return maximizing ? alpha : beta;
+}
+
+function search(state, depth, alpha, beta) {
+  const maximizing = state.turn === RED;
+  const moves = orderMoves(state, allLegalMoves(state));
+  if (moves.length === 0) {
+    return { score: maximizing ? -100000 : 100000, move: null };
+  }
+  if (depth === 0) return { score: quiescence(state, alpha, beta, 2), move: null };
+
+  let best = maximizing ? -Infinity : Infinity;
+  let bestMove = null;
+  for (const m of moves) {
+    makeMove(state, m, null);
+    const { score } = search(state, depth - 1, alpha, beta);
+    undo(state);
+    if (maximizing) {
+      if (score > best) { best = score; bestMove = m; }
+      if (best > alpha) alpha = best;
+    } else {
+      if (score < best) { best = score; bestMove = m; }
+      if (best < beta) beta = best;
+    }
+    if (beta <= alpha) break;
+  }
+  return { score: best, move: bestMove };
+}
+
+function bestMove(state, depth = 3) {
+  const status = gameStatus(state);
+  if (status === 'red-win' || status === 'black-win') return null;
+  return search(state, depth, -Infinity, Infinity).move;
+}
+</script>
+
+<script>
+// ===== ui =====
+const PIECE_GLYPH = {
+  r: { K: '帅', A: '仕', B: '相', N: '傌', R: '俥', C: '炮', P: '兵' },
+  b: { K: '将', A: '士', B: '象', N: '马', R: '车', C: '砲', P: '卒' },
+};
+
+function createBoardView(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const margin = 30;
+  const cellW = (W - margin * 2) / (COLS - 1);
+  const cellH = (H - margin * 2) / (ROWS - 1);
+  const radius = Math.min(cellW, cellH) * 0.42;
+
+  function cellCenter(row, col) {
+    return { x: margin + col * cellW, y: margin + row * cellH };
+  }
+
+  function pointToCell(x, y) {
+    const col = Math.round((x - margin) / cellW);
+    const row = Math.round((y - margin) / cellH);
+    if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return -1;
+    const { x: cx, y: cy } = cellCenter(row, col);
+    if (Math.hypot(x - cx, y - cy) > Math.min(cellW, cellH) * 0.5) return -1;
+    return index(row, col);
+  }
+
+  function drawBoard() {
+    ctx.fillStyle = '#e8c986';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#5a3a1a';
+    ctx.lineWidth = 1.5;
+    for (let r = 0; r < ROWS; r++) {
+      const y = margin + r * cellH;
+      ctx.beginPath(); ctx.moveTo(margin, y); ctx.lineTo(W - margin, y); ctx.stroke();
+    }
+    for (let c = 0; c < COLS; c++) {
+      const x = margin + c * cellW;
+      if (c === 0 || c === COLS - 1) {
+        ctx.beginPath(); ctx.moveTo(x, margin); ctx.lineTo(x, H - margin); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(x, margin); ctx.lineTo(x, margin + 4 * cellH); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, margin + 5 * cellH); ctx.lineTo(x, H - margin); ctx.stroke();
+      }
+    }
+    drawPalace(3, 0, 5, 2);
+    drawPalace(3, 7, 5, 9);
+    ctx.fillStyle = '#5a3a1a';
+    ctx.font = '22px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const midY = margin + 4.5 * cellH;
+    ctx.fillText('楚  河', margin + 2 * cellW, midY);
+    ctx.fillText('漢  界', margin + 6 * cellW, midY);
+    drawMarker(2, 1); drawMarker(2, 7); drawMarker(7, 1); drawMarker(7, 7);
+    for (const c of [0, 2, 4, 6, 8]) { drawMarker(3, c); drawMarker(6, c); }
+  }
+
+  function drawPalace(c1, r1, c2, r2) {
+    ctx.beginPath();
+    ctx.moveTo(margin + c1 * cellW, margin + r1 * cellH);
+    ctx.lineTo(margin + c2 * cellW, margin + r2 * cellH);
+    ctx.moveTo(margin + c2 * cellW, margin + r1 * cellH);
+    ctx.lineTo(margin + c1 * cellW, margin + r2 * cellH);
+    ctx.stroke();
+  }
+
+  function drawMarker(r, c) {
+    const { x, y } = cellCenter(r, c);
+    const s = 4, g = 3;
+    ctx.strokeStyle = '#5a3a1a';
+    ctx.lineWidth = 1.2;
+    const arms = [];
+    if (c > 0) arms.push([-1, -1], [-1, 1]);
+    if (c < COLS - 1) arms.push([1, -1], [1, 1]);
+    for (const [dx, dy] of arms) {
+      ctx.beginPath();
+      ctx.moveTo(x + dx * g, y + dy * (g + s));
+      ctx.lineTo(x + dx * g, y + dy * g);
+      ctx.lineTo(x + dx * (g + s), y + dy * g);
+      ctx.stroke();
+    }
+  }
+
+  function drawPiece(row, col, piece, opts = {}) {
+    const { x, y } = cellCenter(row, col);
+    const r = radius;
+    ctx.save();
+    if (opts.offset) { ctx.translate(opts.offset.x, opts.offset.y); }
+    ctx.beginPath(); ctx.arc(x + 2, y + 3, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fill();
+    const grad = ctx.createRadialGradient(x - r / 3, y - r / 3, r / 4, x, y, r);
+    grad.addColorStop(0, '#fff3d6');
+    grad.addColorStop(1, '#e8b860');
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = piece.side === RED ? '#b00' : '#222';
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r - 4, 0, Math.PI * 2);
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = piece.side === RED ? '#b00' : '#222';
+    ctx.font = `bold ${Math.round(r * 1.1)}px "KaiTi","STKaiti",serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(PIECE_GLYPH[piece.side][piece.type], x, y + 1);
+    ctx.restore();
+  }
+
+  function draw(state, opts = {}) {
+    const { selected = -1, legalTargets = [], lastMove = null, anim = null } = opts;
+    drawBoard();
+
+    if (lastMove) {
+      ctx.fillStyle = 'rgba(255,210,0,0.30)';
+      for (const i of [lastMove.from, lastMove.to]) {
+        const { x, y } = cellCenter(rowOf(i), colOf(i));
+        ctx.fillRect(x - cellW / 2, y - cellH / 2, cellW, cellH);
+      }
+    }
+    if (selected >= 0) {
+      const { x, y } = cellCenter(rowOf(selected), colOf(selected));
+      ctx.beginPath(); ctx.arc(x, y, radius + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = '#0a0'; ctx.lineWidth = 3; ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(0,120,0,0.45)';
+    ctx.strokeStyle = 'rgba(0,120,0,0.7)';
+    for (const t of legalTargets) {
+      const { x, y } = cellCenter(rowOf(t), colOf(t));
+      if (state.board[t]) { ctx.beginPath(); ctx.arc(x, y, radius + 2, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.stroke(); }
+      else { ctx.beginPath(); ctx.arc(x, y, 7, 0, Math.PI * 2); ctx.fill(); }
+    }
+
+    for (let i = 0; i < 90; i++) {
+      const p = state.board[i];
+      if (!p) continue;
+      if (anim && i === anim.from) continue;
+      drawPiece(rowOf(i), colOf(i), p);
+    }
+    if (anim) {
+      const from = cellCenter(rowOf(anim.from), colOf(anim.from));
+      const to = cellCenter(rowOf(anim.to), colOf(anim.to));
+      const x = from.x + (to.x - from.x) * anim.progress;
+      const y = from.y + (to.y - from.y) * anim.progress;
+      const piece = anim.piece;
+      drawPiece(0, 0, piece, { offset: { x: x - (margin), y: y - (margin) } });
+    }
+  }
+
+  return { draw, pointToCell, cellCenter, radius };
+}
+
+// ===== main =====
+const canvas = document.getElementById('board');
+const view = createBoardView(canvas);
+const statusEl = document.getElementById('status');
+const historyEl = document.getElementById('history');
+const thinkingEl = document.getElementById('thinking');
+const modeEl = document.getElementById('mode');
+const difficultyEl = document.getElementById('difficulty');
+const sideEl = document.getElementById('side');
+const newBtn = document.getElementById('new');
+const undoBtn = document.getElementById('undo');
+const modalEl = document.getElementById('modal');
+const modalText = document.getElementById('modal-text');
+const modalClose = document.getElementById('modal-close');
+
+let state = createGame();
+let selected = -1;
+let legalTargets = [];
+let lastMove = null;
+let busy = false;
+let aiToken = 0;
+
+// Build the AI worker from the inlined core source so the page needs no server.
+const coreSrc = document.getElementById('core').textContent;
+const workerBoot = "\nself.onmessage=function(e){var d=e.data;var st={board:d.board,turn:d.turn,history:[]};self.postMessage({type:'progress',token:d.token});setTimeout(function(){var mv=bestMove(st,d.depth||3);self.postMessage({type:'done',move:mv,token:d.token});},0);};";
+const worker = new Worker(URL.createObjectURL(new Blob([coreSrc + workerBoot], { type: 'text/javascript' })));
+worker.onmessage = (e) => {
+  if (e.data.token !== aiToken) return;
+  if (e.data.type === 'progress') { thinkingEl.hidden = false; }
+  else if (e.data.type === 'done') {
+    thinkingEl.hidden = true;
+    const move = e.data.move;
+    if (move) animateAndApply(move, true);
+    else { busy = false; refreshStatus(); }
+  }
+};
+worker.onerror = () => { thinkingEl.hidden = true; busy = false; refreshStatus(); };
+
+function humanSide() {
+  return modeEl.value === 'pvp' ? null : (sideEl.value === 'r' ? RED : BLACK);
+}
+function aiSide() {
+  const h = humanSide();
+  return h === null ? null : (h === RED ? BLACK : RED);
+}
+function aiDepth() { return parseInt(difficultyEl.value, 10) || 3; }
+
+function isHumanTurn() {
+  const h = humanSide();
+  return h === null || state.turn === h;
+}
+
+function render(anim) {
+  view.draw(state, { selected, legalTargets, lastMove, anim });
+}
+
+function refreshStatus() {
+  const s = gameStatus(state);
+  if (s === 'red-win') { statusEl.textContent = '红方胜'; showModal('红方胜!'); return; }
+  if (s === 'black-win') { statusEl.textContent = '黑方胜'; showModal('黑方胜!'); return; }
+  statusEl.textContent = (state.turn === RED ? '红方' : '黑方') + '走棋' + (s === 'check' ? ' — 将军!' : '');
+}
+
+function renderHistory() {
+  historyEl.innerHTML = '';
+  for (let i = 0; i < state.history.length; i += 2) {
+    const li = document.createElement('li');
+    const no = document.createElement('span'); no.className = 'mv-no'; no.textContent = (i / 2 + 1) + '.';
+    const r = document.createElement('span'); r.className = 'mv-r'; r.textContent = state.history[i] ? state.history[i].notation : '';
+    const b = document.createElement('span'); b.className = 'mv-b'; b.textContent = state.history[i + 1] ? state.history[i + 1].notation : '';
+    li.append(no, r, b);
+    historyEl.appendChild(li);
+  }
+  historyEl.scrollTop = historyEl.scrollHeight;
+}
+
+function showModal(text) {
+  modalText.textContent = text;
+  modalEl.hidden = false;
+  busy = true;
+}
+function hideModal() { modalEl.hidden = true; busy = false; }
+
+function afterMove() {
+  renderHistory();
+  refreshStatus();
+  const s = gameStatus(state);
+  if (s === 'red-win' || s === 'black-win') return;
+  if (aiSide() !== null && state.turn === aiSide()) triggerAI();
+}
+
+function applyPlayerMove(move) {
+  const notation = toNotation(state, move);
+  makeMove(state, move, notation);
+  lastMove = move;
+  selected = -1; legalTargets = [];
+  render();
+  afterMove();
+}
+
+function animateAndApply(move, isAi) {
+  busy = true;
+  const piece = state.board[move.from];
+  const duration = 180;
+  const start = performance.now();
+  function frame(now) {
+    const t = Math.min(1, (now - start) / duration);
+    render({ from: move.from, to: move.to, progress: t, piece });
+    if (t < 1) requestAnimationFrame(frame);
+    else {
+      const notation = toNotation(state, move);
+      makeMove(state, move, notation);
+      lastMove = move;
+      selected = -1; legalTargets = [];
+      render();
+      busy = false;
+      afterMove();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function split(i) { return [Math.floor(i / 9), i % 9]; }
+
+function triggerAI() {
+  if (gameStatus(state) === 'red-win' || gameStatus(state) === 'black-win') return;
+  busy = true;
+  thinkingEl.hidden = false;
+  aiToken++;
+  worker.postMessage({ board: cloneBoard(state.board), turn: state.turn, depth: aiDepth(), token: aiToken });
+}
+
+canvas.addEventListener('click', (e) => {
+  if (busy) return;
+  if (!isHumanTurn()) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const cell = view.pointToCell(x, y);
+  if (cell < 0) { selected = -1; legalTargets = []; render(); return; }
+
+  if (selected >= 0) {
+    const target = legalTargets.find(m => m.to === cell);
+    if (target) { applyPlayerMove(target); return; }
+  }
+  const piece = state.board[cell];
+  if (piece && piece.side === state.turn) {
+    selected = cell;
+    legalTargets = legalMoves(state, cell);
+  } else {
+    selected = -1; legalTargets = [];
+  }
+  render();
+});
+
+newBtn.addEventListener('click', () => {
+  aiToken++;
+  state = createGame();
+  selected = -1; legalTargets = []; lastMove = null; busy = false;
+  hideModal();
+  renderHistory(); refreshStatus(); render();
+  if (aiSide() !== null && state.turn === aiSide()) triggerAI();
+});
+
+undoBtn.addEventListener('click', () => {
+  if (busy) return;
+  const undoCount = (aiSide() !== null && state.history.length >= 2) ? 2 : 1;
+  for (let i = 0; i < undoCount; i++) undo(state);
+  lastMove = state.history.length ? { from: state.history[state.history.length - 1].from, to: state.history[state.history.length - 1].to } : null;
+  selected = -1; legalTargets = [];
+  renderHistory(); refreshStatus(); render();
+  if (aiSide() !== null && state.turn === aiSide()) triggerAI();
+});
+
+modeEl.addEventListener('change', () => { newBtn.click(); });
+sideEl.addEventListener('change', () => { newBtn.click(); });
+difficultyEl.addEventListener('change', () => { });
+modalClose.addEventListener('click', () => { newBtn.click(); });
+
+renderHistory(); refreshStatus(); render();
+if (aiSide() !== null && state.turn === aiSide()) triggerAI();
+</script>
+</body>
+</html>

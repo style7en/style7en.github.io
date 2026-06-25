@@ -4,6 +4,7 @@
 
 ## Projects
 
+- [中国象棋](chess.html) - 中国象棋游戏，支持人机对战
 - [元素循环圈塔防](elemental_loop_td.html) - 元素循环塔防游戏
 - [三消塔防无尽版](tower-defense.html) - 一个三消塔防游戏
 - [俄罗斯方块](tetris.html) - Game Boy 风格的俄罗斯方块游戏
