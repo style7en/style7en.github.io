@@ -761,6 +761,31 @@ worker.onmessage = (e) => {
 };
 worker.onerror = () => { thinkingEl.hidden = true; busy = false; refreshStatus(); };
 
+const SAVE_KEY = 'chinese-chess-state';
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      state: { board: state.board, turn: state.turn, history: state.history, initialBoard: state.initialBoard, initialTurn: state.initialTurn, status: state.status },
+      ui: { mode: modeEl.value, difficulty: difficultyEl.value, side: sideEl.value },
+      lastMove: lastMove, selected: -1, legalTargets: [],
+    }));
+  } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    Object.assign(state, data.state);
+    modeEl.value = data.ui.mode;
+    difficultyEl.value = data.ui.difficulty;
+    sideEl.value = data.ui.side;
+    if (data.lastMove) lastMove = data.lastMove;
+    return true;
+  } catch (e) { return false; }
+}
+function clearState() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+
 function humanSide() {
   return modeEl.value === 'pvp' ? null : (sideEl.value === 'r' ? RED : BLACK);
 }
@@ -810,6 +835,7 @@ function hideModal() { modalEl.hidden = true; busy = false; }
 function afterMove() {
   renderHistory();
   refreshStatus();
+  saveState();
   const s = gameStatus(state);
   if (s === 'red-win' || s === 'black-win' || s === 'draw') return;
   if (aiSide() !== null && state.turn === aiSide()) triggerAI();
@@ -883,6 +909,7 @@ canvas.addEventListener('click', (e) => {
 newBtn.addEventListener('click', () => {
   aiToken++;
   state = createGame();
+  clearState();
   selected = -1; legalTargets = []; lastMove = null; busy = false;
   hideModal();
   renderHistory(); refreshStatus(); render();
@@ -896,6 +923,7 @@ undoBtn.addEventListener('click', () => {
   lastMove = state.history.length ? { from: state.history[state.history.length - 1].from, to: state.history[state.history.length - 1].to } : null;
   selected = -1; legalTargets = [];
   renderHistory(); refreshStatus(); render();
+  saveState();
   if (aiSide() !== null && state.turn === aiSide()) triggerAI();
 });
 
@@ -906,6 +934,12 @@ modalClose.addEventListener('click', () => { newBtn.click(); });
 
 renderHistory(); refreshStatus(); render();
 if (aiSide() !== null && state.turn === aiSide()) triggerAI();
+// Try to resume a saved game. If no saved game exists, the fresh state above is kept.
+if (loadState()) {
+  // Saved game restored — update history/status/render, and let the AI continue if needed
+  renderHistory(); refreshStatus(); render();
+  if (aiSide() !== null && state.turn === aiSide() && !busy) triggerAI();
+}
 </script>
 </body>
 </html>
