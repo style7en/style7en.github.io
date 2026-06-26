@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\zhangjia\\project\\style7en.github.io\\ElementalLoopTD\\ElementalLoopTD\\ElementalLoopTD.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\zhangjia\\project\\style7en.github.io\\ElementalLoopTD\\ElementalLoopTD\\ElementalLoopTD.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\zhangjia\\project\\style7en.github.io\\ElementalLoopTD\\ElementalLoopTD\\ElementalLoopTD.csproj",
+        "projectName": "ElementalLoopTD",
+        "projectPath": "C:\\Users\\zhangjia\\project\\style7en.github.io\\ElementalLoopTD\\ElementalLoopTD\\ElementalLoopTD.csproj",
+        "packagesPath": "C:\\Users\\zhangjia\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\zhangjia\\project\\style7en.github.io\\ElementalLoopTD\\ElementalLoopTD\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\zhangjia\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "MonoGame.Content.Builder.Task": {
+              "target": "Package",
+              "version": "[3.8.2.1105, )"
+            },
+            "MonoGame.Framework.DesktopGL": {
+              "target": "Package",
+              "version": "[3.8.2.1105, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Users\\zhangjia\\.dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
