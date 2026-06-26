@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ElementalLoopTD")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b9676dcc565c1ae6e9243fc250961f393ef63113")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bfb810f9c6d2ed05b158cb9041a9007f0ff6f1ad")]
 [assembly: System.Reflection.AssemblyProductAttribute("ElementalLoopTD")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ElementalLoopTD")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
