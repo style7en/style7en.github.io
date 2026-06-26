@@ -14,6 +14,7 @@ public class Game1 : Game
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch = null!;
     private SpriteFont _font = null!;
+    private readonly TextureCache _texCache = new();
 
     private readonly GameManager _gm = new();
     private readonly HUD _hud = new();
@@ -63,6 +64,7 @@ public class Game1 : Game
     {
         _windowWidth = GraphicsDevice.Viewport.Width;
         _windowHeight = GraphicsDevice.Viewport.Height;
+        _texCache.RebuildScreenTextures(GraphicsDevice, _windowWidth, _windowHeight);
         RebuildMap();
     }
 
@@ -93,6 +95,7 @@ public class Game1 : Game
         _gm.OnRuleHint += (msg) => { };
         _gm.OnWaveNotice += (msg) => { };
 
+        _texCache.Build(GraphicsDevice, _windowWidth, _windowHeight);
         RebuildMap();
         _pathRenderer.BuildCache(GraphicsDevice, _gm.Waypoints, _windowWidth, _windowHeight);
         _grassRenderer.BuildCache(GraphicsDevice, (int)_mapW, (int)(_mapW), 42);
@@ -255,11 +258,10 @@ public class Game1 : Game
 
         _pathRenderer.Draw(_spriteBatch);
 
-        var borderTex = TextureGenerator.CreateRect(GraphicsDevice, 1, 1, new Color(10, 26, 5));
-        _spriteBatch.Draw(borderTex, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, (int)_mapW + 4, 2), Color.White);
-        _spriteBatch.Draw(borderTex, new Rectangle((int)_mapLeft - 2, (int)_mapBottom, (int)_mapW + 4, 2), Color.White);
-        _spriteBatch.Draw(borderTex, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
-        _spriteBatch.Draw(borderTex, new Rectangle((int)_mapRight, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
+        _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, (int)_mapW + 4, 2), Color.White);
+        _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapBottom, (int)_mapW + 4, 2), Color.White);
+        _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
+        _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapRight, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
 
         for (int i = 0; i < _gm.Towers.Count; i++)
         {
@@ -268,12 +270,17 @@ public class Game1 : Game
             if (isSelected)
             {
                 var range = t.GetRange(_mapW);
-                var circleTex = TextureGenerator.CreateCircle(GraphicsDevice, (int)range, new Color(255, 255, 255, 77), false);
-                _spriteBatch.Draw(circleTex, t.Position - new Vector2(range, range), Color.White);
+                var r = (int)range;
+                _spriteBatch.Draw(_texCache.RangeCircle,
+                    new Rectangle((int)(t.Position.X - r), (int)(t.Position.Y - r), r * 2, r * 2),
+                    new Color(255, 255, 255, 77));
             }
             var size = Math.Min(14 + t.Level * 1.5f, 26);
-            var towerTex = TextureGenerator.CreateCircle(GraphicsDevice, (int)size, t.Def.Color);
-            _spriteBatch.Draw(towerTex, t.Position - new Vector2(size, size), Color.White);
+            var towerTex = _texCache.TowerCircles[t.Type];
+            var s = (int)size;
+            _spriteBatch.Draw(towerTex,
+                new Rectangle((int)(t.Position.X - s), (int)(t.Position.Y - s), s * 2, s * 2),
+                Color.White);
         }
 
         for (int i = 0; i < _gm.Monsters.Count; i++)
@@ -281,41 +288,42 @@ public class Game1 : Game
             var m = _gm.Monsters[i];
             if (!m.Alive) continue;
             var col = ColorExtensions.HpColor(m.Hp / m.MaxHp);
-            var colVal = new Color(col.R, col.G, col.B);
-            var monsterTex = TextureGenerator.CreateCircle(GraphicsDevice, (int)m.Radius, colVal);
-            _spriteBatch.Draw(monsterTex, m.Position - new Vector2(m.Radius, m.Radius), Color.White);
+            var r = (int)m.Radius;
+            if (!_texCache.MonsterCircles.ContainsKey(r)) continue;
+            var monsterTex = _texCache.MonsterCircles[r];
+            _spriteBatch.Draw(monsterTex, m.Position - new Vector2(r, r), col);
             if (m.MaxHp > 0)
             {
                 var barW = 26; var barH = 4;
                 var barX = m.Position.X - barW / 2; var barY = m.Position.Y - m.Radius - 9;
                 var hpRatio = m.Hp / m.MaxHp;
-                var hpColor = ColorExtensions.HpColor(hpRatio);
-                var hpColVal = new Color(hpColor.R, hpColor.G, hpColor.B);
-                var bgTex = TextureGenerator.CreateRect(GraphicsDevice, barW + 2, barH + 2, new Color(0, 0, 0, 140));
-                var barBgTex = TextureGenerator.CreateRect(GraphicsDevice, barW, barH, new Color(51, 51, 51));
-                var hpTex = TextureGenerator.CreateRect(GraphicsDevice, Math.Max(1, (int)(barW * hpRatio)), barH, hpColVal);
-                _spriteBatch.Draw(bgTex, new Vector2(barX - 1, barY - 1), Color.White);
-                _spriteBatch.Draw(barBgTex, new Vector2(barX, barY), Color.White);
-                _spriteBatch.Draw(hpTex, new Vector2(barX, barY), Color.White);
+
+                _spriteBatch.Draw(_texCache.HpBarBg, new Vector2(barX - 1, barY - 1), Color.White);
+                _spriteBatch.Draw(_texCache.HpBarDark, new Vector2(barX, barY), Color.White);
+
+                var fillW = Math.Max(1, (int)(barW * hpRatio));
+                var hpFillTex = hpRatio > 0.66f ? _texCache.HpBarGreen :
+                                hpRatio > 0.33f ? _texCache.HpBarYellow :
+                                _texCache.HpBarRed;
+                _spriteBatch.Draw(hpFillTex, new Vector2(barX, barY), new Rectangle(0, 0, fillW, barH), Color.White);
             }
         }
 
-        _hud.Draw(_spriteBatch, _font, _gm, _windowWidth);
-        _buildBar.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight);
-        _infoPanel.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight);
+        _hud.Draw(_spriteBatch, _font, _gm, _windowWidth, _texCache);
+        _buildBar.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
+        _infoPanel.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
 
         if (_gm.IsPaused)
-            _overlays.DrawPause(_spriteBatch, _font, _windowWidth, _windowHeight);
+            _overlays.DrawPause(_spriteBatch, _font, _windowWidth, _windowHeight, _texCache);
         if (_gm.IsGameOver)
-            _overlays.DrawGameOver(_spriteBatch, _font, _gm, _windowWidth, _windowHeight);
+            _overlays.DrawGameOver(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
 
         var fpsColor = _fps >= 50 ? Color.Green : (_fps >= 30 ? Color.Yellow : Color.Red);
         _spriteBatch.DrawString(_font, $"FPS {_fps}", new Vector2(10, _windowHeight - 70), fpsColor);
 
         if (_showRestoreDialog)
         {
-            var overlayTex = TextureGenerator.CreateRect(GraphicsDevice, _windowWidth, _windowHeight, new Color(0, 0, 0, 204));
-            _spriteBatch.Draw(overlayTex, Vector2.Zero, Color.White);
+            _spriteBatch.Draw(_texCache.OverlayRestore, Vector2.Zero, Color.White);
             _spriteBatch.DrawString(_font, _restoreInfo + "\n\n按 Y 恢复进度  按 N 新游戏",
                 new Vector2(_windowWidth / 2 - 150, _windowHeight / 2 - 50), new Color(76, 175, 80));
         }

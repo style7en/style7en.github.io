@@ -10,7 +10,7 @@ public class InfoPanel
     private int _lastSig;
     private string _cachedHtml = "";
 
-    public void Draw(SpriteBatch sb, SpriteFont font, GameManager gm, int screenWidth, int screenHeight)
+    public void Draw(SpriteBatch sb, SpriteFont font, GameManager gm, int screenWidth, int screenHeight, Rendering.TextureCache tex)
     {
         if (gm.SelectedTower == null) return;
         var t = gm.SelectedTower;
@@ -28,8 +28,7 @@ public class InfoPanel
         if (pos.Y < 40) pos.Y = 40;
         if (pos.Y + 100 > screenHeight) pos.Y = screenHeight - 110;
 
-        var panelTex = TextureGenerator.CreateRect(sb.GraphicsDevice, 220, 100, new Color(15, 52, 96) * 0.96f);
-        sb.Draw(panelTex, pos, Color.White);
+        sb.Draw(tex.PanelBg, pos, Color.White);
         sb.DrawString(font, _cachedHtml, pos + new Vector2(5, 5), Color.White);
     }
 }

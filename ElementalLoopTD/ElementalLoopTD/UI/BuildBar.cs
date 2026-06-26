@@ -9,11 +9,10 @@ public class BuildBar
 {
     public string? ClickedType;
 
-    public void Draw(SpriteBatch sb, SpriteFont font, GameManager gm, int screenWidth, int screenHeight)
+    public void Draw(SpriteBatch sb, SpriteFont font, GameManager gm, int screenWidth, int screenHeight, Rendering.TextureCache tex)
     {
         var barY = screenHeight - 50;
-        var bgRect = TextureGenerator.CreateRect(sb.GraphicsDevice, screenWidth, 50, new Color(22, 33, 62));
-        sb.Draw(bgRect, new Vector2(0, barY), Color.White);
+        sb.Draw(tex.BuildBarBg, new Vector2(0, barY), Color.White);
 
         var types = new[] { "fire", "water", "ice" };
         var btnW = 120;
@@ -26,7 +25,7 @@ public class BuildBar
             var built = gm.Towers.FirstOrDefault(t => t.Type == types[i]);
             var canAfford = built != null ? gm.Gold >= built.GetUpgradeCost() : gm.Gold >= def.Cost;
             var bx = startX + i * (btnW + 8);
-            var btnRect = TextureGenerator.CreateRect(sb.GraphicsDevice, btnW, 40, canAfford ? new Color(26, 26, 46) : new Color(26, 26, 46) * 0.4f);
+            var btnRect = canAfford ? tex.BuildBarBtnNormal : tex.BuildBarBtnDim;
             sb.Draw(btnRect, new Vector2(bx, barY + 5), Color.White);
             sb.DrawString(font, def.Icon, new Vector2(bx + 10, barY + 8), def.Color);
             var label = built != null ? $"{def.Name} Lv{built.Level}" : def.Name;
