@@ -39,6 +39,7 @@ public class Game1 : Game
     private ButtonState _prevSpace = ButtonState.Released;
     private ButtonState _prevY = ButtonState.Released;
     private ButtonState _prevN = ButtonState.Released;
+    private ButtonState _prevEscape = ButtonState.Released;
 
     private int _mouseX, _mouseY;
 
@@ -64,7 +65,8 @@ public class Game1 : Game
     {
         _windowWidth = GraphicsDevice.Viewport.Width;
         _windowHeight = GraphicsDevice.Viewport.Height;
-        _texCache.RebuildScreenTextures(GraphicsDevice, _windowWidth, _windowHeight);
+        if (_texCache != null)
+            _texCache.RebuildScreenTextures(GraphicsDevice, _windowWidth, _windowHeight);
         RebuildMap();
     }
 
@@ -76,20 +78,15 @@ public class Game1 : Game
         _mapRight = _windowWidth - padding;
         _mapBottom = _windowHeight - 50 - padding;
         _mapW = _mapRight - _mapLeft;
+        if (_mapW < 100) return;
         _gm.BuildWaypoints(_windowWidth, _windowHeight, _mapLeft, _mapTop, _mapRight, _mapBottom);
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        try
-        {
-            _font = Content.Load<SpriteFont>("default");
-        }
-        catch
-        {
-            _font = FontFactory.CreateDefaultSpriteFont(GraphicsDevice);
-        }
+
+        _font = FontFactory.Create(GraphicsDevice);
 
         _gm.OnStateChanged += () => ScheduleSave();
         _gm.OnRuleHint += (msg) => { };
@@ -151,7 +148,9 @@ public class Game1 : Game
         var ms = Mouse.GetState();
         _mouseX = ms.X; _mouseY = ms.Y;
 
-        if (ks.IsKeyDown(Keys.Escape))
+        // ESC cancel (edge-triggered)
+        bool escDown = ks.IsKeyDown(Keys.Escape);
+        if (escDown && _prevEscape == ButtonState.Released)
         {
             if (_gm.SelectedTowerType != null || _gm.SelectedTower != null)
             {
@@ -160,21 +159,20 @@ public class Game1 : Game
                 _gm.NotifyStateChanged();
             }
         }
+        _prevEscape = escDown ? ButtonState.Pressed : ButtonState.Released;
 
+        // P / Space toggle pause
         bool pDown = ks.IsKeyDown(Keys.P);
         if (pDown && _prevP == ButtonState.Released && !_gm.IsGameOver)
-        {
             _gm.IsPaused = !_gm.IsPaused;
-        }
         _prevP = pDown ? ButtonState.Pressed : ButtonState.Released;
 
         bool spaceDown = ks.IsKeyDown(Keys.Space);
         if (spaceDown && _prevSpace == ButtonState.Released && !_gm.IsGameOver)
-        {
             _gm.IsPaused = !_gm.IsPaused;
-        }
         _prevSpace = spaceDown ? ButtonState.Pressed : ButtonState.Released;
 
+        // Restore dialog
         if (_showRestoreDialog)
         {
             bool yDown = ks.IsKeyDown(Keys.Y);
@@ -192,9 +190,11 @@ public class Game1 : Game
                 _showRestoreDialog = false;
             }
             _prevN = nDown ? ButtonState.Pressed : ButtonState.Released;
+            base.Update(gameTime);
             return;
         }
 
+        // Left click
         if (ms.LeftButton == ButtonState.Pressed && _prevLeft == ButtonState.Released)
         {
             if (_buildBar.HandleClick(_mouseX, _mouseY, _windowWidth, _windowHeight))
@@ -210,6 +210,7 @@ public class Game1 : Game
         }
         _prevLeft = ms.LeftButton;
 
+        // Right click cancel
         if (ms.RightButton == ButtonState.Pressed)
         {
             if (_gm.SelectedTowerType != null || _gm.SelectedTower != null)
@@ -221,7 +222,6 @@ public class Game1 : Game
         }
 
         _gm.HoverPos = new Vector2(_mouseX, _mouseY);
-
         _gm.Update(dt);
 
         if (_savePending)
@@ -254,44 +254,59 @@ public class Game1 : Game
 
         _spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
 
+        // Grass + Path (cached)
         _grassRenderer.Draw(_spriteBatch, (int)_mapLeft, (int)_mapTop);
-
         _pathRenderer.Draw(_spriteBatch);
 
+        // Map border
         _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, (int)_mapW + 4, 2), Color.White);
         _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapBottom, (int)_mapW + 4, 2), Color.White);
         _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapLeft - 2, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
         _spriteBatch.Draw(_texCache.BorderPixel, new Rectangle((int)_mapRight, (int)_mapTop - 2, 2, (int)(_mapBottom - _mapTop) + 4), Color.White);
 
+        // Towers
         for (int i = 0; i < _gm.Towers.Count; i++)
         {
             var t = _gm.Towers[i];
             var isSelected = t == _gm.SelectedTower;
+
             if (isSelected)
             {
                 var range = t.GetRange(_mapW);
-                var r = (int)range;
-                _spriteBatch.Draw(_texCache.RangeCircle,
-                    new Rectangle((int)(t.Position.X - r), (int)(t.Position.Y - r), r * 2, r * 2),
-                    new Color(255, 255, 255, 77));
+                var ratio = range / 200f;
+                var origin = new Vector2(200, 200);
+                _spriteBatch.Draw(_texCache.RangeCircle, t.Position, null, Color.White, 0, origin, ratio, SpriteEffects.None, 0);
             }
-            var size = Math.Min(14 + t.Level * 1.5f, 26);
+
+            // Tower base platform
+            var baseTex = _texCache.TowerCircles[t.Type + "_base"];
+            var baseOrigin = new Vector2(baseTex.Width / 2, baseTex.Height / 2);
+            _spriteBatch.Draw(baseTex, t.Position, null, Color.White, 0, baseOrigin, 1, SpriteEffects.None, 0);
+
+            // Tower body (scaled with level)
+            var size = MathF.Min(14 + t.Level * 1.5f, 26);
             var towerTex = _texCache.TowerCircles[t.Type];
-            var s = (int)size;
-            _spriteBatch.Draw(towerTex,
-                new Rectangle((int)(t.Position.X - s), (int)(t.Position.Y - s), s * 2, s * 2),
-                Color.White);
+            var scale = size / 26f;
+            _spriteBatch.Draw(towerTex, t.Position, null, Color.White, 0, new Vector2(26, 26), scale, SpriteEffects.None, 0);
+
+            // Level text on tower
+            var lvText = t.IsUltimate() ? "★" : $"Lv{t.Level}";
+            var lvSize = _font.MeasureString(lvText);
+            _spriteBatch.DrawString(_font, lvText, t.Position - new Vector2(lvSize.X / 2, -size - 8), new Color(255, 215, 0));
         }
 
+        // Monsters
         for (int i = 0; i < _gm.Monsters.Count; i++)
         {
             var m = _gm.Monsters[i];
             if (!m.Alive) continue;
-            var col = ColorExtensions.HpColor(m.Hp / m.MaxHp);
             var r = (int)m.Radius;
             if (!_texCache.MonsterCircles.ContainsKey(r)) continue;
             var monsterTex = _texCache.MonsterCircles[r];
-            _spriteBatch.Draw(monsterTex, m.Position - new Vector2(r, r), col);
+            var hpCol = ColorExtensions.HpColor(m.Hp / m.MaxHp);
+            _spriteBatch.Draw(monsterTex, m.Position - new Vector2(r, r), hpCol);
+
+            // HP bar
             if (m.MaxHp > 0)
             {
                 var barW = 26; var barH = 4;
@@ -307,20 +322,41 @@ public class Game1 : Game
                                 _texCache.HpBarRed;
                 _spriteBatch.Draw(hpFillTex, new Vector2(barX, barY), new Rectangle(0, 0, fillW, barH), Color.White);
             }
+
+            // Elite indicator
+            if (m.IsElite && _font != null)
+            {
+                _spriteBatch.DrawString(_font, "★", new Vector2(m.Position.X - 5, m.Position.Y - m.Radius - 18), new Color(255, 180, 50));
+            }
         }
 
+        // Projectiles
+        for (int i = 0; i < _gm.Projectiles.Count; i++)
+        {
+            var p = _gm.Projectiles[i];
+            if (!p.Alive) continue;
+            var tex = p.IsCrit ? _texCache.ProjectileCritTex : _texCache.ProjectileTex;
+            var origin = new Vector2(tex.Width / 2, tex.Height / 2);
+            var col = p.IsCrit ? Color.White : p.Tower.Def.Color;
+            _spriteBatch.Draw(tex, p.Position, null, col, 0, origin, 1, SpriteEffects.None, 0);
+        }
+
+        // HUD
         _hud.Draw(_spriteBatch, _font, _gm, _windowWidth, _texCache);
         _buildBar.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
         _infoPanel.Draw(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
 
+        // Overlays
         if (_gm.IsPaused)
             _overlays.DrawPause(_spriteBatch, _font, _windowWidth, _windowHeight, _texCache);
         if (_gm.IsGameOver)
             _overlays.DrawGameOver(_spriteBatch, _font, _gm, _windowWidth, _windowHeight, _texCache);
 
+        // FPS
         var fpsColor = _fps >= 50 ? Color.Green : (_fps >= 30 ? Color.Yellow : Color.Red);
         _spriteBatch.DrawString(_font, $"FPS {_fps}", new Vector2(10, _windowHeight - 70), fpsColor);
 
+        // Restore dialog
         if (_showRestoreDialog)
         {
             _spriteBatch.Draw(_texCache.OverlayRestore, Vector2.Zero, Color.White);
@@ -329,7 +365,6 @@ public class Game1 : Game
         }
 
         _spriteBatch.End();
-
         base.Draw(gameTime);
     }
 }

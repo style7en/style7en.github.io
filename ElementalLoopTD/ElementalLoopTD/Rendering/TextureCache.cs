@@ -1,3 +1,4 @@
+using ElementalLoopTD.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -24,12 +25,15 @@ public class TextureCache
 
     public Dictionary<string, Texture2D> TowerCircles { get; } = new();
     public Dictionary<int, Texture2D> MonsterCircles { get; } = new();
+    public Texture2D ProjectileTex { get; private set; } = null!;
+    public Texture2D ProjectileCritTex { get; private set; } = null!;
 
     public void Build(GraphicsDevice gd, int screenW, int screenH)
     {
         Pixel = TextureGenerator.CreateRect(gd, 1, 1, Color.White);
         BorderPixel = TextureGenerator.CreateRect(gd, 1, 1, new Color(10, 26, 5));
 
+        // Tower base circle (fixed size for scaling via draw transform)
         var towerColors = new Dictionary<string, Color>
         {
             ["fire"] = new Color(255, 87, 34),
@@ -39,11 +43,25 @@ public class TextureCache
         foreach (var (type, color) in towerColors)
             TowerCircles[type] = TextureGenerator.CreateCircle(gd, 26, color);
 
+        // Tower base platform
+        foreach (var (type, color) in towerColors)
+        {
+            var baseTex = TextureGenerator.CreateRoundRect(gd, 40, 12, new Color(58, 42, 26));
+            TowerCircles[type + "_base"] = baseTex;
+        }
+
+        // Monster circles (white - tinted with HP color at draw time)
         for (int r = 8; r <= 20; r++)
             MonsterCircles[r] = TextureGenerator.CreateCircle(gd, r, Color.White);
 
-        RangeCircle = TextureGenerator.CreateCircle(gd, 200, Color.White);
+        // Range circle outline
+        RangeCircle = TextureGenerator.CreateCircleOutline(gd, 200, new Color(255, 255, 255, 77), 2);
 
+        // Projectiles
+        ProjectileTex = TextureGenerator.CreateCircle(gd, 3, Color.White);
+        ProjectileCritTex = TextureGenerator.CreateCircle(gd, 5, new Color(255, 235, 59));
+
+        // UI backgrounds
         HudBg = TextureGenerator.CreateRect(gd, screenW, 30, new Color(22, 33, 62));
         BuildBarBg = TextureGenerator.CreateRect(gd, screenW, 50, new Color(22, 33, 62));
         PanelBg = TextureGenerator.CreateRect(gd, 220, 100, new Color(15, 52, 96) * 0.96f);
@@ -54,6 +72,7 @@ public class TextureCache
         BuildBarBtnNormal = TextureGenerator.CreateRect(gd, 120, 40, new Color(26, 26, 46));
         BuildBarBtnDim = TextureGenerator.CreateRect(gd, 120, 40, new Color(26, 26, 46) * 0.4f);
 
+        // HP bars
         HpBarBg = TextureGenerator.CreateRect(gd, 28, 6, new Color(0, 0, 0, 140));
         HpBarDark = TextureGenerator.CreateRect(gd, 26, 4, new Color(51, 51, 51));
         HpBarGreen = TextureGenerator.CreateRect(gd, 26, 4, new Color(76, 175, 80));
