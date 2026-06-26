@@ -136,6 +136,15 @@ function cloneBoard(board) {
   return out;
 }
 
+function positionKey(board, turn) {
+  let s = '';
+  for (let i = 0; i < 90; i++) {
+    const p = board[i];
+    s += p ? (p.side + p.type) : '.';
+  }
+  return s + turn;
+}
+
 function findKing(board, side) {
   for (let i = 0; i < 90; i++) {
     const p = board[i];
@@ -157,7 +166,8 @@ function undoMove(board, move, captured) {
 }
 
 function createGame() {
-  return { board: createBoard(), turn: RED, history: [], status: 'playing' };
+  const board = createBoard();
+  return { board, turn: RED, history: [], status: 'playing', initialBoard: cloneBoard(board), initialTurn: RED };
 }
 
 function makeMove(state, move, notation) {
@@ -357,11 +367,35 @@ function gameStatus(state) {
   if (findKing(board, RED) < 0) return 'black-win';
   if (findKing(board, BLACK) < 0) return 'red-win';
   const side = state.turn;
-  const inCheck = isInCheck(state, side);
   if (allLegalMoves(state).length === 0) {
     return side === RED ? 'black-win' : 'red-win';
   }
+  const rep = repetitionStatus(state);
+  if (rep) return rep;
+  const inCheck = isInCheck(state, side);
   return inCheck ? 'check' : 'playing';
+}
+
+// 长将判负：重复局面且轮走方被将军 -> 将军方负；3 次重复非将军 -> 和棋
+function repetitionStatus(state) {
+  if (!state.initialBoard) return null;
+  const board = cloneBoard(state.initialBoard);
+  let turn = state.initialTurn || RED;
+  const keys = [positionKey(board, turn)];
+  for (const e of state.history) {
+    applyMove(board, { from: e.from, to: e.to });
+    turn = turn === RED ? BLACK : RED;
+    keys.push(positionKey(board, turn));
+  }
+  const cur = keys[keys.length - 1];
+  let count = 0;
+  for (const k of keys) if (k === cur) count++;
+  if (count < 2) return null;
+  if (isInCheck(state, state.turn)) {
+    return state.turn === RED ? 'red-win' : 'black-win';
+  }
+  if (count >= 3) return 'draw';
+  return null;
 }
 
 // ===== notation =====
@@ -498,19 +532,26 @@ function quiescence(state, alpha, beta, qdepth) {
   return maximizing ? alpha : beta;
 }
 
-function search(state, depth, alpha, beta) {
+function search(state, depth, alpha, beta, seen) {
+  const key = positionKey(state.board, state.turn);
+  if (seen.has(key)) {
+    if (isInCheck(state, state.turn)) return { score: state.turn === RED ? 100000 : -100000, move: null };
+    return { score: 0, move: null };
+  }
+  seen.add(key);
   const maximizing = state.turn === RED;
   const moves = orderMoves(state, allLegalMoves(state));
   if (moves.length === 0) {
+    seen.delete(key);
     return { score: maximizing ? -100000 : 100000, move: null };
   }
-  if (depth === 0) return { score: quiescence(state, alpha, beta, 2), move: null };
+  if (depth === 0) { seen.delete(key); return { score: quiescence(state, alpha, beta, 2), move: null }; }
 
   let best = maximizing ? -Infinity : Infinity;
   let bestMove = null;
   for (const m of moves) {
     makeMove(state, m, null);
-    const { score } = search(state, depth - 1, alpha, beta);
+    const { score } = search(state, depth - 1, alpha, beta, seen);
     undo(state);
     if (maximizing) {
       if (score > best) { best = score; bestMove = m; }
@@ -521,13 +562,14 @@ function search(state, depth, alpha, beta) {
     }
     if (beta <= alpha) break;
   }
+  seen.delete(key);
   return { score: best, move: bestMove };
 }
 
 function bestMove(state, depth = 3) {
   const status = gameStatus(state);
   if (status === 'red-win' || status === 'black-win') return null;
-  return search(state, depth, -Infinity, Infinity).move;
+  return search(state, depth, -Infinity, Infinity, new Set()).move;
 }
 </script>
 
@@ -741,6 +783,7 @@ function refreshStatus() {
   const s = gameStatus(state);
   if (s === 'red-win') { statusEl.textContent = '红方胜'; showModal('红方胜!'); return; }
   if (s === 'black-win') { statusEl.textContent = '黑方胜'; showModal('黑方胜!'); return; }
+  if (s === 'draw') { statusEl.textContent = '和棋'; showModal('和棋!'); return; }
   statusEl.textContent = (state.turn === RED ? '红方' : '黑方') + '走棋' + (s === 'check' ? ' — 将军!' : '');
 }
 
@@ -768,7 +811,7 @@ function afterMove() {
   renderHistory();
   refreshStatus();
   const s = gameStatus(state);
-  if (s === 'red-win' || s === 'black-win') return;
+  if (s === 'red-win' || s === 'black-win' || s === 'draw') return;
   if (aiSide() !== null && state.turn === aiSide()) triggerAI();
 }
 
@@ -806,7 +849,8 @@ function animateAndApply(move, isAi) {
 function split(i) { return [Math.floor(i / 9), i % 9]; }
 
 function triggerAI() {
-  if (gameStatus(state) === 'red-win' || gameStatus(state) === 'black-win') return;
+  const s = gameStatus(state);
+  if (s === 'red-win' || s === 'black-win' || s === 'draw') return;
   busy = true;
   thinkingEl.hidden = false;
   aiToken++;
