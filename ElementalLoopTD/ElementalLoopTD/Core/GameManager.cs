@@ -216,6 +216,8 @@ public class GameManager
         }
     }
 
+    public void NotifyStateChanged() => OnStateChanged?.Invoke();
+
     public void Restart()
     {
         Gold = Config.Combat.InitialGold;
