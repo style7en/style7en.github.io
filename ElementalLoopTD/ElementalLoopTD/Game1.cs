@@ -86,7 +86,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        _font = FontFactory.Create(GraphicsDevice);
+        _font = Content.Load<SpriteFont>("default");
 
         _gm.OnStateChanged += () => ScheduleSave();
         _gm.OnRuleHint += (msg) => { };
