@@ -1794,10 +1794,14 @@
                 }
 
                 // Level text
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+                ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+                ctx.strokeText(tower.level, cx, cy);
+                ctx.fillStyle = '#fff';
                 ctx.fillText(tower.level, cx, cy);
             }
 
