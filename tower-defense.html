@@ -3,65 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>三消塔防无尽版</title>
+    <title>NEXUS DEFENSE // 量子塔防</title>
+    <script>
+        // Apply saved theme before CSS renders to prevent flash of wrong theme
+        (function() {
+            if (localStorage.getItem('towerDefenseTheme') === 'dark') {
+                document.documentElement.dataset.theme = 'dark';
+            }
+        })();
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* 浅色主题 */
-            --bg-primary: #e8e8f0;
-            --bg-secondary: #f8f8fc;
-            --bg-tertiary: #f0f0f8;
-            --bg-canvas: #d8d8e8;
-            --bg-canvas-grid: #c0c0d8;
-            --bg-path: rgba(160, 160, 180, 0.4);
-            --text-primary: #333;
-            --text-secondary: #555;
-            --text-muted: #666;
-            --border-primary: #a0a0c0;
-            --border-secondary: #d0d0e0;
-            --accent-primary: #4090d0;
-            --accent-hover: #50a0e0;
-            --accent-success: #40a060;
-            --color-lives: #d04040;
-            --color-lives-hover: #e05050;
-            --color-score: #20a080;
-            --color-wave: #d06030;
-            --color-cancel: #a0a0b0;
-            --color-cancel-hover: #b0b0c0;
-            --dialog-overlay: rgba(200, 200, 220, 0.9);
-            --shadow-primary: 0 4px 15px rgba(0, 0, 0, 0.2);
-            --shadow-secondary: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --tower-bg: #d0d0e0;
-            --tower-bg-hover: #c0c0d0;
-            --tower-border: #3080c0;
+            /* 科幻 - 全息亮色主题（白蓝/银调） */
+            --bg-primary: #e6f2fa;
+            --bg-secondary: rgba(255, 255, 255, 0.85);
+            --bg-tertiary: rgba(220, 238, 250, 0.85);
+            --bg-canvas: #f0f7fc;
+            --bg-canvas-grid: #c0d8e8;
+            --bg-path: rgba(255, 140, 30, 0.20);
+            --text-primary: #0a2540;
+            --text-secondary: #2c5a8a;
+            --text-muted: #6080a0;
+            --border-primary: #2a82c8;
+            --border-secondary: rgba(42, 130, 200, 0.35);
+            --accent-primary: #0078d4;
+            --accent-hover: #0098f0;
+            --accent-success: #00a060;
+            --color-lives: #d4254e;
+            --color-lives-hover: #e84068;
+            --color-score: #00875a;
+            --color-wave: #d97020;
+            --lives-rgb: 212, 37, 78;
+            --score-rgb: 0, 135, 90;
+            --wave-rgb: 217, 112, 32;
+            --color-cancel: #a0b0c0;
+            --color-cancel-hover: #b0c0d0;
+            --dialog-overlay: rgba(220, 235, 245, 0.92);
+            --shadow-primary: 0 0 18px rgba(0, 120, 212, 0.25), 0 4px 14px rgba(40, 80, 120, 0.18);
+            --shadow-secondary: 0 0 28px rgba(0, 120, 212, 0.35), 0 6px 22px rgba(40, 80, 120, 0.25);
+            --tower-bg: rgba(240, 248, 255, 0.9);
+            --tower-bg-hover: rgba(220, 238, 252, 0.95);
+            --tower-border: #0078d4;
+            --glow-cyan: 0 0 6px rgba(0, 152, 240, 0.55), 0 0 14px rgba(0, 152, 240, 0.25);
+            --glow-magenta: 0 0 6px rgba(208, 60, 160, 0.55), 0 0 14px rgba(208, 60, 160, 0.25);
+
+            /* Theme-specific overrides */
+            --page-bg:
+                radial-gradient(ellipse at 20% 10%, rgba(0, 150, 230, 0.10), transparent 55%),
+                radial-gradient(ellipse at 85% 90%, rgba(200, 100, 220, 0.08), transparent 55%),
+                linear-gradient(180deg, #f0f6fc 0%, #d8e8f4 100%);
+            --scanline-color: rgba(0, 120, 200, 0.04);
+            --star-opacity: 0.12;
+            --canvas-bg: #f0f7fc;
+            --canvas-glow:
+                0 0 0 1px rgba(0, 120, 200, 0.18) inset,
+                0 0 16px rgba(0, 130, 220, 0.25),
+                0 0 36px rgba(0, 130, 220, 0.10),
+                0 6px 24px rgba(40, 80, 120, 0.25);
+            --panel-glow-rgb: 0, 120, 200;
+            --hud-tagline-color: #0078d4;
+            --hud-tagline-glow: rgba(0, 120, 200, 0.5);
+            --neon-rgb: 0, 130, 220;
+            --neon-strong: #0078d4;
+            --restart-bg: linear-gradient(135deg, rgba(0, 130, 220, 0.12), rgba(0, 130, 220, 0.02));
+            --restart-bg-hover: linear-gradient(135deg, rgba(0, 130, 220, 0.25), rgba(0, 130, 220, 0.08));
+            --restart-text: #0078d4;
+            --restart-text-hover: #ffffff;
+            --restart-text-shadow: 0 0 4px rgba(0, 130, 220, 0.4);
+            --tower-panel-text-glow: rgba(0, 130, 220, 0.4);
+            --panel-shadow-deep: rgba(40, 80, 120, 0.2);
         }
 
         [data-theme="dark"] {
-            --bg-primary: #1a1a2e;
-            --bg-secondary: #16213e;
-            --bg-tertiary: #1f2940;
-            --bg-canvas: #1a1a30;
-            --bg-canvas-grid: #3a3a5a;
-            --bg-path: rgba(80, 80, 120, 0.5);
-            --text-primary: #e0e0e8;
-            --text-secondary: #b0b0c0;
-            --text-muted: #8888a0;
-            --border-primary: #3a3a5c;
-            --border-secondary: #2a2a4a;
-            --accent-primary: #4a90d0;
-            --accent-hover: #5aa0e0;
-            --accent-success: #4a9060;
-            --color-lives: #e05050;
-            --color-lives-hover: #f06060;
-            --color-score: #30b090;
-            --color-wave: #e08040;
-            --color-cancel: #505070;
-            --color-cancel-hover: #606080;
-            --dialog-overlay: rgba(10, 10, 30, 0.9);
-            --shadow-primary: 0 4px 15px rgba(0, 0, 0, 0.5);
-            --shadow-secondary: 0 4px 20px rgba(0, 0, 0, 0.6);
-            --tower-bg: #2a2a4a;
-            --tower-bg-hover: #3a3a5a;
-            --tower-border: #3a7ab0;
+            /* 科幻 - 深空暗色主题 */
+            --bg-primary: #02050f;
+            --bg-secondary: rgba(8, 16, 36, 0.9);
+            --bg-tertiary: rgba(14, 28, 56, 0.85);
+            --bg-canvas: #02040e;
+            --bg-canvas-grid: #143052;
+            --bg-path: rgba(var(--neon-rgb), 0.22);
+            --text-primary: #e8faff;
+            --text-secondary: #7ac0e0;
+            --text-muted: #4a7898;
+            --border-primary: #00b8e6;
+            --border-secondary: rgba(var(--neon-rgb), 0.4);
+            --accent-primary: #00f0ff;
+            --accent-hover: #66f6ff;
+            --accent-success: #00ffaa;
+            --color-lives: #ff2e6a;
+            --color-lives-hover: #ff558a;
+            --color-score: #00ffb0;
+            --color-wave: #ffb030;
+            --lives-rgb: 255, 46, 106;
+            --score-rgb: 0, 255, 176;
+            --wave-rgb: 255, 176, 48;
+            --color-cancel: #2a3a55;
+            --color-cancel-hover: #3a4d70;
+            --dialog-overlay: rgba(0, 0, 8, 0.95);
+            --shadow-primary: 0 0 22px rgba(var(--neon-rgb), 0.45), 0 4px 16px rgba(0, 0, 0, 0.85);
+            --shadow-secondary: 0 0 36px rgba(var(--neon-rgb), 0.55), 0 6px 24px rgba(0, 0, 0, 0.9);
+            --tower-bg: rgba(14, 32, 62, 0.9);
+            --tower-bg-hover: rgba(22, 52, 92, 0.98);
+            --tower-border: #00f0ff;
+            --glow-cyan: 0 0 8px rgba(var(--neon-rgb), 0.9), 0 0 18px rgba(var(--neon-rgb), 0.5);
+            --glow-magenta: 0 0 8px rgba(255, 70, 200, 0.9), 0 0 18px rgba(255, 70, 200, 0.5);
+
+            /* Dark theme overrides */
+            --page-bg:
+                radial-gradient(ellipse at 20% 10%, rgba(var(--neon-rgb), 0.10), transparent 55%),
+                radial-gradient(ellipse at 85% 90%, rgba(255, 60, 190, 0.08), transparent 55%),
+                linear-gradient(180deg, var(--bg-primary) 0%, #050a18 100%);
+            --scanline-color: rgba(var(--neon-rgb), 0.025);
+            --star-opacity: 1;
+            --canvas-bg: #02040e;
+            --canvas-glow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.15) inset,
+                0 0 24px rgba(var(--neon-rgb), 0.35),
+                0 0 60px rgba(var(--neon-rgb), 0.15),
+                0 8px 32px rgba(0, 0, 0, 0.7);
+            --panel-glow-rgb: 0, 240, 255;
+            --hud-tagline-color: var(--accent-primary);
+            --hud-tagline-glow: rgba(var(--neon-rgb), 0.6);
+            --neon-rgb: 0, 240, 255;
+            --neon-strong: #00f0ff;
+            --restart-bg: linear-gradient(135deg, rgba(var(--neon-rgb), 0.14), rgba(var(--neon-rgb), 0.04));
+            --restart-bg-hover: linear-gradient(135deg, rgba(var(--neon-rgb), 0.3), rgba(var(--neon-rgb), 0.1));
+            --restart-text: var(--accent-primary);
+            --restart-text-hover: #ffffff;
+            --restart-text-shadow: 0 0 4px rgba(var(--neon-rgb), 0.5);
+            --tower-panel-text-glow: rgba(var(--neon-rgb), 0.5);
+            --panel-shadow-deep: rgba(0, 0, 0, 0.6);
         }
 
         * {
@@ -75,61 +147,147 @@
         }
 
         body {
-            background: var(--bg-primary);
+            background: var(--page-bg);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", sans-serif;
+            font-family: 'Orbitron', 'Share Tech Mono', "Microsoft YaHei", "微软雅黑", sans-serif;
             color: var(--text-primary);
             padding: 10px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 全屏扫描线效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                var(--scanline-color) 0,
+                var(--scanline-color) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: screen;
+        }
+
+        /* 星点 */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(1px 1px at 12% 24%, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1px 1px at 78% 18%, rgba(180,220,255,0.6), transparent),
+                radial-gradient(1px 1px at 42% 78%, rgba(255,200,240,0.5), transparent),
+                radial-gradient(1px 1px at 88% 64%, rgba(160,255,220,0.6), transparent),
+                radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 60% 36%, rgba(180,200,255,0.5), transparent);
+            opacity: var(--star-opacity);
+            pointer-events: none;
+            z-index: 0;
+            animation: starfield 60s linear infinite;
+        }
+
+        @keyframes starfield {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-40px); }
         }
 
         .game-container {
             display: flex;
             gap: 20px;
             align-items: flex-start;
+            position: relative;
+            z-index: 2;
         }
 
         #gameCanvas {
-            border: 4px solid var(--border-primary);
-            image-rendering: pixelated;
+            border: 2px solid var(--border-primary);
+            image-rendering: auto;
+            -ms-interpolation-mode: bicubic;
             cursor: crosshair;
-            box-shadow: var(--shadow-primary);
+            box-shadow: var(--canvas-glow);
+            background: var(--canvas-bg);
         }
 
         .ui-panel {
-            background: var(--bg-secondary);
-            padding: 8px;
-            border: 3px solid var(--border-primary);
-            min-width: 180px;
+            background:
+                linear-gradient(135deg, rgba(var(--neon-rgb), 0.06), transparent 40%),
+                var(--bg-secondary);
+            padding: 12px;
+            border: 1px solid var(--border-primary);
+            min-width: 200px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+            position: relative;
+            box-shadow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.1) inset,
+                0 0 18px rgba(var(--neon-rgb), 0.18),
+                0 8px 24px var(--panel-shadow-deep);
+            backdrop-filter: blur(6px);
+        }
+
+        .ui-panel::before {
+            content: 'NEXUS // TACTICAL HUD';
+            position: absolute;
+            top: 4px;
+            right: 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            color: var(--accent-primary);
+            opacity: 0.65;
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.6);
+            pointer-events: none;
         }
 
         .stat {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2px 0;
-            border-bottom: 1px solid var(--border-secondary);
+            padding: 6px 8px;
+            border: 1px solid var(--border-secondary);
+            background: linear-gradient(90deg, rgba(var(--neon-rgb), 0.05), transparent);
+            position: relative;
+        }
+
+        .stat::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary);
         }
 
         .stat-label {
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 11px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .stat-value {
             font-size: 20px;
-            font-weight: bold;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
         }
 
-        .lives { color: var(--color-lives); }
-        .score { color: var(--color-score); }
-        .wave { color: var(--color-wave); }
+        .lives { color: var(--color-lives); text-shadow: 0 0 8px rgba(var(--lives-rgb), 0.5); }
+        .score { color: var(--color-score); text-shadow: 0 0 8px rgba(var(--score-rgb), 0.5); }
+        .wave { color: var(--color-wave); text-shadow: 0 0 8px rgba(var(--wave-rgb), 0.5); }
 
         .game-over {
             position: fixed;
@@ -137,41 +295,73 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: var(--dialog-overlay);
+            background:
+                radial-gradient(ellipse at center, rgba(255, 0, 60, 0.18), transparent 60%),
+                var(--dialog-overlay);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
+            backdrop-filter: blur(4px);
         }
 
         .game-over h2 {
-            font-size: 48px;
+            font-size: 56px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            letter-spacing: 8px;
             color: var(--color-lives);
-            text-shadow: 2px 2px 0 #888;
-            margin-bottom: 20px;
+            text-shadow:
+                0 0 12px rgba(255, 58, 110, 0.9),
+                0 0 28px rgba(255, 58, 110, 0.5),
+                0 0 60px rgba(255, 58, 110, 0.3);
+            margin-bottom: 24px;
+            animation: glitch 2.4s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 92%, 100% { transform: translate(0); }
+            93% { transform: translate(-2px, 1px); }
+            94% { transform: translate(2px, -1px); }
+            95% { transform: translate(-1px, -1px); }
+            96% { transform: translate(1px, 2px); }
         }
 
         .game-over p {
-            font-size: 24px;
+            font-size: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px;
             margin-bottom: 30px;
             color: var(--text-primary);
         }
 
         .restart-btn {
-            padding: 15px 40px;
-            font-size: 20px;
-            font-family: inherit;
-            background: var(--accent-primary);
-            color: white;
-            border: none;
+            padding: 14px 42px;
+            font-size: 16px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.2), rgba(var(--neon-rgb), 0.05));
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: all 0.18s;
+            position: relative;
+            box-shadow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.2) inset,
+                0 0 18px rgba(var(--neon-rgb), 0.4);
+            text-shadow: 0 0 8px rgba(var(--neon-rgb), 0.8);
         }
 
         .restart-btn:hover {
-            transform: scale(1.05);
-            background: var(--accent-hover);
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.35), rgba(var(--neon-rgb), 0.1));
+            color: #ffffff;
+            box-shadow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.4) inset,
+                0 0 28px rgba(var(--neon-rgb), 0.7);
+            transform: translateY(-1px);
         }
 
         .confirm-dialog {
@@ -180,11 +370,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(2, 6, 18, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 200;
+            backdrop-filter: blur(3px);
         }
 
         .help-dialog {
@@ -193,129 +384,192 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(2, 6, 18, 0.78);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 300;
+            backdrop-filter: blur(4px);
         }
 
         .help-content {
-            background: var(--bg-secondary);
-            border: 3px solid var(--accent-primary);
-            border-radius: 8px;
-            padding: 20px;
-            max-width: 400px;
+            background:
+                linear-gradient(135deg, rgba(var(--neon-rgb), 0.08), transparent 40%),
+                var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            padding: 24px;
+            max-width: 440px;
             max-height: 80vh;
             overflow-y: auto;
             box-shadow: var(--shadow-secondary);
+            position: relative;
+        }
+
+        .help-content::before {
+            content: '// MANUAL';
+            position: absolute;
+            top: 6px;
+            right: 18px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--accent-primary);
+            opacity: 0.7;
         }
 
         .help-content h3 {
             color: var(--accent-primary);
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             text-align: center;
             font-size: 18px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(var(--neon-rgb), 0.7);
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-secondary);
         }
 
         .help-content h4 {
-            color: var(--text-primary);
-            margin: 12px 0 6px 0;
-            font-size: 14px;
-            border-bottom: 1px solid var(--border-secondary);
-            padding-bottom: 4px;
+            color: var(--accent-primary);
+            margin: 14px 0 8px 0;
+            font-size: 13px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding-left: 10px;
+            border-left: 2px solid var(--accent-primary);
+            box-shadow: -2px 0 8px rgba(var(--neon-rgb), 0.3);
         }
 
         .help-content p, .help-content li {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-secondary);
-            line-height: 1.6;
+            line-height: 1.7;
             margin: 4px 0;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .help-content strong {
+            color: var(--accent-primary);
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.5);
         }
 
         .help-content ul {
-            padding-left: 20px;
-            margin: 6px 0;
+            padding-left: 22px;
+            margin: 8px 0;
         }
 
         .help-close {
             display: block;
-            margin: 15px auto 0;
-            padding: 8px 30px;
-            font-size: 14px;
-            font-family: inherit;
-            background: var(--accent-primary);
-            color: white;
-            border: none;
-            border-radius: 4px;
+            margin: 18px auto 0;
+            padding: 8px 32px;
+            font-size: 12px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.2), rgba(var(--neon-rgb), 0.05));
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
             cursor: pointer;
+            box-shadow: 0 0 12px rgba(var(--neon-rgb), 0.4);
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.8);
         }
 
         .help-close:hover {
-            background: var(--accent-hover);
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.35), rgba(var(--neon-rgb), 0.1));
+            box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.7);
+            color: #fff;
         }
 
         .confirm-content {
-            background: var(--bg-secondary);
-            border: 3px solid var(--accent-primary);
-            border-radius: 8px;
-            padding: 20px 30px;
+            background:
+                linear-gradient(135deg, rgba(var(--neon-rgb), 0.08), transparent 40%),
+                var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            padding: 24px 32px;
             text-align: center;
             box-shadow: var(--shadow-secondary);
         }
 
         .confirm-message {
-            font-size: 16px;
+            font-size: 14px;
             color: var(--text-primary);
-            margin-bottom: 20px;
+            margin-bottom: 22px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
         }
 
         .confirm-buttons {
             display: flex;
-            gap: 15px;
+            gap: 14px;
             justify-content: center;
         }
 
         .confirm-btn {
-            padding: 8px 24px;
-            font-size: 14px;
-            font-family: inherit;
-            border: none;
-            border-radius: 4px;
+            padding: 8px 26px;
+            font-size: 12px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 1px solid transparent;
             cursor: pointer;
+            transition: all 0.15s;
         }
 
         .confirm-btn.cancel {
-            background: var(--color-cancel);
-            color: white;
+            background: rgba(60, 80, 110, 0.4);
+            color: var(--text-secondary);
+            border-color: var(--color-cancel);
         }
 
         .confirm-btn.cancel:hover {
-            background: var(--color-cancel-hover);
+            background: rgba(80, 100, 130, 0.55);
+            color: #fff;
         }
 
         .confirm-btn.ok {
-            background: var(--accent-primary);
-            color: white;
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.25), rgba(var(--neon-rgb), 0.08));
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px rgba(var(--neon-rgb), 0.5);
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.7);
         }
 
         .confirm-btn.ok:hover {
-            background: var(--accent-hover);
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.4), rgba(var(--neon-rgb), 0.15));
+            color: #fff;
+            box-shadow: 0 0 22px rgba(var(--neon-rgb), 0.8);
         }
 
         .selected-tower {
             font-size: 11px;
             color: var(--text-primary);
             margin-top: 6px;
-            padding: 6px;
-            background: var(--bg-tertiary);
+            padding: 10px;
+            background:
+                linear-gradient(135deg, rgba(var(--neon-rgb), 0.08), transparent 60%),
+                var(--bg-tertiary);
             border: 1px solid var(--accent-primary);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 0.5px;
+            box-shadow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.1) inset,
+                0 0 14px rgba(var(--neon-rgb), 0.25);
         }
 
         .selected-tower .title {
             color: var(--accent-primary);
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 11px;
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.5);
         }
 
         .selected-tower .prop {
@@ -323,100 +577,170 @@
         }
 
         .delete-btn {
-            margin-top: 4px;
-            padding: 3px 6px;
-            font-size: 10px;
-            font-family: inherit;
-            background: var(--color-lives);
-            color: white;
-            border: none;
+            margin-top: 8px;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, rgba(255, 58, 110, 0.2), rgba(255, 58, 110, 0.05));
+            color: var(--color-lives);
+            border: 1px solid var(--color-lives);
             cursor: pointer;
             width: 100%;
+            box-shadow: 0 0 10px rgba(255, 58, 110, 0.3);
+            text-shadow: 0 0 6px rgba(255, 58, 110, 0.6);
+            transition: all 0.15s;
         }
 
         .delete-btn:hover {
-            background: var(--color-lives-hover);
+            background: linear-gradient(135deg, rgba(255, 58, 110, 0.4), rgba(255, 58, 110, 0.15));
+            color: #fff;
+            box-shadow: 0 0 18px rgba(255, 58, 110, 0.7);
         }
 
         .restart-btn-small {
-            padding: 4px 8px;
-            font-size: 12px;
-            font-family: inherit;
-            background: var(--accent-primary);
-            color: white;
-            border: none;
+            padding: 7px 6px;
+            font-size: 11px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.14), rgba(var(--neon-rgb), 0.04));
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
             cursor: pointer;
-            border-radius: 3px;
             width: 100%;
+            box-shadow: 0 0 8px rgba(var(--neon-rgb), 0.25);
+            text-shadow: 0 0 4px rgba(var(--neon-rgb), 0.5);
+            transition: all 0.15s;
         }
 
         .restart-btn-small:hover {
-            background: var(--accent-hover);
+            background: linear-gradient(135deg, rgba(var(--neon-rgb), 0.3), rgba(var(--neon-rgb), 0.1));
+            color: #fff;
+            box-shadow: 0 0 18px rgba(var(--neon-rgb), 0.6);
         }
 
         .btn-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 4px;
+            gap: 6px;
             margin-top: 4px;
         }
 
         .tower-type-select {
             display: flex;
-            gap: 4px;
+            gap: 6px;
             margin-top: 6px;
         }
 
         .type-btn {
             flex: 1;
-            padding: 4px 2px;
+            padding: 8px 4px;
             font-size: 11px;
-            font-family: inherit;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
             background: var(--tower-bg);
             color: var(--text-secondary);
             border: 1px solid var(--border-primary);
             cursor: pointer;
             text-align: center;
-            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 6px;
+            transition: all 0.15s;
+            position: relative;
         }
 
+        .type-icon {
+            font-size: 16px;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        .type-btn.type-attack .type-icon { color: #ff5520; text-shadow: 0 0 6px rgba(255, 85, 32, 0.7); }
+        .type-btn.type-slow .type-icon { color: #40c8ff; text-shadow: 0 0 6px rgba(64, 200, 255, 0.7); }
+
+        .type-btn.type-attack.active {
+            background: linear-gradient(135deg, rgba(255, 85, 32, 0.32), rgba(255, 85, 32, 0.08));
+            color: #fff;
+            border-color: #ff7a40;
+            box-shadow:
+                0 0 14px rgba(255, 85, 32, 0.6),
+                0 0 0 1px rgba(255, 85, 32, 0.3) inset;
+            text-shadow: 0 0 6px rgba(255, 122, 64, 0.9);
+        }
+
+        .type-btn.type-attack.active .type-icon { color: #fff; text-shadow: 0 0 8px rgba(255, 122, 64, 1); }
+
+        .type-btn.type-slow.active {
+            background: linear-gradient(135deg, rgba(64, 200, 255, 0.32), rgba(64, 200, 255, 0.08));
+            color: #fff;
+            border-color: #80e8ff;
+            box-shadow:
+                0 0 14px rgba(64, 200, 255, 0.6),
+                0 0 0 1px rgba(64, 200, 255, 0.3) inset;
+            text-shadow: 0 0 6px rgba(128, 232, 255, 0.9);
+        }
+
+        .type-btn.type-slow.active .type-icon { color: #fff; text-shadow: 0 0 8px rgba(128, 232, 255, 1); }
+
         .type-btn.active {
-            background: var(--accent-primary);
-            color: white;
-            border-color: var(--tower-border);
+            color: #fff;
         }
 
         .type-btn:hover:not(.active) {
             background: var(--tower-bg-hover);
+            color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(var(--neon-rgb), 0.3);
         }
 
         .hidden {
             display: none !important;
         }
 
+        /* Selected tower panel: keep layout space when hidden to prevent page jitter */
+        .selected-tower.hidden {
+            display: block !important;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
         /* Tower tooltip */
         .tower-tooltip {
             position: fixed;
-            background: var(--bg-secondary);
-            border: 2px solid var(--accent-primary);
-            border-radius: 6px;
-            padding: 10px 12px;
-            font-size: 12px;
+            background:
+                linear-gradient(135deg, rgba(var(--neon-rgb), 0.1), transparent 50%),
+                var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            padding: 10px 14px;
+            font-size: 11px;
             z-index: 1000;
             pointer-events: none;
-            box-shadow: var(--shadow-primary);
-            min-width: 120px;
+            box-shadow:
+                0 0 0 1px rgba(var(--neon-rgb), 0.15) inset,
+                0 0 18px rgba(var(--neon-rgb), 0.5),
+                0 4px 14px rgba(0, 0, 0, 0.6);
+            min-width: 140px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 0.5px;
         }
 
         .tower-tooltip .tooltip-title {
             color: var(--accent-primary);
-            font-weight: bold;
+            font-weight: 700;
             margin-bottom: 6px;
             padding-bottom: 4px;
             border-bottom: 1px solid var(--border-secondary);
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 6px rgba(var(--neon-rgb), 0.6);
         }
 
         .tower-tooltip .tooltip-row {
@@ -425,8 +749,9 @@
         }
 
         .tower-tooltip .tooltip-row span {
-            color: var(--text-primary);
+            color: var(--accent-primary);
             font-weight: 500;
+            text-shadow: 0 0 4px rgba(var(--neon-rgb), 0.5);
         }
 
         /* 响应式布局 - 手机适配 */
@@ -539,8 +864,12 @@
                 <button class="restart-btn-small" id="themeBtn" onclick="toggleTheme()">深色</button>
             </div>
             <div class="tower-type-select">
-                <div class="type-btn active" data-type="attack" onclick="selectTowerType('attack')">攻击塔</div>
-                <div class="type-btn" data-type="slow" onclick="selectTowerType('slow')">减速塔</div>
+                <div class="type-btn type-attack active" data-type="attack" onclick="selectTowerType('attack')">
+                    <span class="type-icon">✦</span>攻击塔
+                </div>
+                <div class="type-btn type-slow" data-type="slow" onclick="selectTowerType('slow')">
+                    <span class="type-icon">❋</span>减速塔
+                </div>
             </div>
             <div class="selected-tower hidden" id="selectedTower">
                 <div class="title">防御塔属性</div>
@@ -556,18 +885,18 @@
     </div>
 
     <div class="game-over hidden" id="gameOver">
-        <h2>GAME OVER</h2>
+        <h2>SYSTEM FAILURE</h2>
         <p>最终波次: <span id="finalWave">1</span></p>
-        <button class="restart-btn" onclick="restartGame()">重新开始</button>
+        <button class="restart-btn" onclick="restartGame()">重新启动</button>
     </div>
 
     <div class="game-over hidden" id="victoryDialog">
-        <h2 style="color: var(--accent-success);">胜利！</h2>
+        <h2 style="color: var(--accent-success); text-shadow: 0 0 12px rgba(0, 255, 170, 0.9), 0 0 28px rgba(0, 255, 170, 0.5);">MISSION CLEAR</h2>
         <p>恭喜你成功抵御了100波进攻！</p>
         <p>最终分数: <span id="victoryScore">0</span></p>
         <div style="margin-top: 20px; display: flex; gap: 15px;">
-            <button class="restart-btn" style="background: var(--accent-success);" onclick="continueEndless()">进入无尽模式</button>
-            <button class="restart-btn" style="background: var(--color-cancel);" onclick="endGameFromVictory()">结束游戏</button>
+            <button class="restart-btn" style="color: var(--accent-success); border-color: var(--accent-success); box-shadow: 0 0 18px rgba(0, 255, 170, 0.5); text-shadow: 0 0 8px rgba(0, 255, 170, 0.8);" onclick="continueEndless()">进入无尽模式</button>
+            <button class="restart-btn" style="color: #b0c0d0; border-color: #5a7090; box-shadow: 0 0 10px rgba(90, 112, 144, 0.3); text-shadow: none;" onclick="endGameFromVictory()">结束游戏</button>
         </div>
     </div>
 
@@ -594,7 +923,7 @@
 
     <div class="help-dialog hidden" id="helpDialog">
         <div class="help-content">
-            <h3>三消塔防无尽版 - 玩法说明</h3>
+            <h3>NEXUS DEFENSE // 操作手册</h3>
             
             <h4>游戏目标</h4>
             <p>阻止怪物从左上角到达右下角，保护你的生命值。</p>
@@ -643,6 +972,9 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        // High-DPI rendering to reduce aliasing
+        const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
         // Cache DOM elements for performance
         const DOM = {
             lives: document.getElementById('lives'),
@@ -680,36 +1012,110 @@
         const GAME_WIDTH = GRID_SIZE * CELL_SIZE;
         const GAME_HEIGHT = GRID_SIZE * CELL_SIZE;
 
+        // Configure main canvas for HiDPI (logical size stays 450x450)
+        canvas.width = GAME_WIDTH * DPR;
+        canvas.height = GAME_HEIGHT * DPR;
+        canvas.style.width = GAME_WIDTH + 'px';
+        canvas.style.height = GAME_HEIGHT + 'px';
+        ctx.scale(DPR, DPR);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
         // Create offscreen canvas for grid background (performance optimization)
         const gridCanvas = document.createElement('canvas');
-        gridCanvas.width = GAME_WIDTH;
-        gridCanvas.height = GAME_HEIGHT;
+        gridCanvas.width = GAME_WIDTH * DPR;
+        gridCanvas.height = GAME_HEIGHT * DPR;
         const gridCtx = gridCanvas.getContext('2d');
+        gridCtx.scale(DPR, DPR);
+        gridCtx.imageSmoothingEnabled = true;
+        gridCtx.imageSmoothingQuality = 'high';
 
-        // Initialize grid canvas
+        // Initialize grid canvas - sci-fi tech grid
         function initGridCanvas() {
             const isDark = document.documentElement.dataset.theme === 'dark';
-            gridCtx.fillStyle = isDark ? '#1a1a30' : '#d8d8e8';
+            // Deep space / holo gradient base
+            const bgGrad = gridCtx.createRadialGradient(
+                GAME_WIDTH / 2, GAME_HEIGHT / 2, 0,
+                GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 0.75
+            );
+            if (isDark) {
+                bgGrad.addColorStop(0, '#061224');
+                bgGrad.addColorStop(1, '#02040e');
+            } else {
+                bgGrad.addColorStop(0, '#f4f9fd');
+                bgGrad.addColorStop(1, '#dcebf6');
+            }
+            gridCtx.fillStyle = bgGrad;
             gridCtx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-            gridCtx.strokeStyle = isDark ? '#3a3a5a' : '#c0c0d8';
+            // Subtle scanlines
+            gridCtx.fillStyle = isDark ? 'rgba(0, 200, 255, 0.03)' : 'rgba(0, 120, 200, 0.04)';
+            for (let y = 0; y < GAME_HEIGHT; y += 3) {
+                gridCtx.fillRect(0, y, GAME_WIDTH, 1);
+            }
+
+            // Faint grid lines
+            gridCtx.strokeStyle = isDark ? 'rgba(0, 200, 255, 0.10)' : 'rgba(40, 110, 170, 0.18)';
             gridCtx.lineWidth = 1;
             for (let i = 0; i <= GRID_SIZE; i++) {
                 gridCtx.beginPath();
-                gridCtx.moveTo(i * CELL_SIZE, 0);
-                gridCtx.lineTo(i * CELL_SIZE, GAME_HEIGHT);
+                gridCtx.moveTo(i * CELL_SIZE + 0.5, 0);
+                gridCtx.lineTo(i * CELL_SIZE + 0.5, GAME_HEIGHT);
                 gridCtx.stroke();
 
                 gridCtx.beginPath();
-                gridCtx.moveTo(0, i * CELL_SIZE);
-                gridCtx.lineTo(GAME_WIDTH, i * CELL_SIZE);
+                gridCtx.moveTo(0, i * CELL_SIZE + 0.5);
+                gridCtx.lineTo(GAME_WIDTH, i * CELL_SIZE + 0.5);
                 gridCtx.stroke();
             }
+
+            // Brighter major grid every 5 cells
+            gridCtx.strokeStyle = isDark ? 'rgba(0, 240, 255, 0.22)' : 'rgba(0, 120, 200, 0.30)';
+            gridCtx.lineWidth = 1;
+            for (let i = 0; i <= GRID_SIZE; i += 5) {
+                gridCtx.beginPath();
+                gridCtx.moveTo(i * CELL_SIZE + 0.5, 0);
+                gridCtx.lineTo(i * CELL_SIZE + 0.5, GAME_HEIGHT);
+                gridCtx.stroke();
+
+                gridCtx.beginPath();
+                gridCtx.moveTo(0, i * CELL_SIZE + 0.5);
+                gridCtx.lineTo(GAME_WIDTH, i * CELL_SIZE + 0.5);
+                gridCtx.stroke();
+            }
+
+            // Corner brackets at each grid intersection (decorative HUD nodes)
+            gridCtx.fillStyle = isDark ? 'rgba(0, 240, 255, 0.45)' : 'rgba(0, 120, 200, 0.5)';
+            for (let i = 0; i <= GRID_SIZE; i += 5) {
+                for (let j = 0; j <= GRID_SIZE; j += 5) {
+                    gridCtx.fillRect(i * CELL_SIZE - 1, j * CELL_SIZE - 1, 3, 3);
+                }
+            }
+
+            // Spawn point (top-left) marker
+            gridCtx.strokeStyle = isDark ? 'rgba(0, 255, 170, 0.6)' : 'rgba(0, 160, 90, 0.7)';
+            gridCtx.lineWidth = 2;
+            gridCtx.strokeRect(2, 2, CELL_SIZE - 4, CELL_SIZE - 4);
+            gridCtx.fillStyle = isDark ? 'rgba(0, 255, 170, 0.15)' : 'rgba(0, 160, 90, 0.15)';
+            gridCtx.fillRect(2, 2, CELL_SIZE - 4, CELL_SIZE - 4);
+
+            // Goal (bottom-right) marker
+            const gx = (GRID_SIZE - 1) * CELL_SIZE;
+            const gy = (GRID_SIZE - 1) * CELL_SIZE;
+            gridCtx.strokeStyle = isDark ? 'rgba(255, 58, 110, 0.7)' : 'rgba(200, 40, 80, 0.75)';
+            gridCtx.lineWidth = 2;
+            gridCtx.strokeRect(gx + 2, gy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+            gridCtx.fillStyle = isDark ? 'rgba(255, 58, 110, 0.15)' : 'rgba(200, 40, 80, 0.15)';
+            gridCtx.fillRect(gx + 2, gy + 2, CELL_SIZE - 4, CELL_SIZE - 4);
         }
         initGridCanvas();
 
         // 主题相关
         let isDarkTheme = false;
+
+        // Neon RGB for canvas drawing (must be concrete values, not CSS vars)
+        function neonRGB() { return isDarkTheme ? '0, 240, 255' : '0, 130, 220'; }
+        function neonHex() { return isDarkTheme ? '#00f0ff' : '#0078d4'; }
 
         function toggleTheme() {
             isDarkTheme = !isDarkTheme;
@@ -835,12 +1241,13 @@
         let mousePos = { x: 0, y: 0 };
         let selectedTower = null;
 
-        // Particle colors for each wave
-        const WAVE_COLORS = ['#ff4444', '#ff8844', '#ffcc44', '#ccaa44', '#66cc33', '#33ccaa', '#aa66cc', '#ff66aa', '#888888', '#555555'];
+        // Particle colors for each wave - sci-fi neon palette
+        const WAVE_COLORS = ['#ff4070', '#ff8030', '#ffd040', '#a8ff40', '#40ff90', '#40ffd0', '#40b0ff', '#8060ff', '#d040ff', '#ff40c0'];
 
-        // Tower colors by level (gray, blue, purple, orange, red, gold)
-        const TOWER_COLORS = ['#9d9d9d', '#4177d4', '#9b4dca', '#ff8000', '#e62e2e', '#ffd700'];
-        const SLOW_TOWER_COLORS = ['#7a7a7a', '#2d5a9e', '#7a3dad', '#cc6600', '#b32424', '#ccaa00'];
+        // ATTACK TOWER - warm red/orange/gold palette (level 1~6)
+        const TOWER_COLORS = ['#ff7a40', '#ff5520', '#ff3060', '#ff20a0', '#ff0040', '#ffcc20'];
+        // SLOW TOWER - cool cyan/ice palette (level 1~6)
+        const SLOW_TOWER_COLORS = ['#80e8ff', '#40c8ff', '#20a0ff', '#60e0ff', '#a0f0ff', '#ffffff'];
 
         // Hover tower detection
         let hoveredTower = null;
@@ -849,8 +1256,8 @@
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             // 计算缩放比例（canvas可能被CSS缩放）
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+            const scaleX = GAME_WIDTH / rect.width;
+            const scaleY = GAME_HEIGHT / rect.height;
             mousePos.x = (e.clientX - rect.left) * scaleX;
             mousePos.y = (e.clientY - rect.top) * scaleY;
 
@@ -892,8 +1299,8 @@
             if (gameState.gameOver) return;
 
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+            const scaleX = GAME_WIDTH / rect.width;
+            const scaleY = GAME_HEIGHT / rect.height;
             const x = (e.clientX - rect.left) * scaleX;
             const y = (e.clientY - rect.top) * scaleY;
 
@@ -940,8 +1347,8 @@
             const rect = canvas.getBoundingClientRect();
             const touch = e.touches[0] || e.changedTouches[0];
             // 计算缩放比例
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+            const scaleX = GAME_WIDTH / rect.width;
+            const scaleY = GAME_HEIGHT / rect.height;
             return {
                 x: (touch.clientX - rect.left) * scaleX,
                 y: (touch.clientY - rect.top) * scaleY
@@ -1053,10 +1460,10 @@
             DOM.selInterval.textContent = tower.interval;
 
             if (tower.type === 'slow') {
-                DOM.selSlowDiv.style.display = 'block';
+                DOM.selSlowDiv.style.visibility = 'visible';
                 DOM.selSlow.textContent = Math.round((1 - tower.slowFactor) * 100);
             } else {
-                DOM.selSlowDiv.style.display = 'none';
+                DOM.selSlowDiv.style.visibility = 'hidden';
             }
         }
 
@@ -1617,7 +2024,7 @@
                             const waveBonus = target.isBoss ? gameState.wave * 10 : gameState.wave;
                             gameState.score += waveBonus;
                             // Death explosion particles
-                            const color = target.isBoss ? '#aa44ff' : WAVE_COLORS[(target.wave - 1) % WAVE_COLORS.length];
+                            const color = target.isBoss ? '#ff40e0' : WAVE_COLORS[(target.wave - 1) % WAVE_COLORS.length];
                             spawnParticles(target.x, target.y, color, 20);
                             updateUI();
                         }
@@ -1659,7 +2066,7 @@
                     vy: 20 + Math.random() * 30,
                     life: 1,
                     decay: 0.03 + Math.random() * 0.02,
-                    color: '#aaddff',
+                    color: '#a0eaff',
                     size: 2 + Math.random() * 3,
                     type: 'snow'
                 });
@@ -1698,7 +2105,7 @@
 
         function draw(now) {
             // Draw cached grid background
-            ctx.drawImage(gridCanvas, 0, 0);
+            ctx.drawImage(gridCanvas, 0, 0, GAME_WIDTH, GAME_HEIGHT);
 
             // Draw path as highlighted grid cells
             const path = generatePath();
@@ -1709,153 +2116,374 @@
                 pathSet.add(`${gx},${gy}`);
             }
 
-            // Draw highlighted path cells
+            // Draw highlighted path cells - sci-fi energy path (warm amber/orange to contrast cyan grid)
+            const pathPulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
             for (const key of pathSet) {
                 const [gx, gy] = key.split(',').map(Number);
-                ctx.fillStyle = isDarkTheme ? 'rgba(80, 80, 120, 0.5)' : 'rgba(160, 160, 180, 0.4)';
-                ctx.fillRect(gx * CELL_SIZE + 1, gy * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                const px = gx * CELL_SIZE;
+                const py = gy * CELL_SIZE;
+                // Base glow fill
+                ctx.fillStyle = `rgba(255, 180, 60, ${0.14 + 0.08 * pathPulse})`;
+                ctx.fillRect(px + 1, py + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                // Inner outline
+                ctx.strokeStyle = `rgba(255, 200, 80, ${0.45 + 0.25 * pathPulse})`;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(px + 2.5, py + 2.5, CELL_SIZE - 5, CELL_SIZE - 5);
             }
 
-            // Draw tower attack range for selected tower
+            // Draw tower attack range for selected tower - sci-fi targeting
             if (selectedTower) {
-                ctx.fillStyle = isDarkTheme ? 'rgba(74, 144, 208, 0.15)' : 'rgba(64, 144, 208, 0.15)';
+                const t = Date.now() * 0.002;
+                ctx.save();
+                // Outer pulsing ring
+                ctx.strokeStyle = `rgba(${neonRGB()}, ${0.4 + 0.3 * Math.sin(t)})`;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 4]);
+                ctx.lineDashOffset = -Date.now() * 0.03;
+                ctx.beginPath();
+                ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                // Soft fill
+                ctx.fillStyle = `rgba(${neonRGB()}, 0.08)`;
                 ctx.beginPath();
                 ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = isDarkTheme ? 'rgba(74, 144, 208, 0.5)' : 'rgba(64, 144, 208, 0.5)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.restore();
             }
 
-            // Tower outer ring color based on theme
-            const towerOuterColor = isDarkTheme ? '#3a3a5c' : '#a0a0b0';
+            // Tower outer ring color - sci-fi metallic
+            const towerOuterColor = isDarkTheme ? '#0a1a30' : '#0c1c34';
+            const tickT = Date.now() * 0.003;
 
             for (const tower of gameState.towers) {
                 const color = tower.type === 'slow' ? SLOW_TOWER_COLORS[tower.level - 1] : TOWER_COLORS[tower.level - 1];
 
                 const cx = tower.x;
                 const cy = tower.y;
-                const radius = CELL_SIZE / 2 - 2;
-                const size = radius * 2;
+                const radius = CELL_SIZE / 2 - 5;
 
                 // Calculate attack animation scale
                 let scale = 1;
                 const timeSinceAttack = Date.now() - (tower.lastAttack || 0);
                 if (tower.lastAttack > 0 && timeSinceAttack < 250) {
-                    // Pulse animation: grow then shrink
                     const progress = timeSinceAttack / 250;
                     scale = progress < 0.5
                         ? 1 + 0.3 * (progress * 2)
                         : 1.3 - 0.3 * ((progress - 0.5) * 2);
                 }
 
+                // Energy glow under tower (color-specific for type identification)
+                ctx.save();
+                const glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 2);
+                glowGrad.addColorStop(0, color + 'cc');
+                glowGrad.addColorStop(0.5, color + '40');
+                glowGrad.addColorStop(1, color + '00');
+                ctx.fillStyle = glowGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius * 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
                 if (tower.type === 'slow') {
-                    // Draw rounded square for slow tower with scale animation
-                    const scaledSize = size * scale;
-                    const offset = (scaledSize - size) / 2;
+                    // ===== SLOW TOWER: HEXAGONAL ICE CRYSTAL (cool/blue, snowflake shape) =====
+                    const r = radius * scale;
 
-                    ctx.fillStyle = towerOuterColor;
-                    const outerSize = scaledSize + 4;
+                    // Outer ice ring (hexagon)
+                    ctx.save();
+                    ctx.translate(cx, cy);
+
+                    // Six ice spikes extending outward (very distinct snowflake look)
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 10;
+                    ctx.lineCap = 'round';
+                    for (let k = 0; k < 6; k++) {
+                        const a = (k * Math.PI) / 3 + tickT * 0.3;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.cos(a) * r * 0.35, Math.sin(a) * r * 0.35);
+                        ctx.lineTo(Math.cos(a) * r * 1.0, Math.sin(a) * r * 1.0);
+                        ctx.stroke();
+                        // Spike branches (small)
+                        const bx = Math.cos(a) * r * 0.75;
+                        const by = Math.sin(a) * r * 0.75;
+                        const a1 = a + 0.5;
+                        const a2 = a - 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(bx, by);
+                        ctx.lineTo(bx + Math.cos(a1) * r * 0.25, by + Math.sin(a1) * r * 0.25);
+                        ctx.moveTo(bx, by);
+                        ctx.lineTo(bx + Math.cos(a2) * r * 0.25, by + Math.sin(a2) * r * 0.25);
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+
+                    // Central hexagon ice core
+                    const hexR = r * 0.55;
+                    ctx.fillStyle = '#02101c';
                     ctx.beginPath();
-                    ctx.roundRect(cx - outerSize / 2, cy - outerSize / 2, outerSize, outerSize, 4);
+                    for (let k = 0; k < 6; k++) {
+                        const a = (k * Math.PI) / 3 + Math.PI / 6;
+                        if (k === 0) ctx.moveTo(Math.cos(a) * hexR, Math.sin(a) * hexR);
+                        else ctx.lineTo(Math.cos(a) * hexR, Math.sin(a) * hexR);
+                    }
+                    ctx.closePath();
                     ctx.fill();
 
-                    ctx.fillStyle = color;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 6;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Inner crystal core (rotating diamond)
+                    ctx.rotate(tickT + tower.gridX);
+                    const diamondR = hexR * 0.55;
+                    const diamondGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, diamondR);
+                    diamondGrad.addColorStop(0, '#ffffff');
+                    diamondGrad.addColorStop(0.6, color);
+                    diamondGrad.addColorStop(1, color + '00');
+                    ctx.fillStyle = diamondGrad;
                     ctx.beginPath();
-                    ctx.roundRect(cx - scaledSize / 2, cy - scaledSize / 2, scaledSize, scaledSize, 3);
+                    ctx.moveTo(0, -diamondR);
+                    ctx.lineTo(diamondR, 0);
+                    ctx.lineTo(0, diamondR);
+                    ctx.lineTo(-diamondR, 0);
+                    ctx.closePath();
                     ctx.fill();
 
-                    // Inner highlight
-                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                    ctx.beginPath();
-                    ctx.roundRect(cx - scaledSize / 2 + 3, cy - scaledSize / 2 + 3, scaledSize * 0.4, scaledSize * 0.4, 2);
-                    ctx.fill();
+                    ctx.restore();
                 } else {
-                    // Draw circular tower with scale animation
-                    const scaledRadius = radius * scale;
+                    // ===== ATTACK TOWER: ROUND CANNON TURRET (warm/red, cross cannons) =====
+                    const r = radius * scale;
 
-                    // Outer ring
-                    ctx.fillStyle = towerOuterColor;
+                    ctx.save();
+                    ctx.translate(cx, cy);
+
+                    // Outer dark circular base (metal plating)
+                    ctx.fillStyle = '#0a0a1a';
                     ctx.beginPath();
-                    ctx.arc(cx, cy, scaledRadius + 2, 0, Math.PI * 2);
+                    ctx.arc(0, 0, r * 1.05, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Main circle
-                    ctx.fillStyle = color;
+                    // Outer colored ring
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 10;
                     ctx.beginPath();
-                    ctx.arc(cx, cy, scaledRadius, 0, Math.PI * 2);
+                    ctx.arc(0, 0, r * 0.95, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Cross cannons (4 directions, rotating)
+                    ctx.rotate(tickT * 0.8 + tower.gridY);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 8;
+                    ctx.lineCap = 'butt';
+                    for (let k = 0; k < 4; k++) {
+                        const a = (k * Math.PI) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.cos(a) * r * 0.3, Math.sin(a) * r * 0.3);
+                        ctx.lineTo(Math.cos(a) * r * 1.1, Math.sin(a) * r * 1.1);
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+
+                    // Central glowing core (solid circle)
+                    const coreR = r * 0.45;
+                    const coreGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
+                    coreGrad.addColorStop(0, '#ffffff');
+                    coreGrad.addColorStop(0.3, color);
+                    coreGrad.addColorStop(1, color + '88');
+                    ctx.fillStyle = coreGrad;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, coreR, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Inner highlight
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    // Bright center dot
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 6;
                     ctx.beginPath();
-                    ctx.arc(cx - 3, cy - 3, scaledRadius * 0.4, 0, Math.PI * 2);
+                    ctx.arc(0, 0, coreR * 0.35, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    ctx.restore();
                 }
 
-                // Level text
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+                // ===== LEVEL BADGE - bottom-right corner, clear and readable =====
+                const badgeR = 7;
+                const bx = cx + radius * 0.75;
+                const by = cy + radius * 0.75;
+
+                // Badge background (dark with type color border)
+                ctx.fillStyle = '#000814';
+                ctx.beginPath();
+                ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 5;
+                ctx.beginPath();
+                ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Level number (high contrast white with stroke)
+                ctx.font = '700 11px "Orbitron", "Arial Black", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(tower.level, cx, cy);
+                ctx.strokeStyle = '#000814';
+                ctx.lineWidth = 2.5;
+                ctx.strokeText(tower.level, bx, by + 0.5);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(tower.level, bx, by + 0.5);
             }
 
-            // Draw monsters (combined loop for performance)
+            // Draw monsters - sci-fi drones / aliens
+            const monsterPulse = Date.now() * 0.006;
             for (const monster of gameState.monsters) {
                 const radius = monster.isBoss ? 18 : 10;
                 const hpRatio = monster.hp / monster.maxHp;
 
-                // Get monster color
                 const monsterColor = monster.isBoss
-                    ? '#800080'
+                    ? '#ff40e0'
                     : WAVE_COLORS[(monster.wave - 1) % WAVE_COLORS.length];
 
-                // Draw outline
-                ctx.fillStyle = '#800000';
+                // Slowed effect aura
+                const isSlowed = monster.slowUntil && Date.now() < monster.slowUntil;
+
+                // Outer glow
+                ctx.save();
+                const aura = ctx.createRadialGradient(monster.x, monster.y, 0, monster.x, monster.y, radius * 2.2);
+                aura.addColorStop(0, monsterColor + '99');
+                aura.addColorStop(0.4, monsterColor + '33');
+                aura.addColorStop(1, monsterColor + '00');
+                ctx.fillStyle = aura;
                 ctx.beginPath();
-                ctx.arc(monster.x, monster.y, radius + 2, 0, Math.PI * 2);
+                ctx.arc(monster.x, monster.y, radius * 2.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // Slow effect overlay
+                if (isSlowed) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(160, 230, 255, 0.7)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    ctx.lineDashOffset = -Date.now() * 0.02;
+                    ctx.beginPath();
+                    ctx.arc(monster.x, monster.y, radius + 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Dark core background (energy capsule)
+                ctx.fillStyle = '#02050e';
+                ctx.beginPath();
+                ctx.arc(monster.x, monster.y, radius + 1, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Draw HP as pie chart - 顺时针扣血
-                // 白色部分（缺失的血量）从12点顺时针画
-                ctx.fillStyle = '#f0f0f0';
+                // HP arc (clockwise depletion) - thick energy ring
+                ctx.save();
+                ctx.lineWidth = 3;
+                // missing HP - dim red
+                ctx.strokeStyle = 'rgba(80, 20, 30, 0.6)';
                 ctx.beginPath();
-                ctx.moveTo(monster.x, monster.y);
-                ctx.arc(monster.x, monster.y, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio));
-                ctx.closePath();
-                ctx.fill();
-
-                // 彩色部分（剩余血量）从剩余位置画到12点
-                ctx.fillStyle = monsterColor;
-                ctx.beginPath();
-                ctx.moveTo(monster.x, monster.y);
-                ctx.arc(monster.x, monster.y, radius, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio), -Math.PI / 2 + Math.PI * 2);
-                ctx.closePath();
-                ctx.fill();
-
-                // Draw border
-                ctx.strokeStyle = '#404040';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.arc(monster.x, monster.y, radius, 0, Math.PI * 2);
+                ctx.arc(monster.x, monster.y, radius - 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio));
                 ctx.stroke();
-            }
-
-            for (const bullet of gameState.bullets) {
-                ctx.fillStyle = '#d0a020';
+                // current HP - glowing color
+                ctx.strokeStyle = monsterColor;
+                ctx.shadowColor = monsterColor;
+                ctx.shadowBlur = 6;
                 ctx.beginPath();
-                ctx.arc(bullet.x, bullet.y, 4, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.arc(monster.x, monster.y, radius - 1, -Math.PI / 2 + Math.PI * 2 * (1 - hpRatio), Math.PI * 2 - Math.PI / 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // Inner core - hex / triangle for boss
+                if (monster.isBoss) {
+                    // Boss: rotating triangle with center dot
+                    ctx.save();
+                    ctx.translate(monster.x, monster.y);
+                    ctx.rotate(monsterPulse * 0.5);
+                    ctx.fillStyle = monsterColor;
+                    ctx.shadowColor = monsterColor;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    for (let k = 0; k < 3; k++) {
+                        const a = (k * Math.PI * 2) / 3 - Math.PI / 2;
+                        const r = radius * 0.55;
+                        if (k === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                        else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    // Normal: pulsing center dot
+                    const pulseR = radius * 0.35 + Math.sin(monsterPulse + monster.x * 0.1) * 1;
+                    ctx.fillStyle = monsterColor;
+                    ctx.shadowColor = monsterColor;
+                    ctx.shadowBlur = 6;
+                    ctx.beginPath();
+                    ctx.arc(monster.x, monster.y, pulseR, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    // bright dot
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(monster.x, monster.y, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
 
-            // Draw particles
+            // Bullets - sci-fi energy bolts
+            for (const bullet of gameState.bullets) {
+                ctx.save();
+                ctx.shadowColor = '#ffeb40';
+                ctx.shadowBlur = 10;
+                // outer glow
+                ctx.fillStyle = 'rgba(255, 220, 80, 0.4)';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                // bright core
+                ctx.fillStyle = '#fff8c0';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw particles - with glow
             for (const p of gameState.particles) {
+                ctx.save();
                 ctx.globalAlpha = p.life;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
                 ctx.fillStyle = p.color;
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.restore();
             }
             ctx.globalAlpha = 1;
 
@@ -1866,75 +2494,155 @@
                 const gridX = Math.floor(previewX / CELL_SIZE);
                 const gridY = Math.floor(previewY / CELL_SIZE);
 
-                // Check if can place tower - use O(1) grid lookup
                 const existing = getTowerAt(gridX, gridY);
                 const monsterOnCell = gameState.monsters.some(m => {
                     const mx = Math.floor(m.x / CELL_SIZE);
                     const my = Math.floor(m.y / CELL_SIZE);
                     return mx === gridX && my === gridY;
                 });
-                const pathExists = checkPathExistsAt(gridX, gridY);  // Use optimized function
+                const pathExists = checkPathExistsAt(gridX, gridY);
                 const canPlace = !existing && !monsterOnCell && pathExists && gridX >= 0 && gridX < GRID_SIZE && gridY >= 0 && gridY < GRID_SIZE;
 
-                // Get stats for preview
                 const stats = selectedTowerType === 'attack' ? TOWER_STATS[1] : SLOW_TOWER_STATS[1];
-                const color = selectedTowerType === 'attack' ? TOWER_COLORS[0] : SLOW_TOWER_COLORS[0];
-                const radius = CELL_SIZE / 2 - 2;
+                const baseColor = selectedTowerType === 'attack' ? TOWER_COLORS[0] : SLOW_TOWER_COLORS[0];
+                const color = canPlace ? baseColor : '#ff3a6e';
+                const radius = CELL_SIZE / 2 - 5;
                 const size = radius * 2;
 
-                // Draw attack range
-                ctx.fillStyle = canPlace
-                    ? (isDarkTheme ? 'rgba(74, 144, 208, 0.15)' : 'rgba(64, 144, 208, 0.15)')
-                    : 'rgba(200, 64, 64, 0.15)';
+                // Draw attack range - sci-fi targeting reticle
+                ctx.save();
+                ctx.fillStyle = canPlace ? `rgba(${neonRGB()}, 0.08)` : 'rgba(255, 58, 110, 0.10)';
                 ctx.beginPath();
                 ctx.arc(previewX, previewY, stats.range, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = canPlace
-                    ? (isDarkTheme ? 'rgba(74, 144, 208, 0.5)' : 'rgba(64, 144, 208, 0.5)')
-                    : 'rgba(200, 64, 64, 0.5)';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = canPlace ? `rgba(${neonRGB()}, 0.7)` : 'rgba(255, 58, 110, 0.7)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 4]);
+                ctx.lineDashOffset = -Date.now() * 0.04;
+                ctx.beginPath();
+                ctx.arc(previewX, previewY, stats.range, 0, Math.PI * 2);
                 ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
 
                 // Draw tower preview with transparency
-                ctx.globalAlpha = 0.7;
+                ctx.globalAlpha = 0.8;
+
+                // Glow
+                ctx.save();
+                const pgrad = ctx.createRadialGradient(previewX, previewY, 0, previewX, previewY, radius * 1.8);
+                pgrad.addColorStop(0, color + 'aa');
+                pgrad.addColorStop(1, color + '00');
+                ctx.fillStyle = pgrad;
+                ctx.beginPath();
+                ctx.arc(previewX, previewY, radius * 1.8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
 
                 if (selectedTowerType === 'slow') {
-                    ctx.fillStyle = towerOuterColor;
+                    // Snowflake preview (matches slow tower)
+                    ctx.save();
+                    ctx.translate(previewX, previewY);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 8;
+                    ctx.lineCap = 'round';
+                    for (let k = 0; k < 6; k++) {
+                        const a = (k * Math.PI) / 3;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.cos(a) * radius * 0.35, Math.sin(a) * radius * 0.35);
+                        ctx.lineTo(Math.cos(a) * radius, Math.sin(a) * radius);
+                        ctx.stroke();
+                        const bx = Math.cos(a) * radius * 0.75;
+                        const by = Math.sin(a) * radius * 0.75;
+                        ctx.beginPath();
+                        ctx.moveTo(bx, by);
+                        ctx.lineTo(bx + Math.cos(a + 0.5) * radius * 0.25, by + Math.sin(a + 0.5) * radius * 0.25);
+                        ctx.moveTo(bx, by);
+                        ctx.lineTo(bx + Math.cos(a - 0.5) * radius * 0.25, by + Math.sin(a - 0.5) * radius * 0.25);
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+                    // Hex core
+                    const hexR = radius * 0.55;
+                    ctx.fillStyle = '#02101c';
                     ctx.beginPath();
-                    ctx.roundRect(previewX - (size + 4) / 2, previewY - (size + 4) / 2, size + 4, size + 4, 4);
+                    for (let k = 0; k < 6; k++) {
+                        const a = (k * Math.PI) / 3 + Math.PI / 6;
+                        if (k === 0) ctx.moveTo(Math.cos(a) * hexR, Math.sin(a) * hexR);
+                        else ctx.lineTo(Math.cos(a) * hexR, Math.sin(a) * hexR);
+                    }
+                    ctx.closePath();
                     ctx.fill();
-
-                    ctx.fillStyle = canPlace ? color : '#d04040';
-                    ctx.beginPath();
-                    ctx.roundRect(previewX - size / 2, previewY - size / 2, size, size, 3);
-                    ctx.fill();
-
-                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                    ctx.beginPath();
-                    ctx.roundRect(previewX - size / 2 + 3, previewY - size / 2 + 3, size * 0.4, size * 0.4, 2);
-                    ctx.fill();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.restore();
                 } else {
-                    ctx.fillStyle = towerOuterColor;
+                    // Cross cannon preview (matches attack tower)
+                    ctx.save();
+                    ctx.translate(previewX, previewY);
+                    // Base
+                    ctx.fillStyle = '#0a0a1a';
                     ctx.beginPath();
-                    ctx.arc(previewX, previewY, radius + 2, 0, Math.PI * 2);
+                    ctx.arc(0, 0, radius * 1.05, 0, Math.PI * 2);
                     ctx.fill();
-
-                    ctx.fillStyle = canPlace ? color : '#d04040';
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = 8;
                     ctx.beginPath();
-                    ctx.arc(previewX, previewY, radius, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                    ctx.arc(0, 0, radius * 0.95, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // Cross cannons
+                    ctx.lineWidth = 3;
+                    for (let k = 0; k < 4; k++) {
+                        const a = (k * Math.PI) / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.cos(a) * radius * 0.3, Math.sin(a) * radius * 0.3);
+                        ctx.lineTo(Math.cos(a) * radius * 1.1, Math.sin(a) * radius * 1.1);
+                        ctx.stroke();
+                    }
+                    ctx.shadowBlur = 0;
+                    // Core
+                    const coreR = radius * 0.45;
+                    const cg = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
+                    cg.addColorStop(0, '#ffffff');
+                    cg.addColorStop(0.3, color);
+                    cg.addColorStop(1, color + '88');
+                    ctx.fillStyle = cg;
                     ctx.beginPath();
-                    ctx.arc(previewX - 3, previewY - 3, radius * 0.4, 0, Math.PI * 2);
+                    ctx.arc(0, 0, coreR, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.restore();
                 }
 
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 11px "Microsoft YaHei", sans-serif';
+                // Level badge for preview
+                const badgeR = 7;
+                const bx = previewX + radius * 0.75;
+                const by = previewY + radius * 0.75;
+                ctx.fillStyle = '#000814';
+                ctx.beginPath();
+                ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 5;
+                ctx.beginPath();
+                ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.font = '700 11px "Orbitron", "Arial Black", sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('1', previewX, previewY);
+                ctx.strokeStyle = '#000814';
+                ctx.lineWidth = 2.5;
+                ctx.strokeText('1', bx, by + 0.5);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('1', bx, by + 0.5);
 
                 ctx.globalAlpha = 1;
             }
