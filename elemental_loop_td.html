@@ -232,7 +232,7 @@
       <div id="itemLog"></div>
       <div id="ruleHint"></div>
     </div>
-    <div id="versionTag">v2026.06.18.06</div>
+    <div id="versionTag">v2026.07.11.01</div>
   </div>
   <div id="buildBar">
     <button class="build-btn" data-type="fire" id="btnFire">
@@ -329,8 +329,7 @@ const DROP_NORM_PROB_MUL = 0.5;      // 普通怪 50% 概率掉道具 (相对 IT
 
 const MAX_TOWER_LEVEL = Infinity; // 无等级上限
 const ULTIMATE_LEVEL = 10;       // 达到此等级解锁终极形态
-const UPGRADE_COST_PER_LEVEL = 50;        // 100 -> 50,升级提速一倍
-const UPGRADE_COST_TIER = 10;             // 每多少级费用 +1 倍基础值
+const UPGRADE_COST_FIXED = 200;           // 升级费用固定 200,不随等级变化
 const MAX_CRIT_RATE = 1.0;       // 暴击率上限 100%
 const MAX_CRIT_DMG  = 10.0;      // 爆伤上限 1000%
 const MAX_ATK_SPEED = 20;        // 攻速上限 20/s
@@ -340,18 +339,19 @@ const MAX_SAFE_ATK = 1e9;        // 单次攻击伤害上限(游戏数值上完�
 const MAX_SAFE_HP  = 1e12;       // 怪物血量上限
 const MAX_SAFE_GOLD = 1e12;      // 金币上限
 const MAX_SAFE_WAVE = 1e6;       // 波数上限(到达后停在该波不再递增)
-const MONSTER_BASE_HP = 80;         // 100 -> 80, 前期更合理
-const MONSTER_HP_LINEAR = 0.40;     // 每波 +40%
-const MONSTER_HP_QUAD   = 0.012;    // 二次项 wave² × 0.012
+const MONSTER_BASE_HP = 60;         // 固定20只/波 + 200/级升级,降低基础血量
+const MONSTER_HP_LINEAR = 0.25;     // 每波 +25%
+const MONSTER_HP_QUAD   = 0.005;    // 二次项 wave² × 0.005
 const MONSTER_SPEED = 50;           // px/s
-const WAVE_BASE_INTERVAL = 10;      // 波间隔基础值(秒) — 给清场留足时间
-const WAVE_INTERVAL_PER_WAVE = 0.2; // 每波递增量(秒)
-const WAVE_INTERVAL_CAP = 16;       // 后期封顶(秒)
+const MONSTERS_PER_WAVE = 20;         // 每波固定 20 只,不随波数变化
+const WAVE_BASE_INTERVAL = 15;      // 波间隔基础值(秒) — 固定20只/波,需更多清场时间
+const WAVE_INTERVAL_PER_WAVE = 0.1; // 每波递增量(秒)
+const WAVE_INTERVAL_CAP = 20;       // 后期封顶(秒)
 const MONSTER_SPAWN_INTERVAL = 0.65; // 出怪间距 — 间隔越大塔越能逐个击破
 const INITIAL_GOLD = 300;
-const KILL_GOLD_BASE = 25;          // 15 -> 25, 早期金币丰厚
-const KILL_GOLD_PER_WAVE = 3.0;     // 2.0 -> 3.0
-const KILL_GOLD_QUAD = 0.015;       // 0.008 -> 0.015
+const KILL_GOLD_BASE = 20;          // 固定20只/波,基础击杀金币
+const KILL_GOLD_PER_WAVE = 0.4;     // 每波递增(线性)
+const KILL_GOLD_QUAD = 0.002;       // 二次项(轻微加速)
 
 // === 元素反应系统（参考原神） ===
 // 三元素:火(红)/水(蓝)/冰(青)
@@ -843,7 +843,7 @@ class Tower {
     // level=50 → baseAtk × (1 + 0.10 × 49^0.85) ≈ baseAtk × 3.81
     // level=100 → baseAtk × (1 + 0.10 × 99^0.85) ≈ baseAtk × 6.71
     // level=200 → baseAtk × (1 + 0.10 × 199^0.85) ≈ baseAtk × 12.1
-    // 配合怪物 HP 二次项,后期保持 0.3-0.5 击杀倍率
+    // 配合怪物 HP 二次项(0.005×w²),固定200/级升级下后期保持合理击杀倍率
     const lv = safeNum(safeFinite(this.level, 1), 1, 1e6);
     const growth = 1 + 0.10 * Math.pow(lv - 1, 0.85);
     const raw = this.def.baseAtk * growth * ult;
@@ -883,12 +883,8 @@ class Tower {
     return this.def.baseSpeed + this.bonusSpeed;
   }
   getUpgradeCost() {
-    // 升级费随等级阶梯递增:每 UPGRADE_COST_TIER (10) 级翻一倍系数
-    // Lv 1-10 → 100;Lv 11-20 → 200;Lv 21-30 → 300;Lv 100 → 1000;Lv 200 → 2000
-    // 阻断金币雪崩,防止 wave 50 后玩家一键升满级
-    const lv = safeNum(safeFinite(this.level, 1), 1, 1e6);
-    const tier = Math.ceil(lv / UPGRADE_COST_TIER);
-    return UPGRADE_COST_PER_LEVEL * tier;
+    // 固定 200,不随等级变化
+    return UPGRADE_COST_FIXED;
   }
   upgrade() {
     // 即使 UI 绕过 tryUpgradeTower 直接调 upgrade() 也要防溢出
@@ -1190,8 +1186,8 @@ class Monster {
     const eliteHpMult = this.isElite ? (ELITE_HP_BASE_MULT + safeWave * ELITE_HP_WAVE_SCALE) : 1;
     const spMult = this.isElite ? ELITE_SPEED_MULT : 1;
     const szMult = this.isElite ? ELITE_SIZE_MULT : 1;
-    // 怪物 HP = 50 × (1 + 0.35×w + 0.004×w²) × elite倍率
-    // wave 10 → 50 × 4.9 = 245;wave 50 → 50 × 28.5 = 1425;wave 100 → 50 × 76 = 3800;wave 200 → 50 × 231 = 11550
+    // 怪物 HP = 60 × (1 + 0.25×w + 0.005×w²) × elite倍率
+    // wave 10 → 240;wave 50 → 1560;wave 100 → 4560;wave 200 → 15060
     const hpGrowth = 1 + safeWave * MONSTER_HP_LINEAR + safeWave * safeWave * MONSTER_HP_QUAD;
     this.maxHp = safeRound(safeNum(MONSTER_BASE_HP * hpGrowth * eliteHpMult, 1, MAX_SAFE_HP));
     this.hp = this.maxHp;
@@ -1920,7 +1916,7 @@ const game = {
   // 升级一个塔,带反馈
   tryUpgradeTower(tower) {
     if (this.gameOver) return false;
-    const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+    const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_FIXED);
     const r = this._applyUpgrade(tower, cost);
     if (!r.ok) {
       this.flashRuleHint(`金币不足,需要 $${cost}`);
@@ -2010,7 +2006,7 @@ const game = {
           this.flashRuleHint('不能放在路径上,换个位置');
           return;
         }
-        const cost = safeFinite(existing.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+        const cost = safeFinite(existing.getUpgradeCost(), UPGRADE_COST_FIXED);
         if (this.gold < cost) {
           this.flashRuleHint(`金币不足,需要 $${cost}`);
           return;
@@ -2070,9 +2066,8 @@ const game = {
 
   startWave() {
     this.wave = Math.min(MAX_SAFE_WAVE, safeFinite(this.wave, 0) + 1);
-    // 每波怪物数量：5 + 波数 * 3，后期波次怪更多
-    // 每波怪物数:3 + 2*wave (温和起步,wave 10 = 23只而不是 35只)
-    this.monstersToSpawn = safeAdd(3, this.wave * 2, MAX_SAFE_HP);
+    // 每波固定 20 只,不随波数变化
+    this.monstersToSpawn = MONSTERS_PER_WAVE;
     this.spawnedThisWave = 0;
     this.spawnTimer = 0;
     this.waveActive = true;
@@ -2100,8 +2095,8 @@ const game = {
     this.kills = safeAdd(safeFinite(this.kills, 0), 1, MAX_SAFE_HP);
     // 精英怪击杀金币 × 3
     const goldMult = monster.isElite ? ELITE_GOLD_MULT : 1;
-    // 击杀金币 = 基础 + 线性 × wave + 二次 × wave²,跟上后期阶梯升级费
-    // wave 10 → 26;wave 50 → 110;wave 100 → 260;wave 200 → 710
+    // 击杀金币 = 基础 + 线性 × wave + 二次 × wave² (固定20只/波,200/级升级)
+    // wave 10 → 24;wave 50 → 45;wave 100 → 80;wave 200 → 180
     const w = safeFinite(this.wave, 0);
     const reward = safeRound((KILL_GOLD_BASE + w * KILL_GOLD_PER_WAVE + w * w * KILL_GOLD_QUAD) * goldMult);
     this.gold = safeAdd(safeFinite(this.gold, 0), reward, MAX_SAFE_GOLD);
@@ -2308,41 +2303,17 @@ const game = {
     return 'none';
   },
 
-  // 计算从当前等级升 N 级的累计费用(考虑阶梯涨价)
+  // 计算从当前等级升 N 级的累计费用(固定费用)
   // 返回 { totalCost, affordableLevels }:其中 affordableLevels 是手头金币最多能升的级数
   _computeUpgradeCost(tower, n) {
-    const startLv = safeFinite(tower.level, 1);
-    let total = 0;
-    let affordable = 0;
-    let remaining = safeFinite(this.gold, 0);
-    for (let i = 0; i < n; i++) {
-      const lv = startLv + i;
-      const tier = Math.ceil(lv / UPGRADE_COST_TIER);
-      const cost = UPGRADE_COST_PER_LEVEL * tier;
-      total += cost;
-      if (remaining >= cost) {
-        remaining -= cost;
-        affordable = i + 1;
-      }
-    }
+    const total = UPGRADE_COST_FIXED * n;
+    const affordable = Math.min(n, Math.floor(safeFinite(this.gold, 0) / UPGRADE_COST_FIXED));
     return { totalCost: total, affordableLevels: affordable };
   },
 
-  // 用当前金币能连升多少级(阶梯升级费下贪心算)
+  // 用当前金币能连升多少级(固定升级费)
   _maxAffordableLevels(tower) {
-    const startLv = safeFinite(tower.level, 1);
-    let remaining = safeFinite(this.gold, 0);
-    let levels = 0;
-    // 限制循环上限防止极端金币下卡死
-    while (levels < 100000) {
-      const lv = startLv + levels;
-      const tier = Math.ceil(lv / UPGRADE_COST_TIER);
-      const cost = UPGRADE_COST_PER_LEVEL * tier;
-      if (remaining < cost) break;
-      remaining -= cost;
-      levels++;
-    }
-    return levels;
+    return Math.floor(safeFinite(this.gold, 0) / UPGRADE_COST_FIXED);
   },
 
   // 局部更新升级按钮的 disabled 状态 + 满级按钮文本/数值,不重建 DOM 节点
@@ -2468,7 +2439,7 @@ const game = {
     let upgraded = 0;
     for (let i = 0; i < n; i++) {
       // 动态取价:阶梯升级费会随等级跨阶梯变化
-      const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+      const cost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_FIXED);
       if (cost <= 0) break;
       if (this.gold < cost) break;
       const r = this._applyUpgrade(tower, cost);
@@ -2478,7 +2449,7 @@ const game = {
     }
 
     if (upgraded === 0) {
-      const nextCost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_PER_LEVEL);
+      const nextCost = safeFinite(tower.getUpgradeCost(), UPGRADE_COST_FIXED);
       this.flashRuleHint(`金币不足,需要 $${nextCost}`);
       return 0;
     }
