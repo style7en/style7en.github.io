@@ -4,6 +4,7 @@
 
 ## Projects
 
+- [Windows Vista 桌面复刻](vista.html) - Aero 玻璃质感桌面，含开始菜单、3D 窗口翻转、IE 浏览器与扫雷
 - [中国象棋](chess.html) - 中国象棋游戏，支持人机对战
 - [元素循环圈塔防](elemental_loop_td.html) - 元素循环塔防游戏
 - [三消塔防无尽版](tower-defense.html) - 一个三消塔防游戏
