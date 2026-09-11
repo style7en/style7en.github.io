@@ -22,6 +22,7 @@
     --accent-color: #ec4141;
     --accent-hover: #ff5e5e;
     --border-color: #2a2a2a;
+    --home-indicator: rgba(255, 255, 255, 0.85);
 }
 
 .light-theme {
@@ -33,7 +34,14 @@
     --text-secondary: #666666;
     --text-tertiary: #999999;
     --border-color: #e0e0e0;
+    --home-indicator: rgba(0, 0, 0, 0.7);
 }
+
+/* 纤细深色滚动条（歌单较长时播放列表会滚动） */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 3px; }
+.playlist-sidebar-items { scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.2) transparent; }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
@@ -59,6 +67,12 @@ body.light-theme {
     padding: 12px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 2px #333;
     position: relative;
+    /* 窗口较小时等比缩小（--phone-scale 由 JS 设置）：
+       负外边距让占位尺寸跟随缩放，配合 flex 居中可完整显示且不出现页面滚动条 */
+    transform: scale(var(--phone-scale, 1));
+    transform-origin: top left;
+    margin-right: calc(375px * (var(--phone-scale, 1) - 1));
+    margin-bottom: calc(812px * (var(--phone-scale, 1) - 1));
 }
 
 .phone-frame {
@@ -82,6 +96,21 @@ body.light-theme {
     flex-direction: column;
     padding-top: 20px;
     padding-bottom: 34px;
+}
+
+/* 底部 Home 指示条 */
+.phone-screen::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    width: 134px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--home-indicator);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 50;
 }
 
 .status-bar {
@@ -139,13 +168,15 @@ body.light-theme {
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    overflow-y: auto;
+    overflow: hidden; /* 内容按固定手机尺寸设计，禁止出现滚动条 */
 }
 
 .album-container {
-    width: 260px;
-    height: 260px;
-    margin-bottom: 30px;
+    width: 320px;
+    height: 320px;
+    flex-shrink: 0; /* 防止空间不足时专辑被压缩 */
+    margin-top: auto; /* 剩余空间留在专辑上方，让进度条与底部控制区靠拢 */
+    margin-bottom: 32px;
 }
 
 .album-cover {
@@ -181,7 +212,7 @@ body.light-theme {
 
 .song-info {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 40px;
     width: 100%;
 }
 
@@ -193,7 +224,7 @@ body.light-theme {
 
 .progress-section {
     width: 100%;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .progress-bar-container {
@@ -234,21 +265,21 @@ body.light-theme {
 }
 
 .controls-section {
-    padding: 16px 20px;
+    padding: 8px 20px 16px;
     background: linear-gradient(to top, var(--bg-secondary), transparent);
 }
 
-.secondary-controls {
+.main-controls {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 0 16px;
+    justify-content: space-between;
+    padding: 0 6px;
+    margin-bottom: 12px; /* 整行上移，与音量行拉开一点 */
 }
 
 .control-btn {
-    width: 44px;
-    height: 44px;
+    width: 50px;
+    height: 50px;
     border: none;
     background: transparent;
     color: var(--text-secondary);
@@ -262,18 +293,12 @@ body.light-theme {
 
 .control-btn:hover { color: var(--text-primary); }
 .control-btn.active { color: var(--accent-color); }
-.control-btn svg { width: 24px; height: 24px; }
-
-.primary-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 28px;
-}
+.control-btn svg { width: 28px; height: 28px; }
+.primary-controls .control-btn svg { width: 34px; height: 34px; }
 
 .play-btn {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     border: none;
     background: var(--accent-color);
     color: #fff;
@@ -288,13 +313,13 @@ body.light-theme {
 
 .play-btn:hover { background: var(--accent-hover); transform: scale(1.05); }
 .play-btn:active { transform: scale(0.95); }
-.play-btn svg { width: 28px; height: 28px; }
+.play-btn svg { width: 38px; height: 38px; }
 .play-btn .pause-icon { display: none; }
 .play-btn.playing .play-icon { display: none; }
 .play-btn.playing .pause-icon { display: block; }
 
 .volume-section {
-    padding: 12px 0 0;
+    padding: 10px 0 0;
 }
 
 .volume-slider-container {
@@ -341,6 +366,25 @@ body.light-theme {
 
 .playlist-sidebar.open { transform: translateX(0); }
 
+/* 侧栏打开时的背景遮罩 */
+.sidebar-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 9;
+}
+
+.playlist-sidebar.open ~ .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .playlist-sidebar-header {
     display: flex;
     align-items: center;
@@ -371,6 +415,14 @@ body.light-theme {
     flex: 1;
     overflow-y: auto;
     padding: 8px;
+}
+
+.playlist-empty {
+    padding: 48px 16px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    line-height: 2;
 }
 
 .playlist-sidebar-item {
@@ -415,6 +467,11 @@ body.light-theme {
 .playlist-sidebar-item:hover .playlist-sidebar-delete { opacity: 1; }
 .playlist-sidebar-delete:hover { color: var(--accent-color); background: var(--bg-hover); }
 .playlist-sidebar-delete svg { width: 14px; height: 14px; }
+
+/* 触屏设备没有 hover，删除按钮常显 */
+@media (hover: none) {
+    .playlist-sidebar-delete { opacity: 1; }
+}
 
 .playlist-sidebar-footer {
     padding: 12px;
@@ -704,18 +761,12 @@ body.light-theme {
                 </div>
 
                 <div class="controls-section">
-                    <div class="secondary-controls">
+                    <div class="main-controls">
                         <button class="control-btn" id="loop-btn" title="循环模式">
                             <svg id="loop-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
                             <svg id="single-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/><text x="12" y="15" text-anchor="middle" font-size="7" fill="white">1</text></svg>
                             <svg id="shuffle-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
                         </button>
-                        <button class="control-btn" id="playlist-btn" title="播放列表">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>
-                        </button>
-                    </div>
-
-                    <div class="primary-controls">
                         <button class="control-btn" id="prev-btn" title="上一首">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
                         </button>
@@ -725,6 +776,9 @@ body.light-theme {
                         </button>
                         <button class="control-btn" id="next-btn" title="下一首">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                        <button class="control-btn" id="playlist-btn" title="播放列表">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6H3v2h12V6zm0 4H3v2h12v-2zM3 16h8v-2H3v2zM17 6v8.18c-.31-.11-.65-.18-1-.18-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3V8h3V6h-5z"/></svg>
                         </button>
                     </div>
 
@@ -751,6 +805,8 @@ body.light-theme {
                         </button>
                     </div>
                 </div>
+
+                <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
                 <div class="add-song-modal" id="add-song-modal">
                     <div class="add-song-modal-content">
@@ -794,6 +850,17 @@ body.light-theme {
     <script>
 const $ = id => document.getElementById(id);
 
+// 视口较小时整体等比缩小手机（40 为 body 四周的 padding），保证完整显示且无页面滚动条
+function fitPhone() {
+    const scale = Math.max(0.2, Math.min(1,
+        (window.innerWidth - 40) / 375,
+        (window.innerHeight - 40) / 812
+    ));
+    document.documentElement.style.setProperty('--phone-scale', scale.toFixed(4));
+}
+fitPhone();
+window.addEventListener('resize', fitPhone);
+
 class Player {
     constructor() {
         this.playlist = [];
@@ -806,41 +873,49 @@ class Player {
         this.restoreTime = 0;
         this.shouldPlay = false;
         this.db = null;
+        this.dbReady = this.initDB();
         
         this.audio = $('audio');
-        this.initDB().then(() => {
-            this.loadStorage();
-            this.init();
-        });
+        this.loadStorage();
+        this.init();
         
         this.clock();
         setInterval(() => this.clock(), 1000);
     }
 
-    async initDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open('MusicPlayerDB', 1);
-            
-            request.onerror = () => {
-                console.error('IndexedDB初始化失败');
-                resolve();
-            };
-            
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve();
-            };
-            
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains('songs')) {
-                    db.createObjectStore('songs', { keyPath: 'id' });
-                }
-            };
+    initDB() {
+        return new Promise((resolve) => {
+            let settled = false;
+            const done = () => { if (!settled) { settled = true; resolve(); } };
+            setTimeout(done, 3000); // 兜底：IndexedDB 挂起时 3 秒后放行，不阻塞播放器初始化
+            try {
+                const request = indexedDB.open('MusicPlayerDB', 1);
+
+                request.onerror = () => {
+                    console.error('IndexedDB初始化失败');
+                    done();
+                };
+
+                request.onsuccess = () => {
+                    this.db = request.result;
+                    done();
+                };
+
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('songs')) {
+                        db.createObjectStore('songs', { keyPath: 'id' });
+                    }
+                };
+            } catch (e) {
+                console.error('IndexedDB不可用', e);
+                done();
+            }
         });
     }
 
     async saveSongToDB(id, blob) {
+        await this.dbReady;
         if (!this.db) return;
         return new Promise((resolve) => {
             const tx = this.db.transaction(['songs'], 'readwrite');
@@ -852,6 +927,7 @@ class Player {
     }
 
     async loadSongFromDB(id) {
+        await this.dbReady;
         if (!this.db) return null;
         return new Promise((resolve) => {
             const tx = this.db.transaction(['songs'], 'readonly');
@@ -863,6 +939,7 @@ class Player {
     }
 
     async deleteSongFromDB(id) {
+        await this.dbReady;
         if (!this.db) return;
         return new Promise((resolve) => {
             const tx = this.db.transaction(['songs'], 'readwrite');
@@ -1005,10 +1082,13 @@ class Player {
             if (e.code === 'ArrowLeft') this.audio.currentTime -= 10;
         };
 
-        $('phone-screen').onclick = e => {
-            if (!$('playlist-sidebar').classList.contains('open')) return;
+        // 点击播放列表（及手机）区域外的任意位置都关闭播放列表（添加歌曲弹窗打开时除外）
+        document.onclick = e => {
+            const sidebar = $('playlist-sidebar');
+            if (!sidebar.classList.contains('open')) return;
+            if ($('add-song-modal').classList.contains('open')) return;
             if (!e.target.closest('#playlist-sidebar') && !e.target.closest('#playlist-btn')) {
-                $('playlist-sidebar').classList.remove('open');
+                sidebar.classList.remove('open');
             }
         };
     }
@@ -1169,6 +1249,10 @@ class Player {
     }
 
     renderList() {
+        if (this.playlist.length === 0) {
+            $('playlist-items').innerHTML = '<div class="playlist-empty">暂无歌曲<br>点击下方「添加歌曲」开始</div>';
+            return;
+        }
         $('playlist-items').innerHTML = this.playlist.map((s, i) => `
             <div class="playlist-sidebar-item" data-idx="${i}">
                 <div class="playlist-sidebar-item-info">
