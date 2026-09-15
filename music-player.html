@@ -1177,6 +1177,17 @@ class Player {
         $('vol-up').onclick = () => this.changeVolume(0.05);
         $('vol-down').onclick = () => this.changeVolume(-0.05);
         this.bindVolumeHud();
+
+        /* 键盘 ↑/↓ 调节音量：持续按住时指示条一直显示，松开 1.5 秒后淡出 */
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.changeVolume(0.05);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.changeVolume(-0.05);
+            }
+        });
         $('playlist-btn').onclick = () => $('playlist-sidebar').classList.toggle('open');
         $('close-sidebar').onclick = () => $('playlist-sidebar').classList.remove('open');
         $('theme-btn').onclick = () => this.toggleTheme();

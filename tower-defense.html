@@ -79,11 +79,11 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            align-items: flex-start;
+            justify-content: flex-start;
             font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", sans-serif;
             color: var(--text-primary);
-            padding: 10px;
+            padding: 12px 10px;
         }
 
         .game-container {
@@ -93,7 +93,8 @@
         }
 
         #gameCanvas {
-            border: 4px solid var(--border-primary);
+            border: 3px solid var(--border-primary);
+            border-radius: 10px;
             image-rendering: pixelated;
             cursor: crosshair;
             box-shadow: var(--shadow-primary);
@@ -101,30 +102,32 @@
 
         .ui-panel {
             background: var(--bg-secondary);
-            padding: 8px;
-            border: 3px solid var(--border-primary);
-            min-width: 180px;
+            padding: 12px 10px;
+            border: 2px solid var(--border-primary);
+            border-radius: 12px;
+            min-width: 190px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 8px;
+            box-shadow: var(--shadow-primary);
         }
 
         .stat {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 2px 0;
+            padding: 3px 2px;
             border-bottom: 1px solid var(--border-secondary);
         }
 
         .stat-label {
             color: var(--text-muted);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .stat-value {
-            font-size: 20px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 900;
         }
 
         .lives { color: var(--color-lives); }
@@ -306,10 +309,37 @@
         .selected-tower {
             font-size: 11px;
             color: var(--text-primary);
-            margin-top: 6px;
             padding: 6px;
             background: var(--bg-tertiary);
-            border: 1px solid var(--accent-primary);
+            border: 1px dashed var(--border-primary);
+            border-radius: 8px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        /* 选中塔后：虚线边框变实线高亮 */
+        .selected-tower.filled {
+            border-style: solid;
+            border-color: var(--accent-primary);
+        }
+
+        .sel-empty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        #selProps {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .selected-tower .title {
@@ -339,19 +369,22 @@
         }
 
         .restart-btn-small {
-            padding: 4px 8px;
+            padding: 6px 4px;
             font-size: 12px;
             font-family: inherit;
-            background: var(--accent-primary);
-            color: white;
-            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 8px;
             cursor: pointer;
-            border-radius: 3px;
             width: 100%;
+            font-weight: bold;
         }
 
         .restart-btn-small:hover {
-            background: var(--accent-hover);
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: white;
         }
 
         .btn-grid {
@@ -361,36 +394,96 @@
             margin-top: 4px;
         }
 
-        .tower-type-select {
+        .tower-cards {
             display: flex;
-            gap: 4px;
-            margin-top: 6px;
+            gap: 8px;
         }
 
-        .type-btn {
+        .tower-card {
             flex: 1;
-            padding: 4px 2px;
-            font-size: 11px;
-            font-family: inherit;
-            background: var(--tower-bg);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 7px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-secondary);
+            border-radius: 10px;
             cursor: pointer;
-            text-align: center;
-            border-radius: 3px;
+            /* 故意不加 transition：颜色渐变期文字/图标抗锯齿会随背景重新混合，产生微晃感 */
+        }
+
+        .tower-card:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .tower-card[data-type="attack"].active {
+            border-color: #4090d0;
+            background: rgba(64, 144, 208, 0.12);
+        }
+
+        .tower-card[data-type="slow"].active {
+            border-color: #e08040;
+            background: rgba(224, 128, 64, 0.12);
+        }
+
+        .card-icon {
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: var(--tower-bg);
+            border-radius: 8px;
+            flex-shrink: 0;
         }
 
-        .type-btn.active {
-            background: var(--accent-primary);
-            color: white;
-            border-color: var(--tower-border);
+        .shape-attack {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #6ab0f0, #3080c0);
         }
 
-        .type-btn:hover:not(.active) {
-            background: var(--tower-bg-hover);
+        .shape-slow {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #ffb066, #e08040);
+        }
+
+        .card-info {
+            min-width: 0;
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .card-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            white-space: nowrap;
+        }
+
+        .key-cap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 3px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: normal;
+            color: var(--text-muted);
         }
 
         .hidden {
@@ -470,9 +563,17 @@
                 padding: 6px 4px;
             }
 
-            .type-btn {
-                font-size: 14px;
-                padding: 5px 2px;
+            .tower-card {
+                padding: 6px 5px;
+            }
+
+            .card-icon {
+                width: 26px;
+                height: 26px;
+            }
+
+            .card-desc {
+                font-size: 10px;
             }
 
             .selected-tower {
@@ -504,7 +605,7 @@
 
         /* 触摸设备优化 */
         @media (pointer: coarse) {
-            .restart-btn-small, .type-btn, .confirm-btn, .help-close, .delete-btn {
+            .restart-btn-small, .tower-card, .confirm-btn, .help-close, .delete-btn {
                 min-height: 44px;
             }
 
@@ -518,6 +619,22 @@
     <div class="game-container">
         <canvas id="gameCanvas" width="450" height="450"></canvas>
         <div class="ui-panel">
+            <div class="tower-cards">
+                <div class="tower-card active" data-type="attack" onclick="selectTowerType('attack')">
+                    <div class="card-icon"><div class="shape-attack"></div></div>
+                    <div class="card-info">
+                        <div class="card-name">攻击塔 <span class="key-cap">1</span></div>
+                        <div class="card-desc">单体高伤</div>
+                    </div>
+                </div>
+                <div class="tower-card" data-type="slow" onclick="selectTowerType('slow')">
+                    <div class="card-icon"><div class="shape-slow"></div></div>
+                    <div class="card-info">
+                        <div class="card-name">减速塔 <span class="key-cap">2</span></div>
+                        <div class="card-desc">范围减速</div>
+                    </div>
+                </div>
+            </div>
             <div class="stat">
                 <span class="stat-label">生命</span>
                 <span class="stat-value lives" id="lives">100</span>
@@ -538,19 +655,18 @@
                 <button class="restart-btn-small" onclick="showHelp()">玩法说明</button>
                 <button class="restart-btn-small" id="themeBtn" onclick="toggleTheme()">深色</button>
             </div>
-            <div class="tower-type-select">
-                <div class="type-btn active" data-type="attack" onclick="selectTowerType('attack')">攻击塔</div>
-                <div class="type-btn" data-type="slow" onclick="selectTowerType('slow')">减速塔</div>
-            </div>
-            <div class="selected-tower hidden" id="selectedTower">
-                <div class="title">防御塔属性</div>
-                <div>类型: <span id="selType">-</span></div>
-                <div>等级: <span id="selLevel">-</span></div>
-                <div>攻击力: <span id="selAttack">-</span></div>
-                <div>攻击范围: <span id="selRange">-</span></div>
-                <div>攻击间隔: <span id="selInterval">-</span>ms</div>
-                <div id="selSlowDiv">减速: <span id="selSlow">-</span>%</div>
-                <button class="delete-btn" onclick="deleteSelectedTower()">删除防御塔</button>
+            <div class="selected-tower" id="selectedTower">
+                <div class="sel-empty" id="selEmpty">点击防御塔<br>查看属性</div>
+                <div id="selProps" class="hidden">
+                    <div class="title">防御塔属性</div>
+                    <div>类型: <span id="selType">-</span></div>
+                    <div>等级: <span id="selLevel">-</span></div>
+                    <div>攻击力: <span id="selAttack">-</span></div>
+                    <div>攻击范围: <span id="selRange">-</span></div>
+                    <div>攻击间隔: <span id="selInterval">-</span>ms</div>
+                    <div id="selSlowDiv">减速: <span id="selSlow">-</span>%</div>
+                    <button class="delete-btn" onclick="deleteSelectedTower()">删除防御塔</button>
+                </div>
             </div>
         </div>
     </div>
@@ -601,9 +717,10 @@
             
             <h4>放置防御塔</h4>
             <ul>
-                <li>在地图空格上<strong>点击</strong>放置防御塔</li>
+                <li>点击上方卡片或按 <strong>1 / 2</strong> 键选择攻击塔/减速塔（空格可快速切换）</li>
+                <li>在地图空格上<strong>点击</strong>放置防御塔，移动鼠标可预览攻击范围</li>
+                <li>红叉表示不可放置（已有塔、怪物经过或会堵死路径）</li>
                 <li>按住鼠标<strong>超过0.5秒</strong>可拖拽预览塔的攻击范围</li>
-                <li>按<strong>空格键</strong>切换攻击塔/减速塔</li>
             </ul>
             
             <h4>塔的类型</h4>
@@ -729,6 +846,19 @@
         }
         loadTheme();
 
+        /* 画布是 image-rendering: pixelated 的像素画风，
+           弹性居中会让画布落在 0.5px 半像素位置，重绘时在两个相位间翻转，
+           视觉上就是栅格上下微晃。这里把容器吸附到整数像素位置 */
+        function snapLayout() {
+            const c = document.querySelector('.game-container');
+            const availX = document.body.clientWidth - 20; /* 减去 body 左右 padding */
+            const availY = document.documentElement.clientHeight - 24; /* 减去 body 上下 padding */
+            c.style.marginLeft = Math.max(0, Math.floor((availX - c.offsetWidth) / 2)) + 'px';
+            c.style.marginTop = Math.max(0, Math.floor((availY - c.offsetHeight) / 2)) + 'px';
+        }
+        window.addEventListener('resize', snapLayout);
+        snapLayout();
+
         // Tower type selection
         let selectedTowerType = 'attack';
         let isPaused = false;
@@ -738,14 +868,17 @@
 
         function selectTowerType(type) {
             selectedTowerType = type;
-            document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.type === type);
+            document.querySelectorAll('.tower-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.type === type);
             });
         }
 
-        // 空格键切换塔类型
+        // 快捷键：1/2 选择塔类型，空格快速切换
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !gameState.gameOver) {
+            if (gameState.gameOver) return;
+            if (e.key === '1') selectTowerType('attack');
+            if (e.key === '2') selectTowerType('slow');
+            if (e.code === 'Space') {
                 e.preventDefault();
                 const newType = selectedTowerType === 'attack' ? 'slow' : 'attack';
                 selectTowerType(newType);
@@ -846,6 +979,26 @@
         let hoveredTower = null;
         let hoverTimeout = null;
 
+        // 建塔预览
+        let previewCell = null;
+        let previewValid = false;
+
+        function canPlaceAt(gridX, gridY) {
+            if (getTowerAt(gridX, gridY)) return false;
+            const monsterOnCell = gameState.monsters.some(m =>
+                Math.floor(m.x / CELL_SIZE) === gridX && Math.floor(m.y / CELL_SIZE) === gridY
+            );
+            if (monsterOnCell) return false;
+            return checkPathExistsAt(gridX, gridY);
+        }
+
+        function updatePreviewAt(gx, gy) {
+            if (!previewCell || previewCell.gridX !== gx || previewCell.gridY !== gy) {
+                previewCell = { gridX: gx, gridY: gy };
+                previewValid = canPlaceAt(gx, gy);
+            }
+        }
+
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             // 计算缩放比例（canvas可能被CSS缩放）
@@ -853,6 +1006,16 @@
             const scaleY = canvas.height / rect.height;
             mousePos.x = (e.clientX - rect.left) * scaleX;
             mousePos.y = (e.clientY - rect.top) * scaleY;
+
+            /* 建塔预览跟踪（悬停在塔上时不显示） */
+            const pgx = Math.floor(mousePos.x / CELL_SIZE);
+            const pgy = Math.floor(mousePos.y / CELL_SIZE);
+            const previewInBounds = pgx >= 0 && pgx < GRID_SIZE && pgy >= 0 && pgy < GRID_SIZE;
+            if (previewInBounds && !getTowerAt(pgx, pgy)) {
+                updatePreviewAt(pgx, pgy);
+            } else {
+                previewCell = null;
+            }
 
             // Update pending tower position while dragging
             if (isMouseDown) {
@@ -920,7 +1083,7 @@
 
             if (isMouseDown && pendingTowerPos) {
                 selectedTower = null;
-                DOM.selectedTower.classList.add('hidden');
+                hideSelectedTowerPanel();
                 placeTower(pendingTowerPos.gridX, pendingTowerPos.gridY);
             }
             isMouseDown = false;
@@ -932,6 +1095,7 @@
             isMouseDown = false;
             pendingTowerPos = null;
             mouseDownTime = 0;
+            previewCell = null;
             hideTowerTooltip();
         });
 
@@ -969,6 +1133,7 @@
                     mouseDownTime = Date.now();
                     pendingTowerPos = { gridX, gridY };
                 }
+                updatePreviewAt(gridX, gridY);
             }
         }, { passive: false });
 
@@ -978,11 +1143,12 @@
             mousePos.x = pos.x;
             mousePos.y = pos.y;
 
+            const gridX = Math.floor(pos.x / CELL_SIZE);
+            const gridY = Math.floor(pos.y / CELL_SIZE);
             if (isMouseDown) {
-                const gridX = Math.floor(pos.x / CELL_SIZE);
-                const gridY = Math.floor(pos.y / CELL_SIZE);
                 pendingTowerPos = { gridX, gridY };
             }
+            updatePreviewAt(gridX, gridY);
         }, { passive: false });
 
         canvas.addEventListener('touchend', (e) => {
@@ -991,12 +1157,13 @@
 
             if (isMouseDown && pendingTowerPos) {
                 selectedTower = null;
-                DOM.selectedTower.classList.add('hidden');
+                hideSelectedTowerPanel();
                 placeTower(pendingTowerPos.gridX, pendingTowerPos.gridY);
             }
             isMouseDown = false;
             pendingTowerPos = null;
             mouseDownTime = 0;
+            previewCell = null;
         }, { passive: false });
 
         // Tooltip functions
@@ -1045,7 +1212,9 @@
         }
 
         function showTowerInfo(tower) {
-            DOM.selectedTower.classList.remove('hidden');
+            document.getElementById('selEmpty').classList.add('hidden');
+            document.getElementById('selProps').classList.remove('hidden');
+            DOM.selectedTower.classList.add('filled');
             DOM.selType.textContent = tower.type === 'slow' ? '减速塔' : '攻击塔';
             DOM.selLevel.textContent = tower.level;
             DOM.selAttack.textContent = tower.attack;
@@ -1061,6 +1230,12 @@
         }
 
         let confirmDialogCallback = null;
+
+        function hideSelectedTowerPanel() {
+            document.getElementById('selEmpty').classList.remove('hidden');
+            document.getElementById('selProps').classList.add('hidden');
+            DOM.selectedTower.classList.remove('filled');
+        }
 
         function showConfirm(message, callback) {
             DOM.confirmMessage.textContent = message;
@@ -1099,7 +1274,7 @@
                             invalidatePathCache();
                         }
                         selectedTower = null;
-                        DOM.selectedTower.classList.add('hidden');
+                        hideSelectedTowerPanel();
                     }
                 });
             }
@@ -1727,6 +1902,46 @@
                 ctx.stroke();
             }
 
+            /* 建塔预览：范围圈 + 半透明塔本体（红叉 = 不可放置） */
+            if (previewCell && !gameState.gameOver) {
+                previewValid = canPlaceAt(previewCell.gridX, previewCell.gridY);
+                const px = previewCell.gridX * CELL_SIZE + CELL_SIZE / 2;
+                const py = previewCell.gridY * CELL_SIZE + CELL_SIZE / 2;
+                const previewStats = selectedTowerType === 'attack' ? TOWER_STATS[1] : SLOW_TOWER_STATS[1];
+                if (previewValid) {
+                    ctx.fillStyle = selectedTowerType === 'attack' ? 'rgba(64, 144, 208, 0.12)' : 'rgba(224, 128, 64, 0.12)';
+                    ctx.beginPath();
+                    ctx.arc(px, py, previewStats.range, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = selectedTowerType === 'attack' ? 'rgba(64, 144, 208, 0.55)' : 'rgba(224, 128, 64, 0.55)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.globalAlpha = 0.55;
+                    ctx.fillStyle = selectedTowerType === 'attack' ? '#4090d0' : '#e08040';
+                    if (selectedTowerType === 'slow') {
+                        ctx.beginPath();
+                        ctx.roundRect(px - 13, py - 13, 26, 26, 4);
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(px, py, 13, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                } else {
+                    ctx.fillStyle = 'rgba(224, 46, 46, 0.3)';
+                    ctx.fillRect(previewCell.gridX * CELL_SIZE + 1, previewCell.gridY * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                    ctx.strokeStyle = 'rgba(224, 46, 46, 0.85)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(px - 8, py - 8);
+                    ctx.lineTo(px + 8, py + 8);
+                    ctx.moveTo(px + 8, py - 8);
+                    ctx.lineTo(px - 8, py + 8);
+                    ctx.stroke();
+                }
+            }
+
             // Tower outer ring color based on theme
             const towerOuterColor = isDarkTheme ? '#3a3a5c' : '#a0a0b0';
 
@@ -2000,7 +2215,7 @@
             DOM.pauseBtn.textContent = '暂停';
 
             selectedTower = null;
-            DOM.selectedTower.classList.add('hidden');
+            hideSelectedTowerPanel();
             DOM.gameOver.classList.add('hidden');
             DOM.victoryDialog.classList.add('hidden');
             invalidatePathCache();
