@@ -13,6 +13,7 @@
 - [扫雷](minesweeper.html) - 经典 Windows 风格扫雷游戏
 - [2048](2048.html) - 经典数字合并游戏
 - [贪吃蛇](snake.html) - 经典贪吃蛇游戏
+- [文字快传](qrcode.html) - 二维码生成与扫描，电脑手机之间互传文字
 - [音乐播放器](music-player.html) - 手机风格的音乐播放器，支持本地/网络音频
 
 ## Contact
